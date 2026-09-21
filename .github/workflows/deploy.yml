@@ -2,9 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches:
-      - main
-      - claude/fortune-telling-pwa-app-v2uubt
+    branches: [main]
   workflow_dispatch:
 
 permissions:
