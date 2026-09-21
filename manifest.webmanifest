@@ -2,7 +2,7 @@
   "name": "玄鑑 — 命理工具箱",
   "short_name": "玄鑑",
   "description": "離線可用的命理計算工具：星盤、紫微、八字、姓名學、數字磁場，並產生提示詞給外部 LLM 解讀。",
-  "id": "/xuanjian/",
+  "id": "./",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

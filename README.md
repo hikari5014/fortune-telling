@@ -70,3 +70,21 @@ docs/DESIGN.md        完整設計規劃書
 ## 免責
 
 本 App 為文化娛樂與自我探索工具。計算結果與 LLM 解讀皆不構成醫療、法律、投資或任何專業建議。
+
+## 部署到 GitHub Pages
+
+專案已附上 `.github/workflows/deploy.yml`，推送後自動部署，**不需要任何建置步驟**。
+
+第一次設定（只要做一次）：
+
+1. 到 repo 的 **Settings → Pages**
+2. **Build and deployment → Source** 選 **GitHub Actions**
+3. 回到 **Actions** 分頁，等 `Deploy to GitHub Pages` 跑完
+
+網址：`https://<使用者名稱>.github.io/fortune-telling/`
+
+注意事項：
+
+- 站台部署在子路徑底下，所以所有路徑都必須是**相對路徑**（本專案已全部使用相對路徑）
+- `.nojekyll` 一定要保留，否則 GitHub Pages 的 Jekyll 會忽略 `src/views/_shared.js`（底線開頭的檔案）
+- GitHub Pages 是 HTTPS，Service Worker 與「安裝成 App」都能正常運作
