@@ -2,16 +2,51 @@ import { html, raw, $, $$ } from '../ui.js';
 import { icon } from '../icons.js';
 import { store } from '../store.js';
 import { todayInfo } from '../prompt/context.js';
+import { ziweiLimits, fortuneOfYear, baziLuck, shiShen } from '../engines/fortune.js';
 import { DISCLAIMER, sectionHead, pad } from './_shared.js';
 
 const TILES = [
   { p: '/astro',   t: '星盤',   icon: 'astro',   d: '太陽 · 月亮 · 上升 · 中天' },
   { p: '/ziwei',   t: '紫微',   icon: 'ziwei',   d: '十二宮 · 十四主星 · 四化' },
+  { p: '/fortune', t: '運勢',   icon: 'clock',   d: '大限 · 流年 · 大運 · 流月' },
   { p: '/naming',  t: '姓名',   icon: 'naming',  d: '五格三才 · 81 靈動 · 取名' },
   { p: '/numbers', t: '數字',   icon: 'numbers', d: '磁場 · 車牌 · 幸運數' },
   { p: '/prompt',  t: '提示詞', icon: 'prompt',  d: '產生 → 貼到 LLM → 貼回' },
   { p: '/records', t: '紀錄',   icon: 'records', d: '收藏所有解讀結果' },
 ];
+
+function luckCard(all, settings, t) {
+  if (!all?.ziwei || !all?.bazi) return '';
+  let f, bStep;
+  try {
+    const limits = ziweiLimits(all.ziwei);
+    f = fortuneOfYear({ chart: all.ziwei, limits, year: t.y, birthYear: all.base.y });
+    const luck = baziLuck({ ...all.base, gender: all.profile.gender, lateZiRule: settings.lateZiRule });
+    bStep = luck.list.find(x => t.y >= x.fromYear && t.y <= x.toYear);
+  } catch { return ''; }
+  const dm = all.bazi.day.index % 10;
+  return html`
+    <section class="section">
+      ${raw(sectionHead('今年運限', `<a class="chip" href="#/fortune">完整運勢</a>`))}
+      <a class="card press track reveal" href="#/fortune" style="display:block">
+        <div class="row row--between" style="align-items:flex-start;gap:var(--sp-4)">
+          <div style="min-width:0">
+            <p class="card__label">${t.y} · 虛歲 ${f.age}</p>
+            <p style="font-family:var(--font-display);font-size:var(--step-2);margin-top:4px;letter-spacing:.08em">
+              ${f.yearGZName}　流年命宮在${f.yearPalace.name}
+            </p>
+            <p class="hint" style="margin-top:4px">
+              ${f.major ? `大限 ${f.major.fromAge}–${f.major.toAge} 歲 · ${f.major.palace.name}　` : ''}${bStep ? `大運 ${bStep.name}（${bStep.shiShen}）` : ''}
+            </p>
+          </div>
+          <span class="badge badge--dash" style="flex:none">今日 ${t.gz ? shiShen(dm, t.gz.day.index % 10) : ''}</span>
+        </div>
+        <div class="row" style="gap:5px;margin-top:var(--sp-3)">
+          ${f.yearSihua.map(s => html`<span class="badge badge--dash">${s.text}</span>`)}
+        </div>
+      </a>
+    </section>`;
+}
 
 export default {
   title: '首頁', eyebrow: 'XUAN JIAN',
@@ -38,6 +73,8 @@ export default {
           ${all?.astro ? html`<span class="chip">上升 ${all.astro.ascendant.signName}</span>` : ''}
         </div>
       </section>
+
+      ${raw(luckCard(all, settings, t))}
 
       <section class="section">
         ${raw(sectionHead('工具'))}

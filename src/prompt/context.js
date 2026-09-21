@@ -3,6 +3,7 @@ import { fourPillars, toLunar, HOUR_NAMES, lunarMonthName } from '../engines/cal
 import { natalChart, SIGNS, HOUSE_MEANING } from '../engines/astro.js';
 import { ziweiChart } from '../engines/ziwei.js';
 import { analyzeName } from '../engines/naming.js';
+import { baziLuck, ziweiLimits, fortuneOfYear, monthsOfYear, shiShen } from '../engines/fortune.js';
 import { analyzeNumber, lifePath, analyzePlate } from '../engines/numbers.js';
 
 export function computeAll(profile, settings) {
@@ -20,6 +21,10 @@ export function computeAll(profile, settings) {
   try { out.astro = natalChart({ ...base, trueSolarTime: settings.trueSolarTime }); } catch (e) { out.astro = null; }
   try { out.ziwei = ziweiChart({ ...base, gender: profile.gender }); } catch (e) { out.ziwei = null; }
   try { out.life = lifePath(y, m, d); } catch (e) { out.life = null; }
+  try {
+    out.luck = baziLuck({ ...base, gender: profile.gender, lateZiRule: settings.lateZiRule });
+    out.limits = out.ziwei ? ziweiLimits(out.ziwei) : null;
+  } catch (e) { out.luck = null; out.limits = null; }
   if (profile.surname || profile.givenName) {
     out.naming = analyzeName(profile.surname || '', profile.givenName || '',
       { overrides: profile.strokeOverrides || {}, waiRule: settings.wageWaiRule });
@@ -97,6 +102,31 @@ export function buildBlocks(A, settings) {
     B.naming = `姓名筆畫尚未完整（未收錄：${A.naming.unknown.join('、')}），請先補上康熙筆畫。`;
   }
 
+  if (A.luck && A.limits && A.ziwei) {
+    const year = new Date().getFullYear();
+    const f = fortuneOfYear({ chart: A.ziwei, limits: A.limits, year, birthYear: A.base.y });
+    const bStep = A.luck.list.find(x => year >= x.fromYear && year <= x.toYear);
+    const dm = A.bazi ? A.bazi.day.index % 10 : 0;
+    B.luck = [
+      `【當前運限】${year} 年，虛歲 ${f.age}`,
+      `流年干支：${f.yearGZName}（${f.zodiac}年）　流年四化：${f.yearSihua.map(s => s.text).join('、')}`,
+      `流年命宮落在本命「${f.yearPalace.name}」（${f.yearPalace.branchName}宮）：${f.yearPalace.main.join('、') || '空宮'}`,
+      `小限在${f.minorPalace.branchName}宮，本命「${f.minorPalace.name}」`,
+      f.major ? `紫微大限：${f.major.fromAge}–${f.major.toAge} 歲，${f.major.palace.branchName}宮「${f.major.palace.name}」，大限四化 ${f.major.sihua.map(s => s.text).join('、')}` : '',
+      bStep ? `八字大運：${bStep.name}（${bStep.shiShen}），${bStep.fromAge}–${bStep.toAge} 歲（${bStep.fromYear}–${bStep.toYear}）` : '',
+      `大運排法：${A.luck.direction}，${A.luck.startAge.years} 歲${A.luck.startAge.months ? A.luck.startAge.months + ' 個月' : ''}起運（交${A.luck.boundaryTerm}，相距 ${A.luck.daysToTerm.toFixed(1)} 天）`,
+      '',
+      '【八字大運全排】',
+      ...A.luck.list.map(x => `${x.fromAge}–${x.toAge} 歲（${x.fromYear}–${x.toYear}）：${x.name}　${x.shiShen}　納音${x.nayin.name}`),
+      '',
+      '【紫微大限全排】',
+      ...A.limits.major.map(x => `${x.fromAge}–${x.toAge} 歲：${x.palace.branchName}宮「${x.palace.name}」${x.palace.main.join('、') || '空宮'}　四化 ${x.sihua.map(s => s.text).join('、')}`),
+      '',
+      `【${year} 年流月】`,
+      ...monthsOfYear(year).map(mo => `${mo.term}（${mo.start.m}/${mo.start.d}）起　${mo.name}　${shiShen(dm, mo.gz % 10)}`),
+    ].filter(x => x !== undefined).join('\n');
+  }
+
   if (A.life) B.lifepath = `生命靈數：主命數 ${A.life.main}（生日數 ${A.life.birth}，數字總和 ${A.life.total}）— ${A.life.text}`;
 
   const numParts = [];
@@ -116,6 +146,7 @@ export const BLOCK_META = [
   { key: 'ziwei', label: '紫微摘要', hint: '命身宮、五行局、四化' },
   { key: 'ziwei_table', label: '紫微全盤', hint: '十二宮完整星曜表' },
   { key: 'naming', label: '姓名五格', hint: '五格三才與 81 靈動' },
+  { key: 'luck', label: '大運流年', hint: '大限、小限、流年、流月、八字大運' },
   { key: 'lifepath', label: '生命靈數', hint: '主命數與特質' },
   { key: 'numbers', label: '號碼磁場', hint: '手機、車牌磁場分析' },
 ];

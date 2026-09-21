@@ -45,7 +45,7 @@ ${OUT}`,
   {
     id: 'year', name: '流年運勢', category: '綜合', icon: 'clock',
     desc: '以本命盤為基礎，推當前年度的重點與節奏。',
-    blocks: ['basic', 'bazi', 'ziwei'],
+    blocks: ['basic', 'bazi', 'ziwei', 'luck'],
     body: `你是流年推運的命理顧問。今天是 {{today}}（{{today_gz}}）。
 
 {{data}}
@@ -77,7 +77,7 @@ ${OUT}`,
   {
     id: 'career', name: '事業與財務', category: '主題', icon: 'records',
     desc: '職業方向、賺錢模式、合作與風險。',
-    blocks: ['basic', 'bazi', 'ziwei', 'astro'],
+    blocks: ['basic', 'bazi', 'ziwei', 'astro', 'luck'],
     body: `你是生涯與財務取向的命理顧問。
 
 {{data}}
@@ -234,7 +234,7 @@ ${OUT}`,
   {
     id: 'freeform', name: '自由問答', category: '綜合', icon: 'prompt',
     desc: '帶著全部資料，問任何想問的。',
-    blocks: ['basic', 'bazi', 'astro', 'ziwei', 'naming', 'lifepath', 'numbers'],
+    blocks: ['basic', 'bazi', 'astro', 'ziwei', 'luck', 'naming', 'lifepath', 'numbers'],
     body: `以下是我的完整命理資料，請以此為基礎回答我的問題。
 
 {{data}}

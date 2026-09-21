@@ -21,6 +21,23 @@ const JIE = [
   { lon: 255, name: '大雪', branch: 0 }, { lon: 285, name: '小寒', branch: 1 },
 ];
 
+/** 十二「節」的黃經（315, 345, 15, …），即 lon ≡ 15 (mod 30) */
+export function nextJieJD(jdUT) {
+  const lon = sunLongitude(jdUT);
+  const target = norm360((Math.floor((norm360(lon - 15)) / 30) + 1) * 30 + 15);
+  return solarTermJD(target, jdUT + 15);
+}
+export function prevJieJD(jdUT) {
+  const lon = sunLongitude(jdUT);
+  const target = norm360(Math.floor((norm360(lon - 15)) / 30) * 30 + 15);
+  return solarTermJD(target, jdUT - 15);
+}
+/** 該黃經對應的節氣名 */
+export function jieNameOf(lon) {
+  const j = JIE.find(x => Math.abs(((x.lon - lon + 180) % 360 + 360) % 360 - 180) < 1);
+  return j ? j.name : '';
+}
+
 /* 六十甲子納音（每兩組一個） */
 const NAYIN_PAIRS = [
   ['海中金','金'],['爐中火','火'],['大林木','木'],['路旁土','土'],['劍鋒金','金'],

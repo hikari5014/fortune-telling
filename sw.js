@@ -1,17 +1,17 @@
 /* 玄鑑 Service Worker：應用程式外殼快取 + 執行期快取 */
-const VERSION = 'xj-v1';
+const VERSION = 'xj-v2';
 const SHELL = [
   './', './index.html', './manifest.webmanifest',
   './styles/tokens.css', './styles/base.css', './styles/motion.css',
   './styles/components.css', './styles/views.css',
   './src/app.js', './src/router.js', './src/store.js', './src/ui.js', './src/motion.js', './src/icons.js',
   './src/engines/calendar.js', './src/engines/astro.js', './src/engines/ziwei.js',
-  './src/engines/naming.js', './src/engines/numbers.js',
+  './src/engines/naming.js', './src/engines/numbers.js', './src/engines/fortune.js',
   './src/data/strokes.js', './src/data/lucky81.js', './src/data/magnetic.js',
   './src/prompt/context.js', './src/prompt/templates.js', './src/prompt/builder.js',
   './src/views/_shared.js', './src/views/home.js', './src/views/profile.js', './src/views/astro.js',
   './src/views/ziwei.js', './src/views/naming.js', './src/views/numbers.js', './src/views/prompt.js',
-  './src/views/records.js', './src/views/settings.js',
+  './src/views/records.js', './src/views/settings.js', './src/views/fortune.js',
   './assets/icons/icon.svg', './assets/icons/icon-192.png', './assets/icons/icon-512.png',
 ];
 
