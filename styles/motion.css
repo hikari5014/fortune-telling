@@ -32,15 +32,14 @@
 .ripple { position: absolute; border-radius: 50%; pointer-events: none; transform: translate(-50%, -50%) scale(0); background: currentColor; opacity: .16; animation: ripple var(--dur-5) var(--ease-out) forwards; }
 @keyframes ripple { to { transform: translate(-50%,-50%) scale(1); opacity: 0; } }
 
-/* 5. 指標追蹤光暈 */
+/* 5. 指標追蹤光暈（只在有滑鼠的裝置） */
 .track { position: relative; overflow: hidden; }
 .track::after {
   content: ""; position: absolute; inset: -1px; pointer-events: none; opacity: 0;
   background: radial-gradient(220px 220px at var(--mx, 50%) var(--my, 50%), var(--glow), transparent 70%);
   transition: opacity var(--dur-3) var(--ease);
 }
-@media (hover: hover) { .track:hover::after { opacity: 1; } }
-.track.is-touched::after { opacity: 1; }
+@media (hover: hover) and (pointer: fine) { .track:hover::after { opacity: 1; } }
 
 /* 6. 數值計數 / 描邊 */
 .dial__value { animation: dash var(--dur-5) var(--ease-out) both; }

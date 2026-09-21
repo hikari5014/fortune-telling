@@ -1,5 +1,5 @@
 /* 玄鑑 Service Worker：應用程式外殼快取 + 執行期快取 */
-const VERSION = 'xj-v5';
+const VERSION = 'xj-v6';
 const SHELL = [
   './', './index.html', './manifest.webmanifest',
   './styles/tokens.css', './styles/base.css', './styles/motion.css',
