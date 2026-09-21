@@ -144,6 +144,8 @@ export default {
       strokeCombos: $('#x-combos', root).value.trim(),
       other: otherAll ? Object.entries(buildBlocks(otherAll, settings)).map(([k, v]) => v).join('\n\n') : '',
       synastry: otherAll && all ? synastryText(all, otherAll) : '',
+      divination: active.id === 'tarot' ? (store.drafts.tarotResult || '')
+                : active.id === 'iching' ? (store.drafts.ichingResult || '') : '',
     });
 
     const build = () => compose({
