@@ -1,0 +1,27 @@
+{
+  "name": "玄鑑 — 命理工具箱",
+  "short_name": "玄鑑",
+  "description": "離線可用的命理計算工具：星盤、紫微、八字、姓名學、數字磁場，並產生提示詞給外部 LLM 解讀。",
+  "id": "./",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "orientation": "portrait-primary",
+  "background_color": "#0a0a0a",
+  "theme_color": "#0a0a0a",
+  "lang": "zh-Hant",
+  "dir": "ltr",
+  "categories": ["lifestyle", "utilities", "entertainment"],
+  "icons": [
+    { "src": "assets/icons/icon.svg", "sizes": "any", "type": "image/svg+xml" },
+    { "src": "assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "星盤", "url": "./index.html#/astro" },
+    { "name": "紫微", "url": "./index.html#/ziwei" },
+    { "name": "提示詞", "url": "./index.html#/prompt" }
+  ]
+}

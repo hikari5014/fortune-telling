@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="zh-Hant" data-theme="dark" data-motion="full">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5">
+<title>玄鑑 — 命理工具箱</title>
+<meta name="description" content="離線可用的命理 PWA：星盤、紫微、八字、姓名學、數字磁場，並產生提示詞交給外部 LLM 解讀。">
+<meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="color-scheme" content="dark light">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="玄鑑">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="assets/icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Noto+Serif+TC:wght@400;600;900&family=Space+Grotesk:wght@400;500;700&display=swap">
+
+<link rel="stylesheet" href="styles/tokens.css">
+<link rel="stylesheet" href="styles/base.css">
+<link rel="stylesheet" href="styles/motion.css">
+<link rel="stylesheet" href="styles/components.css">
+<link rel="stylesheet" href="styles/views.css">
+<script>
+  // 在第一次繪製前套用主題，避免閃爍
+  try {
+    const s = JSON.parse(localStorage.getItem('xj.settings') || '{}');
+    const t = s.theme || 'system';
+    const dark = t === 'system' ? matchMedia('(prefers-color-scheme: dark)').matches : t === 'dark';
+    document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+    document.documentElement.dataset.motion = s.motion || 'full';
+    document.documentElement.dataset.density = s.density || 'normal';
+    if (s.fontScale) document.documentElement.style.setProperty('--font-scale', s.fontScale);
+  } catch (e) {}
+</script>
+</head>
+<body>
+  <div id="boot" class="boot">
+    <div class="boot__mark" aria-hidden="true">
+      <svg viewBox="0 0 100 100"><circle class="boot__ring" cx="50" cy="50" r="38"/></svg>
+    </div>
+    <p class="boot__text">玄鑑</p>
+  </div>
+
+  <div class="grain" aria-hidden="true"></div>
+  <div class="spot" aria-hidden="true"></div>
+
+  <header class="topbar" id="topbar">
+    <button class="topbar__back iconbtn" id="btn-back" aria-label="返回" hidden></button>
+    <div class="topbar__title">
+      <span class="topbar__eyebrow" id="top-eyebrow">玄鑑</span>
+      <h1 id="top-title">首頁</h1>
+    </div>
+    <button class="iconbtn" id="btn-theme" aria-label="切換黑白主題"></button>
+  </header>
+
+  <nav class="rail" id="rail" aria-label="主要導覽"></nav>
+
+  <main id="view" class="view" tabindex="-1"></main>
+
+  <nav class="tabbar" id="tabbar" aria-label="主要導覽"></nav>
+
+  <div class="sheet-root" id="sheet-root" aria-live="polite"></div>
+  <div class="toast-root" id="toast-root" aria-live="polite" aria-atomic="true"></div>
+
+  <script type="module" src="src/app.js"></script>
+</body>
+</html>
