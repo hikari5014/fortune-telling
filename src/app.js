@@ -128,8 +128,22 @@ async function paint(view, p) {
 }
 
 /* ── 啟動 ──────────────────────────────── */
+/** 以 visualViewport 追蹤虛擬鍵盤高度，寫進 --kb 供抽屜使用 */
+function trackKeyboard() {
+  const vv = window.visualViewport;
+  if (!vv) return;
+  const sync = () => {
+    const kb = Math.max(0, Math.round(innerHeight - vv.height - vv.offsetTop));
+    document.documentElement.style.setProperty('--kb', `${kb}px`);
+  };
+  vv.addEventListener('resize', sync);
+  vv.addEventListener('scroll', sync);
+  sync();
+}
+
 function boot() {
   applyChrome();
+  trackKeyboard();
   buildNav();
   syncThemeBtn();
   initFeedback();

@@ -46,6 +46,10 @@ python3 -m http.server 8080
 - **動態 UI**：View Transitions 過場、IntersectionObserver 逐項進場、滑動切頁、長按選單、
   漣漪與指標光暈、數值計數、下拉關閉抽屜；可在設定切「關閉／輕量／完整」，並尊重
   `prefers-reduced-motion`
+- **iOS 專門處理**：避開 Safari 工具列收合造成的 `dvh` 尺寸抖動（改用 `svh`）、
+  固定層不使用 `mix-blend-mode`、觸控裝置停用 `backdrop-filter` 與指標光暈、
+  手勢方向鎖定 + rAF 節流 + 慣性捲動保護 + 螢幕邊緣讓位、抽屜開啟時鎖住背景捲動、
+  可編輯欄位字級不低於 16px（避免聚焦自動縮放）、以 `visualViewport` 追蹤鍵盤高度
 
 ## 目錄
 

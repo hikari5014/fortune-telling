@@ -44,9 +44,9 @@ export default {
         <section class="setgroup reveal">
           <div class="setgroup__head">動態</div>
           ${raw(row('動畫強度', '關閉後仍保留必要的狀態提示。', seg('set-motion', [['off', '關閉'], ['light', '輕量'], ['full', '完整']], s.motion)))}
-          ${raw(row('左右滑動切頁', '在觸控裝置上滑動切換主分頁。', sw('set-swipe', s.swipeNav)))}
+          ${raw(row('左右滑動切頁', '在觸控裝置上左右滑動切換分頁。方向鎖定後才會跟手，螢幕邊緣讓給系統返回手勢。', sw('set-swipe', s.swipeNav)))}
           ${raw(row('觸覺回饋', '支援震動的裝置才有作用。', sw('set-haptics', s.haptics)))}
-          ${raw(row('指標光暈', '游標／觸點附近的漸層光暈。', sw('set-glow', s.pointerGlow)))}
+          ${raw(row('指標光暈', '游標附近的漸層光暈。觸控裝置一律關閉，避免拖曳時畫面抖動。', sw('set-glow', s.pointerGlow)))}
         </section>
 
         <section class="setgroup reveal">

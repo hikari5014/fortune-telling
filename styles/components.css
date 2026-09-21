@@ -6,10 +6,13 @@
   display: flex; align-items: center; gap: var(--sp-3);
   padding: calc(env(safe-area-inset-top) + var(--sp-3)) var(--sp-4) var(--sp-3);
   max-width: var(--shell-max); margin-inline: auto;
-  background: color-mix(in srgb, var(--bg) 82%, transparent);
-  backdrop-filter: blur(14px) saturate(1.2);
+  background: color-mix(in srgb, var(--bg) 94%, transparent);
   border-bottom: 1px solid transparent;
   transition: border-color var(--dur-2) var(--ease);
+  transform: translateZ(0);          /* 固定成獨立合成層，捲動時不重排 */
+}
+@media (hover: hover) and (pointer: fine) {
+  .topbar { background: color-mix(in srgb, var(--bg) 82%, transparent); backdrop-filter: blur(14px) saturate(1.2); }
 }
 .topbar.is-stuck { border-bottom-color: var(--line); }
 .topbar__title { flex: 1; min-width: 0; }
@@ -33,10 +36,14 @@
   transform: translateX(-50%);
   display: flex; align-items: center; gap: 2px;
   padding: 5px; border: 1px solid var(--line); border-radius: var(--r-full);
-  background: color-mix(in srgb, var(--bg) 78%, transparent);
-  backdrop-filter: blur(18px) saturate(1.3);
+  background: color-mix(in srgb, var(--bg) 96%, transparent);
   box-shadow: var(--shadow);
   max-width: calc(100vw - 20px); overflow-x: auto; scrollbar-width: none;
+  overscroll-behavior-x: contain;
+  transform: translateX(-50%) translateZ(0);
+}
+@media (hover: hover) and (pointer: fine) {
+  .tabbar { background: color-mix(in srgb, var(--bg) 78%, transparent); backdrop-filter: blur(18px) saturate(1.3); }
 }
 .tabbar::-webkit-scrollbar { display: none; }
 .tabbar__ind {
@@ -136,7 +143,7 @@
   outline: none; border-color: var(--ink); box-shadow: 0 0 0 3px var(--glow);
 }
 .textarea { min-height: 120px; resize: vertical; line-height: 1.7; font-family: var(--font-body); }
-.textarea--code { font-family: var(--font-num); font-size: var(--step--1); letter-spacing: 0; }
+.textarea--code { font-family: var(--font-num); font-size: max(16px, var(--step--1)); letter-spacing: 0; }
 .select { appearance: none; padding-right: var(--sp-6);
   background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
   background-position: right 20px center, right 14px center; background-size: 6px 6px; background-repeat: no-repeat; }
@@ -185,20 +192,25 @@
 .badge--dash { border-style: dashed; color: var(--ink-3); }
 
 /* 底部抽屜 */
-.sheet-scrim { position: fixed; inset: 0; z-index: 40; background: color-mix(in srgb, var(--bg) 62%, transparent); backdrop-filter: blur(6px); animation: scrim-in var(--dur-3) var(--ease) both; }
+.sheet-scrim { position: fixed; inset: 0; z-index: 40; background: color-mix(in srgb, var(--bg) 82%, transparent); animation: scrim-in var(--dur-3) var(--ease) both; }
+@media (hover: hover) and (pointer: fine) {
+  .sheet-scrim { background: color-mix(in srgb, var(--bg) 62%, transparent); backdrop-filter: blur(6px); }
+}
 .sheet {
   position: fixed; left: 50%; bottom: 0; z-index: 41; width: min(620px, 100%);
   transform: translateX(-50%);
-  max-height: 88dvh; display: flex; flex-direction: column;
+  max-height: calc(88svh - var(--kb, 0px)); display: flex; flex-direction: column;
   background: var(--bg); border: 1px solid var(--line); border-bottom: 0;
   border-radius: var(--r-4) var(--r-4) 0 0; box-shadow: var(--shadow);
   animation: sheet-in var(--dur-4) var(--ease-out) both;
-  padding-bottom: env(safe-area-inset-bottom);
+  padding-bottom: calc(env(safe-area-inset-bottom) + var(--kb, 0px));
 }
-.sheet__grip { width: 42px; height: 4px; border-radius: 99px; background: var(--line-2); margin: 10px auto 4px; flex: none; }
+.sheet__drag { flex: none; touch-action: none; cursor: grab; }
+.sheet__drag:active { cursor: grabbing; }
+.sheet__grip { width: 42px; height: 4px; border-radius: 99px; background: var(--line-2); margin: 10px auto 4px; }
 .sheet__head { display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-3) var(--sp-5); border-bottom: 1px solid var(--line); }
 .sheet__head h3 { flex: 1; }
-.sheet__body { padding: var(--sp-5); overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.sheet__body { padding: var(--sp-5); overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
 
 /* 吐司 */
 .toast-root { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 76px); z-index: 60; transform: translateX(-50%); display: grid; gap: var(--sp-2); pointer-events: none; width: max-content; max-width: calc(100vw - 32px); }

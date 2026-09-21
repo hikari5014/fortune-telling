@@ -100,7 +100,7 @@
 /* 提示詞產生器 */
 .pb { display: grid; gap: var(--sp-4); }
 @media (min-width: 1000px) { .pb { grid-template-columns: 340px 1fr; align-items: start; } .pb__preview { position: sticky; top: 96px; } }
-@media (max-width: 999px) { #tpl-list { max-height: 44dvh; overflow-y: auto; padding-right: 4px; } }
+@media (max-width: 999px) { #tpl-list { max-height: 44svh; overflow-y: auto; padding-right: 4px; } }
 .tmpl { display: grid; gap: 3px; padding: var(--sp-3) var(--sp-4); border: 1px solid var(--line); border-radius: var(--r-2); background: var(--surface); text-align: left; width: 100%; }
 .tmpl[aria-pressed="true"] { border-color: var(--ink); box-shadow: inset 3px 0 0 var(--ink); }
 .tmpl b { font-size: var(--step-0); font-family: var(--font-display); letter-spacing: .06em; }
@@ -111,7 +111,7 @@
 .preview {
   white-space: pre-wrap; word-break: break-word; font-family: var(--font-num); font-size: var(--step--1);
   line-height: 1.75; letter-spacing: 0; padding: var(--sp-4); border: 1px solid var(--line);
-  border-radius: var(--r-2); background: var(--bg-2); max-height: 54dvh; overflow: auto;
+  border-radius: var(--r-2); background: var(--bg-2); max-height: 54svh; overflow: auto; overscroll-behavior: contain;
 }
 .counter { font-family: var(--font-num); font-size: var(--step--2); color: var(--ink-3); }
 
@@ -145,7 +145,8 @@
 
 /* 運勢：年份尺 */
 .yearstrip {
-  display: flex; gap: 6px; overflow-x: auto; scroll-snap-type: x mandatory;
+  display: flex; gap: 6px; overflow-x: auto; scroll-snap-type: x proximity;
+  overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch;
   padding: 4px 50%; scrollbar-width: none; -webkit-overflow-scrolling: touch;
   mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
 }
@@ -163,7 +164,10 @@
 .yearstrip__y[aria-current="true"] small { color: color-mix(in srgb, var(--invert-ink) 65%, transparent); }
 
 /* 運限軌道 */
-.track-row { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; scrollbar-width: none; }
+.track-row {
+  display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; scrollbar-width: none;
+  overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch;
+}
 .track-row::-webkit-scrollbar { display: none; }
 .luckstep {
   flex: none; display: grid; gap: 2px; min-width: 116px; padding: var(--sp-3);
@@ -246,3 +250,7 @@
 
 /* 起卦結果不要被吸頂列遮住 */
 #result, #table, #detail { scroll-margin-top: 104px; }
+
+
+/* iOS：Safari 工具列收合會改變 dvh，改用穩定的 svh；水平捲動容器不串連 */
+.yearstrip, .track-row, .tabbar, .deck { scroll-behavior: auto; }

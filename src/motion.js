@@ -30,6 +30,8 @@ export function observeReveal(root = document) {
 }
 
 /* 漣漪 + 指標光暈（事件委派，全站生效） */
+const FINE_POINTER = matchMedia('(hover: hover) and (pointer: fine)').matches;
+
 export function initFeedback() {
   document.addEventListener('pointerdown', (e) => {
     const t = e.target.closest('.btn, .iconbtn, .tab, .tile, .chip, .tmpl, .profile, .rec, .zw__cell');
@@ -44,8 +46,10 @@ export function initFeedback() {
     setTimeout(() => span.remove(), 820);
   }, { passive: true });
 
+  // 指標光暈只在真正有滑鼠時啟用：觸控裝置上每次拖曳都重繪固定層會造成畫面抖動
+  if (!FINE_POINTER) return;
   document.addEventListener('pointermove', (e) => {
-    if (!store.settings.pointerGlow || !motionOn()) return;
+    if (e.pointerType !== 'mouse' || !store.settings.pointerGlow || !motionOn()) return;
     const root = document.documentElement;
     root.style.setProperty('--px', `${(e.clientX / innerWidth) * 100}%`);
     root.style.setProperty('--py', `${(e.clientY / innerHeight) * 100}%`);
@@ -56,47 +60,99 @@ export function initFeedback() {
       card.style.setProperty('--my', `${e.clientY - r.top}px`);
     }
   }, { passive: true });
-
-  // 觸控時也要有光暈
-  document.addEventListener('touchstart', (e) => {
-    const card = e.target.closest('.track');
-    if (!card || !motionOn()) return;
-    const t = e.touches[0], r = card.getBoundingClientRect();
-    card.style.setProperty('--mx', `${t.clientX - r.left}px`);
-    card.style.setProperty('--my', `${t.clientY - r.top}px`);
-    card.classList.add('is-touched');
-    setTimeout(() => card.classList.remove('is-touched'), 700);
-  }, { passive: true });
 }
 
-/* 左右滑動切頁 */
-export function initSwipe(onSwipe) {
-  let x0 = 0, y0 = 0, t0 = 0, active = false;
-  const view = document.getElementById('view');
-  addEventListener('touchstart', (e) => {
-    if (!store.settings.swipeNav || e.touches.length !== 1) return;
-    if (e.target.closest('.sheet, .textarea, .preview, [data-noswipe], input[type="range"]')) return;
-    x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; t0 = Date.now(); active = true;
-  }, { passive: true });
-  addEventListener('touchmove', (e) => {
-    if (!active) return;
-    const dx = e.touches[0].clientX - x0, dy = e.touches[0].clientY - y0;
-    if (Math.abs(dy) > Math.abs(dx)) { active = false; view.style.transform = ''; return; }
-    if (Math.abs(dx) > 14 && motionOn()) {
-      view.dataset.dragging = '1';
-      view.style.transform = `translateX(${dx * 0.22}px)`;
-      view.style.opacity = String(1 - Math.min(Math.abs(dx) / 700, 0.22));
+/* ── 左右滑動切頁 ──────────────────────────────────────────
+   iOS 上會晃動的成因與對策：
+   1. 方向沒有鎖定 → 每次 touchmove 重新判斷，手指稍微偏斜就在水平／垂直之間跳動
+      → 超過門檻後鎖定軸向，整個手勢不再改變
+   2. 慣性捲動途中起手 → 瀏覽器還在捲，又疊加 transform
+      → 最近一次捲動 250ms 內不啟動
+   3. 每個 touchmove 直接寫 style → 一幀可能寫多次
+      → 用 requestAnimationFrame 節流，且只寫 translate3d（合成層，不觸發重排）
+   4. 螢幕邊緣起手會和 Safari 的返回手勢打架 → 左右 28px 不啟動
+   5. 手勢起點在水平捲動容器內（年份尺、大運軌道、牌陣）→ 不攔截           */
+let lastScrollAt = 0;
+addEventListener('scroll', () => { lastScrollAt = Date.now(); }, { passive: true, capture: true });
+
+function inHorizontalScroller(el) {
+  for (let n = el; n && n !== document.body; n = n.parentElement) {
+    if (n.hasAttribute?.('data-noswipe')) return true;
+    if (n.scrollWidth > n.clientWidth + 4) {
+      const ox = getComputedStyle(n).overflowX;
+      if (ox === 'auto' || ox === 'scroll') return true;
     }
-  }, { passive: true });
-  addEventListener('touchend', (e) => {
-    if (!active) return;
-    active = false;
-    const dx = e.changedTouches[0].clientX - x0;
-    const dt = Date.now() - t0;
+  }
+  return false;
+}
+
+export function initSwipe(onSwipe) {
+  const view = document.getElementById('view');
+  const LATCH = 14;          // 判定軸向所需的位移
+  const MAX_PULL = 26;       // 拖曳預覽最多位移這麼多，避免大面積重繪
+  let x0 = 0, y0 = 0, t0 = 0;
+  let axis = null;           // null 尚未鎖定 / 'x' / 'y'
+  let tracking = false, raf = 0, pending = 0;
+
+  const paint = () => {
+    raf = 0;
+    view.style.transform = pending ? `translate3d(${pending}px,0,0)` : '';
+  };
+  const reset = (animate) => {
+    tracking = false; axis = null; pending = 0;
+    if (raf) { cancelAnimationFrame(raf); raf = 0; }
+    view.style.willChange = '';
     view.removeAttribute('data-dragging');
-    view.style.transform = ''; view.style.opacity = '';
-    if (Math.abs(dx) > 68 && dt < 700) onSwipe(dx < 0 ? 1 : -1);
-  });
+    view.style.transition = animate ? 'transform var(--dur-3) var(--ease-out)' : '';
+    view.style.transform = '';
+    if (animate) setTimeout(() => { view.style.transition = ''; }, 320);
+  };
+
+  addEventListener('touchstart', (e) => {
+    if (!store.settings.swipeNav || e.touches.length !== 1) { tracking = false; return; }
+    const t = e.touches[0];
+    if (t.clientX < 28 || t.clientX > innerWidth - 28) { tracking = false; return; }  // 讓給系統返回手勢
+    if (Date.now() - lastScrollAt < 250) { tracking = false; return; }                // 慣性捲動中不接手
+    if (e.target.closest('.sheet, input, textarea, select')) { tracking = false; return; }
+    if (inHorizontalScroller(e.target)) { tracking = false; return; }
+    x0 = t.clientX; y0 = t.clientY; t0 = Date.now();
+    axis = null; tracking = true; pending = 0;
+    view.style.transition = '';
+  }, { passive: true });
+
+  addEventListener('touchmove', (e) => {
+    if (!tracking) return;
+    const t = e.touches[0];
+    const dx = t.clientX - x0, dy = t.clientY - y0;
+
+    if (!axis) {
+      if (Math.abs(dx) < LATCH && Math.abs(dy) < LATCH) return;     // 還看不出方向，先不動
+      axis = Math.abs(dx) > Math.abs(dy) * 1.4 ? 'x' : 'y';          // 一旦鎖定就不再改變
+      if (axis === 'x' && motionOn()) {
+        view.dataset.dragging = '1';
+        view.style.willChange = 'transform';
+      }
+      return;
+    }
+    if (axis !== 'x' || !motionOn()) return;
+
+    // 阻尼：越拖越難拖，且上限 MAX_PULL，避免整頁大面積重繪
+    const pull = dx - Math.sign(dx) * LATCH;
+    pending = Math.sign(pull) * MAX_PULL * (1 - Math.exp(-Math.abs(pull) / 90));
+    if (!raf) raf = requestAnimationFrame(paint);
+  }, { passive: true });
+
+  const finish = (e) => {
+    if (!tracking) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - x0;
+    const dt = Date.now() - t0;
+    const fired = axis === 'x' && Math.abs(dx) > 62 && dt < 700;
+    reset(axis === 'x');
+    if (fired) onSwipe(dx < 0 ? 1 : -1);
+  };
+  addEventListener('touchend', finish, { passive: true });
+  addEventListener('touchcancel', () => reset(true), { passive: true });
 }
 
 /* 數值計數動畫 */

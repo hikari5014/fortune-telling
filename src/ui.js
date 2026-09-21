@@ -47,14 +47,43 @@ export function toast(msg, ms = 2000) {
   }, ms);
 }
 
+/* ── 背景捲動鎖（iOS 需要 position: fixed 才鎖得住）─────── */
+let locked = false, lockedY = 0, lockedHash = '';
+function lockScroll() {
+  if (locked) return;                      // 抽屜互相替換時不重複上鎖
+  locked = true;
+  lockedY = window.scrollY;
+  lockedHash = location.hash;
+  const b = document.body;
+  b.style.position = 'fixed';
+  b.style.top = `-${lockedY}px`;
+  b.style.left = '0';
+  b.style.right = '0';
+  b.style.width = '100%';
+}
+function unlockScroll() {
+  if (!locked) return;
+  locked = false;
+  const b = document.body;
+  b.style.position = '';
+  b.style.top = '';
+  b.style.left = '';
+  b.style.right = '';
+  b.style.width = '';
+  // 若期間換了頁，回到頂端而不是舊頁的捲動位置
+  window.scrollTo({ top: location.hash === lockedHash ? lockedY : 0, behavior: 'instant' });
+}
+
 /* ── 底部抽屜 ─────────────────────────── */
 export function sheet({ title, body, actions = '', onMount } = {}) {
   const root = $('#sheet-root');
   root.innerHTML = html`
     <div class="sheet-scrim" data-close></div>
     <section class="sheet" role="dialog" aria-modal="true" aria-label="${title || '對話框'}">
-      <div class="sheet__grip"></div>
-      <header class="sheet__head">
+      <div class="sheet__drag">
+        <div class="sheet__grip"></div>
+      </div>
+      <header class="sheet__head sheet__drag">
         <h3>${title || ''}</h3>
         <button class="iconbtn" data-close aria-label="關閉">${raw(icon('close'))}</button>
       </header>
@@ -63,9 +92,14 @@ export function sheet({ title, body, actions = '', onMount } = {}) {
     </section>`;
 
   const panel = $('.sheet', root);
+  lockScroll();
+  let closed = false;
   const close = () => {
+    if (closed) return;
+    closed = true;
+    unlockScroll();
     panel.style.transition = 'transform var(--dur-3) var(--ease-in), opacity var(--dur-3)';
-    panel.style.transform = 'translateX(-50%) translateY(100%)';
+    panel.style.transform = 'translateX(-50%) translate3d(0,100%,0)';
     $('.sheet-scrim', root).style.opacity = '0';
     setTimeout(() => { root.innerHTML = ''; }, 260);
   };
@@ -74,28 +108,45 @@ export function sheet({ title, body, actions = '', onMount } = {}) {
     if (e.key === 'Escape') { close(); document.removeEventListener('keydown', onEsc); }
   });
 
-  // 下拉關閉
-  let y0 = null;
-  const grip = $('.sheet__grip', root);
-  const head = $('.sheet__head', root);
-  const start = (e) => { y0 = e.touches ? e.touches[0].clientY : e.clientY; panel.style.transition = 'none'; };
+  // 下拉關閉：非被動監聽 + preventDefault，避免同時捲動底層造成晃動
+  let y0 = null, dy = 0, raf = 0;
+  const handles = $$('.sheet__drag', root);
+  const paint = () => { raf = 0; panel.style.transform = `translateX(-50%) translate3d(0,${dy}px,0)`; };
+  const start = (e) => {
+    if (e.touches && e.touches.length !== 1) return;
+    y0 = e.touches ? e.touches[0].clientY : e.clientY;
+    dy = 0;
+    panel.style.transition = 'none';
+    panel.style.willChange = 'transform';
+  };
   const move = (e) => {
     if (y0 == null) return;
     const y = e.touches ? e.touches[0].clientY : e.clientY;
-    const dy = Math.max(0, y - y0);
-    panel.style.transform = `translateX(-50%) translateY(${dy}px)`;
+    dy = Math.max(0, y - y0);
+    if (dy > 0 && e.cancelable) e.preventDefault();   // 底層不要跟著捲
+    if (!raf) raf = requestAnimationFrame(paint);
   };
-  const end = (e) => {
+  const end = () => {
     if (y0 == null) return;
-    const y = (e.changedTouches ? e.changedTouches[0].clientY : e.clientY);
-    const dy = y - y0; y0 = null;
+    const travelled = dy;
+    y0 = null;
+    if (raf) { cancelAnimationFrame(raf); raf = 0; }
+    panel.style.willChange = '';
     panel.style.transition = 'transform var(--dur-3) var(--ease-out)';
-    if (dy > 110) close(); else panel.style.transform = 'translateX(-50%)';
+    if (travelled > 110) close(); else panel.style.transform = 'translateX(-50%)';
   };
-  [grip, head].forEach(el => {
+  handles.forEach(el => {
     el.addEventListener('touchstart', start, { passive: true });
-    el.addEventListener('touchmove', move, { passive: true });
-    el.addEventListener('touchend', end);
+    el.addEventListener('touchmove', move, { passive: false });
+    el.addEventListener('touchend', end, { passive: true });
+    el.addEventListener('touchcancel', end, { passive: true });
+  });
+
+  // iOS 鍵盤彈出時把聚焦的欄位帶進可視範圍
+  $$('.sheet input, .sheet textarea, .sheet select', root).forEach(el => {
+    el.addEventListener('focus', () => {
+      setTimeout(() => el.scrollIntoView({ block: 'center', behavior: 'smooth' }), 260);
+    });
   });
 
   onMount?.(root, close);
