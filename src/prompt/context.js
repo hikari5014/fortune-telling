@@ -27,7 +27,7 @@ export function computeAll(profile, settings) {
   } catch (e) { out.luck = null; out.limits = null; }
   if (profile.surname || profile.givenName) {
     out.naming = analyzeName(profile.surname || '', profile.givenName || '',
-      { overrides: profile.strokeOverrides || {}, waiRule: settings.wageWaiRule });
+      { overrides: profile.strokeOverrides || {}, waiRule: settings.wageWaiRule, numeralRule: settings.numeralRule !== false });
   }
   if (profile.phone) out.phone = analyzeNumber(profile.phone);
   if (profile.plate) out.plate = analyzePlate(profile.plate);

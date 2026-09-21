@@ -1,5 +1,5 @@
 /* 玄鑑 Service Worker：應用程式外殼快取 + 執行期快取 */
-const VERSION = 'xj-v4';
+const VERSION = 'xj-v5';
 const SHELL = [
   './', './index.html', './manifest.webmanifest',
   './styles/tokens.css', './styles/base.css', './styles/motion.css',
@@ -7,7 +7,7 @@ const SHELL = [
   './src/app.js', './src/router.js', './src/store.js', './src/ui.js', './src/motion.js', './src/icons.js',
   './src/engines/calendar.js', './src/engines/astro.js', './src/engines/ziwei.js',
   './src/engines/naming.js', './src/engines/numbers.js', './src/engines/fortune.js', './src/engines/synastry.js', './src/engines/iching.js', './src/engines/tarot.js',
-  './src/data/strokes.js', './src/data/lucky81.js', './src/data/magnetic.js', './src/data/hexagrams.js', './src/data/tarot.js',
+  './src/data/strokes.js', './src/data/kangxi.js', './src/data/lucky81.js', './src/data/magnetic.js', './src/data/hexagrams.js', './src/data/tarot.js',
   './src/prompt/context.js', './src/prompt/templates.js', './src/prompt/builder.js',
   './src/views/_shared.js', './src/views/home.js', './src/views/profile.js', './src/views/astro.js',
   './src/views/ziwei.js', './src/views/naming.js', './src/views/numbers.js', './src/views/prompt.js',

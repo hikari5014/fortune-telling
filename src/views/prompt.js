@@ -28,7 +28,7 @@ export default {
       <div class="pb">
         <div class="stack" data-noswipe>
           <section>
-            ${raw(sectionHead('模板', `<button class="chip press" id="new-tpl">${icon('plus')} 自訂</button>`))}
+            ${raw(sectionHead('模板', `<button class="chip press" id="new-tpl">${icon('plus')} 自訂</button><button class="chip press" id="tpl-io">${icon('share')} 匯出入</button>`))}
             <div class="row" style="gap:5px;margin-bottom:var(--sp-3)" id="cat-row">
               <button class="chip press" data-cat="" aria-pressed="true">全部</button>
               ${raw([...new Set(tpls.map(t => t.category))].map(c => html`<button class="chip press" data-cat="${c}" aria-pressed="false">${c}</button>`).join(''))}
@@ -237,6 +237,70 @@ export default {
       download(`prompt-${active.id}.txt`, text, 'text/plain');
     });
     $('#new-tpl', root).addEventListener('click', () => saveAs(''));
+    $('#tpl-io', root).addEventListener('click', openIO);
+
+    function openIO() {
+      const mine = store.templates;
+      sheet({
+        title: '模板匯出／匯入',
+        body: html`<div class="stack" data-noswipe>
+          <p class="hint">自訂模板共 ${mine.length} 個。分享碼是一段純文字，可以貼到訊息裡傳給別人。</p>
+          <div class="row" style="gap:var(--sp-2)">
+            <button class="btn btn--ghost press" data-export ${mine.length ? '' : 'disabled'}>${raw(icon('down'))} 下載 JSON</button>
+            <button class="btn btn--ghost press" data-code ${mine.length ? '' : 'disabled'}>${raw(icon('copy'))} 複製分享碼</button>
+            <button class="btn btn--ghost press" data-file>${raw(icon('up'))} 從檔案匯入</button>
+          </div>
+          <div class="field"><label for="io-code">貼上分享碼</label>
+            <textarea class="textarea textarea--code" id="io-code" style="min-height:110px" placeholder="XJTPL1:..."></textarea></div>
+          <button class="btn btn--primary btn--block press" data-import>${raw(icon('check'))} 匯入分享碼</button>
+          <p class="hint">匯入只會新增模板，不會覆蓋你現有的內容。</p>
+        </div>`,
+        onMount(sr, close) {
+          const payload = () => JSON.stringify({ app: 'xuanjian', kind: 'templates', v: 1, items: store.templates });
+          $('[data-export]', sr)?.addEventListener('click', () => {
+            download(`玄鑑模板-${new Date().toISOString().slice(0, 10)}.json`, payload());
+            toast('已下載');
+          });
+          $('[data-code]', sr)?.addEventListener('click', () => copyText('XJTPL1:' + encodeCode(payload()), '分享碼已複製'));
+          $('[data-file]', sr).addEventListener('click', () => {
+            const input = document.createElement('input');
+            input.type = 'file'; input.accept = 'application/json,.json';
+            input.onchange = async () => {
+              const f = input.files?.[0]; if (!f) return;
+              try { importTemplates(await f.text()); close(); } catch (e) { toast('匯入失敗：' + e.message); }
+            };
+            input.click();
+          });
+          $('[data-import]', sr).addEventListener('click', () => {
+            const t = $('#io-code', sr).value.trim();
+            if (!t) { toast('先貼上分享碼'); return; }
+            try {
+              importTemplates(t.startsWith('XJTPL1:') ? decodeCode(t.slice(7)) : t);
+              close();
+            } catch (e) { toast('分享碼無法解析'); }
+          });
+        },
+      });
+    }
+
+    function importTemplates(text) {
+      const data = JSON.parse(text);
+      const items = Array.isArray(data) ? data : data.items;
+      if (!Array.isArray(items) || !items.length) throw new Error('沒有可匯入的模板');
+      let n = 0;
+      for (const t of items) {
+        if (!t || typeof t.body !== 'string') continue;
+        store.saveTemplate({
+          ...t, id: uid('tpl'), custom: true,
+          category: t.category || '自訂',
+          name: (t.name || '匯入的模板'),
+          blocks: Array.isArray(t.blocks) ? t.blocks : [],
+        });
+        n++;
+      }
+      toast(`已匯入 ${n} 個模板`);
+      setTimeout(() => location.reload(), 600);
+    }
     $('#save-tpl', root).addEventListener('click', () => saveAs(bodyOverride ?? active.body));
 
     function saveAs(body) {
@@ -338,4 +402,19 @@ function synastryText(A, B) {
     if (r.tips.length) lines.push('', '【自動判讀】', ...r.tips.map(t => '・' + t));
     return lines.join('\n');
   } catch { return ''; }
+}
+
+
+/* 分享碼：UTF-8 → base64（URL 安全） */
+function encodeCode(str) {
+  const bytes = new TextEncoder().encode(str);
+  let bin = '';
+  bytes.forEach(b => { bin += String.fromCharCode(b); });
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+function decodeCode(code) {
+  const b64 = code.replace(/-/g, '+').replace(/_/g, '/');
+  const bin = atob(b64 + '='.repeat((4 - b64.length % 4) % 4));
+  const bytes = Uint8Array.from(bin, c => c.charCodeAt(0));
+  return new TextDecoder().decode(bytes);
 }

@@ -21,12 +21,11 @@ export function rel(a, b) {
 const REL_SCORE = { 生: 2, 被生: 2, 比和: 1, 剋: -2, 被剋: -2, '—': 0 };
 
 /** 拆字並取筆畫，overrides 可覆寫個別字 */
-export function analyzeChars(text, overrides = {}) {
-  return [...String(text || '').trim()].filter(c => /\S/.test(c)).map(ch => ({
-    ch,
-    strokes: overrides[ch] ?? strokeOf(ch),
-    known: (overrides[ch] ?? strokeOf(ch)) != null,
-  }));
+export function analyzeChars(text, overrides = {}, opts = {}) {
+  return [...String(text || '').trim()].filter(c => /\S/.test(c)).map(ch => {
+    const n = overrides[ch] ?? strokeOf(ch, opts);
+    return { ch, strokes: n, known: n != null };
+  });
 }
 
 /**
@@ -77,9 +76,9 @@ export function sancai(g) {
 }
 
 /** 完整分析 */
-export function analyzeName(surname, given, { overrides = {}, waiRule = 'classic' } = {}) {
-  const S = analyzeChars(surname, overrides);
-  const G = analyzeChars(given, overrides);
+export function analyzeName(surname, given, { overrides = {}, waiRule = 'classic', numeralRule = true } = {}) {
+  const S = analyzeChars(surname, overrides, { numeralRule });
+  const G = analyzeChars(given, overrides, { numeralRule });
   const unknown = [...S, ...G].filter(c => !c.known).map(c => c.ch);
   if (unknown.length) return { ok: false, unknown, chars: [...S, ...G] };
   const g = wuge(S.map(c => c.strokes), G.map(c => c.strokes), waiRule);
