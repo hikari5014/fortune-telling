@@ -9,6 +9,7 @@ export const VARS = [
   { v: 'ziwei', d: '紫微摘要' }, { v: 'ziwei_table', d: '紫微全盤表' },
   { v: 'naming', d: '姓名五格' }, { v: 'lifepath', d: '生命靈數' }, { v: 'numbers', d: '號碼磁場' },
   { v: 'data', d: '所有勾選的資料區塊' },
+  { v: 'other', d: '第二個人的資料' }, { v: 'synastry', d: '合盤分析結果' },
   { v: 'question', d: '我的問題' }, { v: 'lang', d: '輸出語言' }, { v: 'tone', d: '語氣' },
   { v: 'depth', d: '深度' }, { v: 'format', d: '輸出格式' }, { v: 'length', d: '長度' },
 ];
@@ -221,6 +222,9 @@ ${OUT}`,
 
 【B 方資料】
 {{other}}
+
+【本機算出的合盤結果】
+{{synastry}}
 
 請分析：
 1. 兩人的節奏差異（誰快誰慢、誰主動誰被動）。

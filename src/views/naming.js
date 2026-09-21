@@ -40,7 +40,7 @@ export default {
 
     return html`
       <section class="card reveal track">
-        <div class="row row--between" style="align-items:flex-start">
+        <div class="row row--between row--nowrap" style="align-items:flex-start">
           <div>
             <p class="card__label">綜合評分</p>
             <h2 style="font-size:var(--step-3);margin-top:6px">${n.fullName}</h2>

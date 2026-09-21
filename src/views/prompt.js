@@ -4,6 +4,7 @@ import { store, uid } from '../store.js';
 import { BUILTIN, VARS, CATEGORIES } from '../prompt/templates.js';
 import { compose, estTokens, BLOCK_META } from '../prompt/builder.js';
 import { buildBlocks, computeAll } from '../prompt/context.js';
+import { synastry } from '../engines/synastry.js';
 import { observeReveal } from '../motion.js';
 import { DISCLAIMER, sectionHead } from './_shared.js';
 
@@ -142,6 +143,7 @@ export default {
       chars: $('#x-chars', root).value.trim(),
       strokeCombos: $('#x-combos', root).value.trim(),
       other: otherAll ? Object.entries(buildBlocks(otherAll, settings)).map(([k, v]) => v).join('\n\n') : '',
+      synastry: otherAll && all ? synastryText(all, otherAll) : '',
     });
 
     const build = () => compose({
@@ -156,6 +158,12 @@ export default {
       // 只顯示與這個模板有關的補充欄位
       $$('[data-for]', root).forEach(el => { el.hidden = el.dataset.for !== active.id; });
     };
+
+    // 由網址帶入第二個人
+    if (query.other) {
+      const sel = $('#x-other', root);
+      if (sel) { sel.value = query.other; const p2 = store.profiles.find(x => x.id === query.other); otherAll = p2 ? computeAll(p2, settings) : null; }
+    }
 
     // 模板選擇
     const pick = (id) => {
@@ -302,4 +310,30 @@ function otherSelect(current) {
     <option value="">（不附帶）</option>
     ${raw(list.map(p => html`<option value="${p.id}">${(p.surname || '') + (p.givenName || '') || p.label}</option>`).join(''))}
   </select>`;
+}
+
+
+function synastryText(A, B) {
+  try {
+    const r = synastry(A, B);
+    const lines = [`綜合契合度：${r.score}/100（${r.level}）`];
+    if (r.astro) {
+      lines.push('', '【星盤相位】', ...r.astro.items.map(i => `${i.label}，差 ${i.orb.toFixed(1)}°（${i.text}）`));
+      if (!r.astro.items.length) lines.push('日月升中天之間無主要相位。');
+    }
+    if (r.bazi) {
+      lines.push('', `【八字互動】日主 ${r.bazi.dayMasters}`,
+        ...r.bazi.items.map(i => `${i.kind}：${i.pair} — ${i.text}`));
+      if (!r.bazi.items.length) lines.push('四柱之間無明顯刑沖合害。');
+    }
+    if (r.ziwei) {
+      lines.push('', '【紫微對照】',
+        `命宮關係：${r.ziwei.lifeRel.kind} — ${r.ziwei.lifeRel.text}`,
+        `B 的命宮落在 A 盤的「${r.ziwei.bInA.name}」宮：${r.ziwei.bInA.main.join('、') || '空宮'}`,
+        `A 的命宮落在 B 盤的「${r.ziwei.aInB.name}」宮：${r.ziwei.aInB.main.join('、') || '空宮'}`,
+        `五行局：${r.ziwei.juPair}`);
+    }
+    if (r.tips.length) lines.push('', '【自動判讀】', ...r.tips.map(t => '・' + t));
+    return lines.join('\n');
+  } catch { return ''; }
 }

@@ -58,6 +58,8 @@
 /* 側邊 Rail（桌機） */
 .rail { display: none; }
 @media (min-width: 900px) {
+  .rail { overflow-y: auto; scrollbar-width: none; }
+  .rail::-webkit-scrollbar { display: none; }
   .rail {
     position: fixed; left: 0; top: 0; bottom: 0; z-index: 30;
     display: flex; flex-direction: column; align-items: center; gap: var(--sp-2);
@@ -91,6 +93,7 @@
 .stack { display: grid; gap: var(--sp-4); }
 .row { display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap; }
 .row--between { justify-content: space-between; }
+.row--nowrap { flex-wrap: nowrap; }
 .spacer { flex: 1; }
 
 /* 區段標題 */

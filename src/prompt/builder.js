@@ -50,6 +50,7 @@ export function compose({ template, all, settings, selected = [], options = {}, 
     goal: extra.goal || '整體運勢',
     chars: extra.chars || '',
     other: extra.other || '（未填寫第二個人的資料）',
+    synastry: extra.synastry || '（未附帶本機合盤分析）',
     stroke_combos: extra.strokeCombos || '（未指定）',
   };
 

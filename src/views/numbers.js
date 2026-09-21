@@ -10,7 +10,7 @@ const kindCls = (k) => k === '吉' ? 'luck--good' : k === '凶' ? 'luck--bad' : 
 function resultBlock(r) {
   return html`
     <div class="card track" style="margin-top:var(--sp-3)">
-      <div class="row row--between" style="align-items:flex-start">
+      <div class="row row--between row--nowrap" style="align-items:flex-start">
         <div style="min-width:0">
           <p class="card__label">分析結果</p>
           <p class="num" style="font-size:var(--step-2);margin-top:4px;word-break:break-all">${r.input || '—'}</p>
@@ -45,7 +45,7 @@ export default {
     return html`
       ${lp ? html`
       <section class="card reveal track">
-        <div class="row row--between" style="align-items:flex-start">
+        <div class="row row--between row--nowrap" style="align-items:flex-start">
           <div>
             <p class="card__label">生命靈數</p>
             <h2 style="font-family:var(--font-num);font-size:var(--step-5);line-height:1;margin-top:6px">${lp.main}</h2>
@@ -176,7 +176,7 @@ export default {
       const r = matchNumbers($('#m-a', root).value, $('#m-b', root).value, { mode });
       mOut.innerHTML = html`
         <div class="card" style="margin-top:var(--sp-3)">
-          <div class="row row--between" style="align-items:flex-start">
+          <div class="row row--between row--nowrap" style="align-items:flex-start">
             <div><p class="card__label">匹配度</p>
               <p class="hint" style="margin-top:6px">A ${r.a.score} 分 · B ${r.b.score} 分${r.bridge ? ` · 銜接 ${r.bridge.pair}「${r.bridge.name}」` : ''}</p>
               <p style="margin-top:var(--sp-2);color:var(--ink-2);font-size:var(--step--1)">${r.text}</p></div>
