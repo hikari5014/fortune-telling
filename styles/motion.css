@@ -1,0 +1,80 @@
+/* ── 動態系統：過場、進場、回饋 ─────────────────────────── */
+
+/* 1. 頁面過場（View Transitions；不支援時用下方 fallback） */
+@view-transition { navigation: auto; }
+::view-transition-old(root) { animation: vt-out var(--dur-3) var(--ease-in) both; }
+::view-transition-new(root) { animation: vt-in var(--dur-4) var(--ease-out) both; }
+@keyframes vt-out { to { opacity: 0; transform: translate3d(0,-10px,0) scale(.985); filter: blur(3px); } }
+@keyframes vt-in  { from { opacity: 0; transform: translate3d(0,16px,0) scale(.99); filter: blur(4px); } }
+
+:root[data-nav="back"] ::view-transition-old(root) { animation-name: vt-out-back; }
+:root[data-nav="back"] ::view-transition-new(root) { animation-name: vt-in-back; }
+@keyframes vt-out-back { to { opacity: 0; transform: translate3d(0,14px,0) scale(1.01); } }
+@keyframes vt-in-back  { from { opacity: 0; transform: translate3d(0,-12px,0) scale(.99); } }
+
+.view.is-entering { animation: page-in var(--dur-4) var(--ease-out) both; }
+@keyframes page-in { from { opacity: 0; transform: translate3d(0, 14px, 0); } }
+
+/* 2. 逐項進場（IntersectionObserver 加上 .is-in） */
+.reveal { opacity: 0; transform: translate3d(0, 18px, 0); will-change: opacity, transform; }
+.reveal.is-in {
+  opacity: 1; transform: none;
+  transition: opacity var(--dur-4) var(--ease-out) var(--d, 0ms),
+              transform var(--dur-4) var(--ease-out) var(--d, 0ms);
+}
+
+/* 3. 按壓回饋 */
+.press { transition: transform var(--dur-2) var(--spring), border-color var(--dur-2) var(--ease), background var(--dur-2) var(--ease); }
+.press:active { transform: scale(.972); }
+@media (hover: hover) { .press:hover { border-color: var(--line-2); } }
+
+/* 4. 漣漪 */
+.ripple { position: absolute; border-radius: 50%; pointer-events: none; transform: translate(-50%, -50%) scale(0); background: currentColor; opacity: .16; animation: ripple var(--dur-5) var(--ease-out) forwards; }
+@keyframes ripple { to { transform: translate(-50%,-50%) scale(1); opacity: 0; } }
+
+/* 5. 指標追蹤光暈 */
+.track { position: relative; overflow: hidden; }
+.track::after {
+  content: ""; position: absolute; inset: -1px; pointer-events: none; opacity: 0;
+  background: radial-gradient(220px 220px at var(--mx, 50%) var(--my, 50%), var(--glow), transparent 70%);
+  transition: opacity var(--dur-3) var(--ease);
+}
+@media (hover: hover) { .track:hover::after { opacity: 1; } }
+.track.is-touched::after { opacity: 1; }
+
+/* 6. 數值計數 / 描邊 */
+.dial__value { animation: dash var(--dur-5) var(--ease-out) both; }
+@keyframes dash { from { stroke-dashoffset: var(--dash-from, 999); } }
+
+/* 7. 骨架 */
+.skeleton { background: linear-gradient(100deg, var(--surface-2) 30%, var(--line) 50%, var(--surface-2) 70%); background-size: 220% 100%; animation: shimmer 1.4s linear infinite; border-radius: var(--r-2); }
+@keyframes shimmer { to { background-position: -120% 0; } }
+
+/* 8. 底部抽屜 */
+@keyframes sheet-in { from { transform: translate3d(0, 100%, 0); } }
+@keyframes scrim-in { from { opacity: 0; } }
+@keyframes toast-in { from { opacity: 0; transform: translate3d(0, 20px, 0) scale(.96); } }
+
+/* 9. 滑動切頁的即時位移 */
+.view[data-dragging="1"] { transition: none; }
+
+/* 10. 動畫強度 */
+:root[data-motion="light"] { --dur-3: 180ms; --dur-4: 240ms; --dur-5: 320ms; }
+:root[data-motion="light"] .reveal { transform: translate3d(0, 8px, 0); }
+:root[data-motion="light"] .ripple { display: none; }
+
+:root[data-motion="off"] *,
+:root[data-motion="off"] *::before,
+:root[data-motion="off"] *::after {
+  animation-duration: 1ms !important; animation-iteration-count: 1 !important;
+  transition-duration: 1ms !important; scroll-behavior: auto !important;
+}
+:root[data-motion="off"] .reveal { opacity: 1; transform: none; }
+:root[data-motion="off"] .boot__ring { animation-duration: 1.05s !important; animation-iteration-count: infinite !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion="full"]) .reveal { opacity: 1; transform: none; }
+  :root:not([data-motion="full"]) *, :root:not([data-motion="full"]) *::before {
+    animation-duration: 1ms !important; transition-duration: 1ms !important;
+  }
+}
