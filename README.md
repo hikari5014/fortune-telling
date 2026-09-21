@@ -75,11 +75,18 @@ docs/DESIGN.md        完整設計規劃書
 
 專案已附上 `.github/workflows/deploy.yml`，推送後自動部署，**不需要任何建置步驟**。
 
-第一次設定（只要做一次）：
+第一次設定（只要做一次，**必須手動**）：
 
 1. 到 repo 的 **Settings → Pages**
 2. **Build and deployment → Source** 選 **GitHub Actions**
-3. 回到 **Actions** 分頁，等 `Deploy to GitHub Pages` 跑完
+3. 回到 **Actions → Deploy to GitHub Pages**，按 **Run workflow** 重跑一次
+
+> 為什麼不能自動？Actions 的預設 `GITHUB_TOKEN` 沒有建立 Pages 站台的權限，
+> 會回 `Resource not accessible by integration`。啟用之後，之後每次推送都會自動部署。
+
+如果部署時出現 `Branch is not allowed to deploy to github-pages`，
+表示 `github-pages` 環境限制只能從預設分支部署 —— 把這個分支合併到 `main` 即可，
+或到 **Settings → Environments → github-pages** 放寬分支限制。
 
 網址：`https://<使用者名稱>.github.io/fortune-telling/`
 

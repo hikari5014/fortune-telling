@@ -27,11 +27,10 @@ jobs:
       - uses: actions/checkout@v4
 
       # 這是純靜態網站（原生 ES Modules），不需要建置步驟
+      # 前提：repo 的 Settings → Pages → Source 已設為「GitHub Actions」
+      # （預設的 GITHUB_TOKEN 沒有權限自動建立 Pages 站台，這一步需手動設定一次）
       - name: Configure Pages
-        # enablement: true 會在 Pages 尚未啟用時自動開啟（來源設為 GitHub Actions）
         uses: actions/configure-pages@v5
-        with:
-          enablement: true
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
