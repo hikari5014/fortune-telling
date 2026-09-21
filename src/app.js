@@ -7,21 +7,29 @@ import { register, navigate, resolve, start, path, query } from './router.js';
 import { computeAll } from './prompt/context.js';
 
 export const NAV = [
-  { p: '/',         t: '首頁', icon: 'home',     eyebrow: 'XUAN JIAN' },
-  { p: '/astro',    t: '星盤', icon: 'astro',    eyebrow: 'NATAL CHART' },
-  { p: '/ziwei',    t: '紫微', icon: 'ziwei',    eyebrow: 'ZI WEI DOU SHU' },
-  { p: '/naming',   t: '姓名', icon: 'naming',   eyebrow: 'NAME STUDY' },
-  { p: '/numbers',  t: '數字', icon: 'numbers',  eyebrow: 'NUMEROLOGY' },
-  { p: '/prompt',   t: '提示', icon: 'prompt',   eyebrow: 'PROMPT STUDIO' },
-  { p: '/records',  t: '紀錄', icon: 'records',  eyebrow: 'READINGS' },
-  { p: '/profile',  t: '檔案', icon: 'profile',  eyebrow: 'PROFILES' },
-  { p: '/settings', t: '設定', icon: 'settings', eyebrow: 'SETTINGS' },
+  { p: '/',          t: '首頁', icon: 'home',     eyebrow: 'XUAN JIAN',      tab: 1 },
+  { p: '/astro',     t: '星盤', icon: 'astro',    eyebrow: 'NATAL CHART',    tab: 1 },
+  { p: '/ziwei',     t: '紫微', icon: 'ziwei',    eyebrow: 'ZI WEI DOU SHU', tab: 1 },
+  { p: '/fortune',   t: '運勢', icon: 'clock',    eyebrow: 'LUCK CYCLES',    tab: 1 },
+  { p: '/synastry',  t: '合盤', icon: 'link',     eyebrow: 'SYNASTRY' },
+  { p: '/iching',    t: '卜卦', icon: 'dice',     eyebrow: 'I CHING' },
+  { p: '/tarot',     t: '塔羅', icon: 'star',     eyebrow: 'TAROT' },
+  { p: '/naming',    t: '姓名', icon: 'naming',   eyebrow: 'NAME STUDY' },
+  { p: '/numbers',   t: '數字', icon: 'numbers',  eyebrow: 'NUMEROLOGY' },
+  { p: '/prompt',    t: '提示', icon: 'prompt',   eyebrow: 'PROMPT STUDIO',  tab: 1 },
+  { p: '/records',   t: '紀錄', icon: 'records',  eyebrow: 'READINGS' },
+  { p: '/profile',   t: '檔案', icon: 'profile',  eyebrow: 'PROFILES' },
+  { p: '/settings',  t: '設定', icon: 'settings', eyebrow: 'SETTINGS' },
 ];
 
 const VIEWS = {
   '/':         () => import('./views/home.js'),
   '/astro':    () => import('./views/astro.js'),
   '/ziwei':    () => import('./views/ziwei.js'),
+  '/fortune':  () => import('./views/fortune.js'),
+  '/synastry': () => import('./views/synastry.js'),
+  '/iching':   () => import('./views/iching.js'),
+  '/tarot':    () => import('./views/tarot.js'),
   '/naming':   () => import('./views/naming.js'),
   '/numbers':  () => import('./views/numbers.js'),
   '/prompt':   () => import('./views/prompt.js'),
@@ -43,22 +51,38 @@ export function ctx() {
 }
 export const invalidate = () => { cache = { key: null, value: null }; };
 
-/* ── 導覽列 ─────────────────────────────── */
-function navHTML(isRail) {
-  return NAV.map(n => html`
-    <a class="tab" href="#${n.p}" data-path="${n.p}" aria-label="${n.t}">
-      ${raw(icon(n.icon))}<span>${n.t}</span>
-    </a>`).join('');
-}
+/* ── 導覽列：手機顯示主要分頁 + 更多，桌機側欄顯示全部 ── */
+const link = (n) => html`
+  <a class="tab" href="#${n.p}" data-path="${n.p}" aria-label="${n.t}">
+    ${raw(icon(n.icon))}<span>${n.t}</span>
+  </a>`;
+
 function buildNav() {
-  $('#tabbar').innerHTML = `<span class="tabbar__ind" aria-hidden="true"></span>` + navHTML(false);
-  $('#rail').innerHTML = `<div class="rail__logo">${icon('astro')}</div>` + navHTML(true);
+  $('#tabbar').innerHTML = `<span class="tabbar__ind" aria-hidden="true"></span>`
+    + NAV.filter(n => n.tab).map(link).join('')
+    + `<button class="tab" id="tab-more" aria-label="更多">${icon('folder')}<span>更多</span></button>`;
+  $('#rail').innerHTML = `<div class="rail__logo">${icon('astro')}</div>` + NAV.map(link).join('');
+  $('#tab-more').addEventListener('click', openMore);
 }
+
+function openMore() {
+  haptic(8);
+  import('./ui.js').then(({ sheet }) => sheet({
+    title: '全部功能',
+    body: `<div class="grid grid--3">` + NAV.map(n => `
+      <a class="tile press track" href="#${n.p}" data-close>
+        ${icon(n.icon)}<h3>${n.t}</h3><p>${n.eyebrow}</p>
+      </a>`).join('') + `</div>`,
+  }));
+}
+
 function syncNav(p) {
-  $$('#tabbar .tab, #rail .tab').forEach(a => {
-    const on = a.dataset.path === p;
+  const isPrimary = NAV.some(n => n.p === p && n.tab);
+  $$('#rail .tab').forEach(a => a.setAttribute('aria-current', a.dataset.path === p ? 'page' : 'false'));
+  $$('#tabbar .tab').forEach(a => {
+    const on = a.id === 'tab-more' ? !isPrimary : a.dataset.path === p;
     a.setAttribute('aria-current', on ? 'page' : 'false');
-    if (on && a.closest('#tabbar')) {
+    if (on) {
       const ind = $('.tabbar__ind');
       ind.style.width = `${a.offsetWidth}px`;
       ind.style.transform = `translateX(${a.offsetLeft - 5}px)`;

@@ -62,7 +62,8 @@ export default {
           ${raw(row('真太陽時校正', '以經度時差與均時差修正出生時間（影響上升與時柱）。', sw('set-tst', s.trueSolarTime)))}
           ${raw(row('子時換日', '23:00 之後算隔天（晚子時）還是當天。', seg('set-zi', [['next', '晚子換日'], ['same', '不換日']], s.lateZiRule)))}
           ${raw(row('外格算法', `熊崎式傳統規則，或一律「總格−人格+1」。`, seg('set-wai', [['classic', '傳統'], ['simple', '簡式']], s.wageWaiRule)))}
-          ${raw(row('筆畫字典', `內建 ${dictSize} 字的康熙筆畫；未收錄的字可在姓名頁手動修正。`, `<span class="badge badge--dash">康熙</span>`))}
+          ${raw(row('數目字筆畫', '一～十依數值計（四＝4、五＝5…），關閉則用康熙實際筆畫（四＝5、五＝4…）。', sw('set-numeral', s.numeralRule !== false)))}
+          ${raw(row('筆畫字典', `涵蓋 ${dictSize.toLocaleString()} 個漢字，由 Unicode Unihan 部首餘筆推算；個別字可在姓名頁手動修正。`, `<span class="badge badge--dash">康熙</span>`))}
         </section>
 
         <section class="setgroup reveal">
@@ -121,7 +122,7 @@ export default {
     bindSeg('set-motion', 'motion');
     bindSeg('set-zi', 'lateZiRule');
     bindSeg('set-wai', 'wageWaiRule');
-    ['set-swipe|swipeNav', 'set-haptics|haptics', 'set-glow|pointerGlow', 'set-tst|trueSolarTime', 'set-pdisc|promptDisclaimer']
+    ['set-swipe|swipeNav', 'set-haptics|haptics', 'set-glow|pointerGlow', 'set-tst|trueSolarTime', 'set-pdisc|promptDisclaimer', 'set-numeral|numeralRule']
       .forEach(x => { const [id, key] = x.split('|'); bindSw(id, key); });
     bindVal('set-tz', 'tzOffset', Number);
     bindVal('set-city', 'city');

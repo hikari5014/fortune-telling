@@ -1,6 +1,6 @@
-import { html, raw, $, $$, sheet, toast, copyText } from '../ui.js';
+import { html, raw, $, $$, sheet, toast, copyText, haptic } from '../ui.js';
 import { icon } from '../icons.js';
-import { store } from '../store.js';
+import { store, uid } from '../store.js';
 import { invalidate } from '../app.js';
 import { resolve } from '../router.js';
 import { analyzeName, recommend, analyzeChars } from '../engines/naming.js';
@@ -40,7 +40,7 @@ export default {
 
     return html`
       <section class="card reveal track">
-        <div class="row row--between" style="align-items:flex-start">
+        <div class="row row--between row--nowrap" style="align-items:flex-start">
           <div>
             <p class="card__label">綜合評分</p>
             <h2 style="font-size:var(--step-3);margin-top:6px">${n.fullName}</h2>
@@ -85,6 +85,22 @@ export default {
       </section>
 
       <section class="section">
+        ${raw(sectionHead('候選名比較', `<span class="hint">已收藏 ${store.candidates.length}</span>`))}
+        <div class="card reveal" data-noswipe>
+          <div class="grid grid--2">
+            <div class="field"><label for="c-sur">姓</label><input class="input" id="c-sur" value="${profile.surname || ''}" maxlength="4"></div>
+            <div class="field"><label for="c-giv">候選名</label><input class="input" id="c-giv" placeholder="例如：宥辰" maxlength="6"></div>
+          </div>
+          <div class="row" style="margin-top:var(--sp-3);gap:var(--sp-2)">
+            <button class="btn btn--primary press" id="c-check">${raw(icon('search'))} 試算</button>
+            <button class="btn btn--ghost press" id="c-save" disabled>${raw(icon('plus'))} 收藏</button>
+          </div>
+          <div id="c-out"></div>
+        </div>
+        <div class="stack" id="c-list" style="margin-top:var(--sp-3)"></div>
+      </section>
+
+      <section class="section">
         ${raw(sectionHead('取名筆畫推薦', `<button class="chip press" id="rec-run">${icon('dice')} 重新計算</button>`))}
         <p class="hint">固定姓氏筆畫，窮舉名字的筆畫組合，依五格與三才排序。挑好組合後可產生提示詞，請 LLM 推薦實際用字。</p>
         <div class="row" style="margin:var(--sp-3) 0;gap:var(--sp-2)">
@@ -109,7 +125,7 @@ export default {
 
     const openStrokeEditor = () => {
       const src = (profile.surname || '') + (profile.givenName || '');
-      const cs = analyzeChars(src, profile.strokeOverrides || {});
+      const cs = analyzeChars(src, profile.strokeOverrides || {}, { numeralRule: settings.numeralRule !== false });
       sheet({
         title: '修正康熙筆畫',
         body: html`
@@ -194,6 +210,63 @@ export default {
     $('#rec-run', root)?.addEventListener('click', run);
     $('#rec-max', root)?.addEventListener('change', run);
     run();
+
+    // 候選名比較
+    let lastCand = null;
+    const cOut = $('#c-out', root), cList = $('#c-list', root);
+    const opt = { overrides: profile.strokeOverrides || {}, waiRule: settings.wageWaiRule, numeralRule: settings.numeralRule !== false };
+
+    const drawList = () => {
+      const list = [...store.candidates].sort((a, b) => b.score - a.score);
+      cList.innerHTML = list.length ? list.map(c => html`
+        <div class="pair track" style="grid-template-columns:1fr auto auto;gap:var(--sp-3)">
+          <span>
+            <b style="font-family:var(--font-display);font-size:var(--step-1)">${c.full}</b>
+            <span class="hint" style="display:block">三才 ${c.sancai} <span class="luck ${luckCls(c.luck)}">${c.luck}</span>　人格 ${c.ren} · 總格 ${c.total}</span>
+          </span>
+          <span class="num" style="font-size:var(--step-1)">${c.score}</span>
+          <button class="iconbtn press" data-del="${c.id}" aria-label="刪除 ${c.full}">${raw(icon('trash'))}</button>
+        </div>`).join('') : html`<p class="hint">還沒有收藏的候選名。上面試算後按「收藏」即可加入比較。</p>`;
+      $$('[data-del]', cList).forEach(b => b.addEventListener('click', () => {
+        store.removeCandidate(b.dataset.del); drawList(); toast('已移除');
+      }));
+    };
+
+    $('#c-check', root)?.addEventListener('click', () => {
+      const sur = $('#c-sur', root).value.trim(), giv = $('#c-giv', root).value.trim();
+      if (!sur || !giv) { toast('姓與名都要填'); return; }
+      const r = analyzeName(sur, giv, opt);
+      if (!r.ok) {
+        cOut.innerHTML = html`<p class="hint" style="margin-top:var(--sp-3)">字典查不到：<b>${r.unknown.join(' ')}</b>，請先在上方「修正筆畫」補上。</p>`;
+        $('#c-save', root).disabled = true; lastCand = null; return;
+      }
+      lastCand = {
+        id: uid('nc'), full: r.fullName, surname: sur, given: giv, score: r.score,
+        sancai: r.sancai.config, luck: r.sancai.luck, ren: r.wuge.人格.n, total: r.wuge.總格.n,
+        createdAt: new Date().toISOString(),
+      };
+      $('#c-save', root).disabled = false;
+      cOut.innerHTML = html`
+        <div class="card" style="margin-top:var(--sp-3);padding:var(--sp-3) var(--sp-4)">
+          <div class="row row--between">
+            <b style="font-family:var(--font-display);font-size:var(--step-2)">${r.fullName}</b>
+            <span class="num" style="font-size:var(--step-2)">${r.score}</span>
+          </div>
+          <p class="hint" style="margin-top:4px">
+            ${[...r.surname, ...r.given].map(c => c.ch + c.strokes).join(' ')}　三才 ${r.sancai.config}
+            <span class="luck ${luckCls(r.sancai.luck)}">${r.sancai.luck}</span>
+          </p>
+          <p class="hint">${Object.values(r.wuge).map(g => `${g.key}${g.n}${g.luck}`).join('　')}</p>
+        </div>`;
+      haptic(8);
+    });
+    $('#c-save', root)?.addEventListener('click', () => {
+      if (!lastCand) return;
+      store.addCandidate(lastCand); drawList(); toast(`已收藏 ${lastCand.full}`);
+      $('#c-giv', root).value = ''; $('#c-save', root).disabled = true; cOut.innerHTML = '';
+    });
+    $('#c-giv', root)?.addEventListener('keydown', (e) => { if (e.key === 'Enter') $('#c-check', root).click(); });
+    drawList();
 
     $('#rec-prompt', root)?.addEventListener('click', () => {
       const combos = [...selected];

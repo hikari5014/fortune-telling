@@ -50,6 +50,8 @@ export function compose({ template, all, settings, selected = [], options = {}, 
     goal: extra.goal || '整體運勢',
     chars: extra.chars || '',
     other: extra.other || '（未填寫第二個人的資料）',
+    synastry: extra.synastry || '（未附帶本機合盤分析）',
+    divination: extra.divination || '（沒有卜卦或抽牌結果，請先到「卜卦」或「塔羅」頁面起卦）',
     stroke_combos: extra.strokeCombos || '（未指定）',
   };
 

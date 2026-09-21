@@ -7,6 +7,7 @@ const K = {
   templates: 'xj.templates',
   records: 'xj.records',
   drafts: 'xj.drafts',
+  candidates: 'xj.candidates',
 };
 
 const DEFAULT_SETTINGS = {
@@ -28,6 +29,7 @@ const DEFAULT_SETTINGS = {
   lateZiRule: 'next',         // next=晚子時算隔天 | same=不換日
   namingSchool: 'kangxi',     // kangxi | modern
   wageWaiRule: 'classic',     // classic | simple（外格算法）
+  numeralRule: true,          // 一～十依數值計筆畫
   // 提示詞預設
   promptLang: '繁體中文',
   promptTone: '溫和但直接',
@@ -98,6 +100,11 @@ export const store = {
   addRecord(r) { this.records = [r, ...this.records].slice(0, 300); return r; },
   removeRecord(id) { this.records = this.records.filter(r => r.id !== id); },
 
+  get candidates() { return read(K.candidates, []); },
+  set candidates(v) { write(K.candidates, v); emit('candidates', v); },
+  addCandidate(c) { this.candidates = [c, ...this.candidates.filter(x => x.full !== c.full)].slice(0, 60); return c; },
+  removeCandidate(id) { this.candidates = this.candidates.filter(c => c.id !== id); },
+
   get drafts() { return read(K.drafts, {}); },
   setDraft(key, value) { const d = this.drafts; d[key] = value; write(K.drafts, d); },
 
@@ -105,7 +112,7 @@ export const store = {
     return {
       app: 'xuanjian', version: 1, exportedAt: new Date().toISOString(),
       settings: this.settings, profiles: this.profiles, currentId: this.currentId,
-      templates: this.templates, records: this.records,
+      templates: this.templates, records: this.records, candidates: this.candidates,
     };
   },
   importAll(data, { merge = false } = {}) {
@@ -114,6 +121,7 @@ export const store = {
     if (data.profiles) write(K.profiles, merge ? dedupe([...this.profiles, ...data.profiles]) : data.profiles);
     if (data.templates) write(K.templates, merge ? dedupe([...this.templates, ...data.templates]) : data.templates);
     if (data.records) write(K.records, merge ? dedupe([...this.records, ...data.records]) : data.records);
+    if (data.candidates) write(K.candidates, merge ? dedupe([...this.candidates, ...data.candidates]) : data.candidates);
     if (data.currentId) write(K.current, data.currentId);
     applyChrome(this.settings);
     emit('all', null);

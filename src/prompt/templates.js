@@ -9,6 +9,7 @@ export const VARS = [
   { v: 'ziwei', d: '紫微摘要' }, { v: 'ziwei_table', d: '紫微全盤表' },
   { v: 'naming', d: '姓名五格' }, { v: 'lifepath', d: '生命靈數' }, { v: 'numbers', d: '號碼磁場' },
   { v: 'data', d: '所有勾選的資料區塊' },
+  { v: 'divination', d: '卜卦／塔羅結果' }, { v: 'other', d: '第二個人的資料' }, { v: 'synastry', d: '合盤分析結果' },
   { v: 'question', d: '我的問題' }, { v: 'lang', d: '輸出語言' }, { v: 'tone', d: '語氣' },
   { v: 'depth', d: '深度' }, { v: 'format', d: '輸出格式' }, { v: 'length', d: '長度' },
 ];
@@ -45,7 +46,7 @@ ${OUT}`,
   {
     id: 'year', name: '流年運勢', category: '綜合', icon: 'clock',
     desc: '以本命盤為基礎，推當前年度的重點與節奏。',
-    blocks: ['basic', 'bazi', 'ziwei'],
+    blocks: ['basic', 'bazi', 'ziwei', 'luck'],
     body: `你是流年推運的命理顧問。今天是 {{today}}（{{today_gz}}）。
 
 {{data}}
@@ -77,7 +78,7 @@ ${OUT}`,
   {
     id: 'career', name: '事業與財務', category: '主題', icon: 'records',
     desc: '職業方向、賺錢模式、合作與風險。',
-    blocks: ['basic', 'bazi', 'ziwei', 'astro'],
+    blocks: ['basic', 'bazi', 'ziwei', 'astro', 'luck'],
     body: `你是生涯與財務取向的命理顧問。
 
 {{data}}
@@ -211,6 +212,49 @@ ${OUT}`,
 ${OUT}`,
   },
   {
+    id: 'iching', name: '解卦', category: '卜卦', icon: 'dice',
+    desc: '把起出來的卦交給 LLM，引用原文卦辭爻辭解讀。',
+    blocks: ['basic'],
+    body: `你是精通《周易》的解卦者。以下是我剛起出來的卦。
+
+{{divination}}
+
+請依序回答：
+1. 先引用《周易》通行本的**卦辭原文**與**動爻爻辭原文**（若無動爻則說明以卦辭斷），並逐句白話翻譯。
+2. 針對我的問題直接給判斷：可行／不可行／有條件可行，並說明理由出自哪一爻。
+3. 本卦 → 之卦的變化說明了什麼過程。
+4. 互卦（事情的中段與內情）、錯卦（相反的角度）、綜卦（對方的立場）各補一句觀察。
+5. 給出具體可執行的建議與該避開的做法。
+6. 若問題本身不適合用卜卦回答（醫療、法律、投資、他人隱私），請直說。
+
+{{question}}
+────────────
+輸出要求
+・語言：{{lang}}　語氣：{{tone}}　深度：{{depth}}　格式：{{format}}
+・引用原文時請標明出處爻位，不確定的地方要說不確定，不要杜撰經文。`,
+  },
+  {
+    id: 'tarot', name: '解牌', category: '卜卦', icon: 'star',
+    desc: '把抽到的牌陣交給 LLM，逐張串成一個故事。',
+    blocks: ['basic'],
+    body: `你是經驗豐富的塔羅解讀者，風格務實、不恐嚇、不打包票。
+
+{{divination}}
+
+請依序回答：
+1. 逐張解讀：這張牌在「這個位置」代表什麼（不是背誦牌義，要扣住位置與我的問題）。
+2. 把所有牌串成一段連貫的敘事：事情從哪裡來、現在卡在哪、往哪裡去。
+3. 指出牌陣中最關鍵的一張，以及它在提醒我什麼。
+4. 三個具體可做的行動，和一個要避免的傾向。
+5. 如果牌面訊息彼此矛盾，直接說明矛盾在哪，不要硬圓。
+
+{{question}}
+────────────
+輸出要求
+・語言：{{lang}}　語氣：{{tone}}　深度：{{depth}}　格式：{{format}}
+・不要預言死亡、疾病或法律結果；這類問題請建議我找專業人士。`,
+  },
+  {
     id: 'compat', name: '兩人合盤', category: '關係', icon: 'link',
     desc: '把兩個人的資料一起丟進去比對。',
     blocks: ['basic', 'bazi', 'astro', 'ziwei'],
@@ -221,6 +265,9 @@ ${OUT}`,
 
 【B 方資料】
 {{other}}
+
+【本機算出的合盤結果】
+{{synastry}}
 
 請分析：
 1. 兩人的節奏差異（誰快誰慢、誰主動誰被動）。
@@ -234,7 +281,7 @@ ${OUT}`,
   {
     id: 'freeform', name: '自由問答', category: '綜合', icon: 'prompt',
     desc: '帶著全部資料，問任何想問的。',
-    blocks: ['basic', 'bazi', 'astro', 'ziwei', 'naming', 'lifepath', 'numbers'],
+    blocks: ['basic', 'bazi', 'astro', 'ziwei', 'luck', 'naming', 'lifepath', 'numbers'],
     body: `以下是我的完整命理資料，請以此為基礎回答我的問題。
 
 {{data}}
