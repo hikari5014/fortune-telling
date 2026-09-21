@@ -28,7 +28,10 @@ jobs:
 
       # 這是純靜態網站（原生 ES Modules），不需要建置步驟
       - name: Configure Pages
+        # enablement: true 會在 Pages 尚未啟用時自動開啟（來源設為 GitHub Actions）
         uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
