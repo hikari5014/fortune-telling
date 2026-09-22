@@ -112,6 +112,13 @@ export default {
           <section>
             ${raw(sectionHead('把 LLM 的回覆貼回來'))}
             <textarea class="textarea" id="paste-back" data-noswipe placeholder="在這裡貼上外部 LLM 的回覆⋯⋯" style="min-height:150px"></textarea>
+            <div class="field" style="margin-top:var(--sp-3)">
+              <label for="rec-model">這是哪個模型回的（選填）</label>
+              <input class="input" id="rec-model" list="model-list" placeholder="例如 Claude、ChatGPT、Gemini" maxlength="40"
+                     value="${store.drafts.lastModel || ''}">
+              <datalist id="model-list">${store.allModels.map(m => html`<option value="${m}"></option>`)}</datalist>
+            </div>
+            <p class="hint">填了之後，同一個提示詞問不同模型的回覆可以在紀錄頁並排比較。</p>
             <div class="row" style="margin-top:var(--sp-3);gap:var(--sp-2)">
               <button class="btn btn--primary press" id="save-rec">${raw(icon('down'))} 存成紀錄</button>
               <a class="btn btn--ghost press" href="#/records">${raw(icon('records'))} 查看紀錄</a>
@@ -345,8 +352,11 @@ export default {
         who: profile ? ((profile.surname || '') + (profile.givenName || '') || profile.label) : '',
         profileId: profile?.id || null,
         prompt: build(), content,
+        model: $('#rec-model', root).value.trim(),
+        tags: [],
         snapshot: { blocks: [...selected], options: opts() },
       });
+      store.setDraft('lastModel', $('#rec-model', root).value.trim());
       $('#paste-back', root).value = '';
       toast('已存成紀錄');
     });
