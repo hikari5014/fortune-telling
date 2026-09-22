@@ -2,11 +2,20 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.17.0';
+export const APP_VERSION = '0.17.1';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.17.1', date: '2026-09-22', title: '提示詞的操作列浮起來了',
+    items: [
+      { kind: 'change', text: '「複製提示詞 / 存模板 / 分享」改成浮在畫面下方的一列，捲到哪都按得到，不必再捲回預覽底下' },
+      { kind: 'change', text: '位置在分頁列正上方；桌機沒有分頁列就貼著視窗底部' },
+      { kind: 'change', text: '有這條列的時候，頁尾留白與 Toast 都會跟著讓位，不會互相遮住' },
+      { kind: 'fix', text: '螢幕很窄時「存模板」自動縮成只剩圖示，三顆按鈕還是排得下' },
+    ],
+  },
   {
     v: '0.17.0', date: '2026-09-22', title: '塔羅大改：牌圖 · 牌義 · 今日一張 · 本命牌',
     items: [
