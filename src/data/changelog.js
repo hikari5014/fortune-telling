@@ -2,11 +2,21 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.19.0';
+export const APP_VERSION = '0.19.1';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.19.1', date: '2026-09-23', title: '導覽列不再擠成一坨',
+    items: [
+      { kind: 'fix', text: '首頁鍵原本壓在中間兩個分類的字上面。改成在扇形正中間留一個缺口，圓鍵卡進去，誰也不碰誰' },
+      { kind: 'fix', text: '扇形兩端是用 transform 推下去的，transform 不佔版面高度 —— 沒補回去，工具與人際那兩顆其實掛在導覽列外面。現在高度算得進去了' },
+      { kind: 'change', text: '導覽列從兩列變一列，高度從 110px 降到 88px，畫面多出一截' },
+      { kind: 'change', text: '扇形的落差與傾斜調緩（30px→22px、13°→11°）：太陡的話兩端會掉到跟首頁鍵一樣低，看起來就擠了' },
+      { kind: 'change', text: '頁尾留白、浮動操作列、Toast、比較列的位置都跟著新高度重算' },
+    ],
+  },
   {
     v: '0.19.0', date: '2026-09-22', title: '導覽大改：扇形分類 · 圓形首頁',
     items: [

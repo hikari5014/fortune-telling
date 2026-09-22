@@ -51,7 +51,7 @@ export const itemsOf = (cat) => cat.paths.map(p => byPath.get(p)).filter(Boolean
 export const catOf = (path) => CATS.find(c => c.paths.includes(path)) || null;
 
 /** 扇形的弧度：第幾個換算成 -1..1，再取平方當落差、取一次方當傾斜 */
-export const ARC = { rise: 30, tilt: 13 };
+export const ARC = { rise: 22, tilt: 11 };   // 太陡的話兩端會掉到跟首頁鍵一樣低，看起來就擠了
 export function arcShape(i, n) {
   const mid = (n - 1) / 2;
   const t = mid ? (i - mid) / mid : 0;

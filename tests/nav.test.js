@@ -23,6 +23,9 @@ test('每一頁都分得到類，沒有多也沒有少', () => {
 
 test('分類本身是合理的', () => {
   assert.equal(CATS.length, 4);
+  // 首頁鍵卡在正中間的缺口裡；分類是雙數，缺口才會落在中線上。
+  // 改成單數的話缺口會歪掉，圓鍵就會壓到中間那顆的字。
+  assert.equal(CATS.length % 2, 0, '分類要是雙數');
   assert.equal(CATS[0].key, 'tool', '工具要在最左邊');
   for (const c of CATS) {
     assert.equal(c.name.length, 2, `${c.name} 不是兩個字，扇形上排不整齊`);
@@ -105,6 +108,26 @@ test('項目之間不會疊在一起', () => {
       assert.ok(pts[i].y - pts[i - 1].y >= 46, `第 ${i} 項跟上一項只差 ${pts[i].y - pts[i - 1].y}px`);
     }
   }
+});
+
+test('導覽列不會擠在一起：高度補得回來、缺口比圓鍵寬', () => {
+  const css = readFileSync('styles/components.css', 'utf8');
+  const app = readFileSync('src/app.js', 'utf8');
+  // 兩端是用 transform 推下去的，transform 不佔版面高度 ——
+  // 沒把落差補回去，那兩顆會掛在導覽列外面
+  assert.match(css, /\.dock__arc \{[^}]*height: calc\(46px \+ var\(--arc-rise/,
+    '扇形那一排沒有把兩端的落差算進高度');
+  assert.match(app, /--arc-rise/, 'app.js 沒有把落差值傳進 CSS');
+  // 缺口要比圓鍵寬，不然圓鍵會壓到隔壁的字
+  const notch = Number(css.match(/\.dock__notch \{ width: (\d+)px/)[1]);
+  const home = Number(css.match(/\.dock \.tab\.dock__home \{[^}]*width: (\d+)px/s)[1]);
+  assert.ok(notch >= home + 12, `缺口 ${notch}px 只比圓鍵 ${home}px 寬 ${notch - home}px，太擠`);
+  assert.match(css, /\.dock \.tab\.dock__home \{[^}]*position: absolute/s,
+    '圓鍵要用絕對定位卡進缺口，不然會多佔一列');
+  // 版面留白要蓋得過導覽列
+  const base = readFileSync('styles/base.css', 'utf8');
+  const pad = Number(base.match(/padding-bottom: calc\((\d+)px \+ env\(safe-area-inset-bottom\)\)/)[1]);
+  assert.ok(pad >= 104 && pad <= 130, `頁尾留白 ${pad}px 跟導覽列高度（88 + 8）對不上`);
 });
 
 test('樣式與程式對得上：沒有殘留的舊分頁列', () => {
