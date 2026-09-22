@@ -74,12 +74,20 @@ b { font-weight: 500; }
 .fake i:nth-child(5) { width: 40%; height: 22px; background: var(--line-2); }
 
 .dock {
-  position: relative; z-index: 2; margin: var(--sp-4); padding: 6px;
-  display: flex; gap: 4px; align-items: center; justify-content: center; flex-wrap: wrap;
+  position: relative; z-index: 2; margin: var(--sp-4); padding: 10px 8px 12px;
+  display: flex; flex-direction: column; align-items: center; gap: 0;
   border: 1px solid var(--line); border-radius: var(--r-4);
   background: color-mix(in srgb, var(--bg) 92%, transparent);
   backdrop-filter: blur(14px);
 }
+/* 扇形那一排：中間高、兩端低，按鈕跟著外傾 */
+.arcbar { display: flex; align-items: flex-start; gap: 2px; }
+.arcbar .cat { transform: translateY(var(--dy, 0)) rotate(var(--rot, 0)); }
+.arcbar .cat.is-armed { transform: translateY(var(--dy, 0)) rotate(var(--rot, 0)) scale(1.14); }
+/* 首頁卡在扇形正中央下面的凹處 */
+.cat--home { margin-top: -2px; background: var(--invert-bg); color: var(--invert-ink); min-width: 64px; box-shadow: var(--shadow); }
+.cat--home span { color: var(--invert-ink); }
+.cat--home.is-armed { transform: scale(1.1); }
 .cat {
   position: relative; display: grid; place-items: center; gap: 2px;
   min-width: 56px; padding: 9px 8px; border-radius: var(--r-3);
@@ -88,10 +96,8 @@ b { font-weight: 500; }
 }
 .cat svg { width: 21px; height: 21px; }
 .cat span { font-size: 10px; letter-spacing: .1em; color: var(--ink-3); }
-.cat.is-armed { background: var(--invert-bg); color: var(--invert-ink); transform: scale(1.14); }
+.cat.is-armed { background: var(--invert-bg); color: var(--invert-ink); }
 .cat.is-armed span { color: var(--invert-ink); }
-.cat--wide { min-width: 0; flex: 1; grid-auto-flow: column; justify-content: center; gap: var(--sp-2); padding-inline: var(--sp-4); }
-.cat--wide span { font-size: var(--step--1); letter-spacing: .12em; color: var(--ink-2); }
 
 /* ── 選單本體 ───────────────────────────────────── */
 .menu-root { position: fixed; inset: 0; z-index: 50; }

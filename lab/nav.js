@@ -16,7 +16,14 @@
 import { icon } from '../src/icons.js';
 
 /* ── 分類 ─────────────────────────────────────────── */
+/* 五個分類排成扇形，正中間下面放首頁。
+   工具放最左邊 —— 那是最少用、也最不想誤觸的一類。
+   「關係」是人際與名數合併來的：合盤、面談是你跟人的關係，
+   姓名、數字是你跟自己名號的關係。這個歸類有點勉強，名字待定。 */
 const CATS = [
+  { key: 'tool', name: '工具', icon: 'settings', items: [
+    { t: '提示', icon: 'prompt' }, { t: '紀錄', icon: 'records' }, { t: '檔案', icon: 'profile' },
+    { t: '設定', icon: 'settings' }, { t: '關於', icon: 'info' }] },
   { key: 'chart', name: '命盤', icon: 'astro', items: [
     { t: '星盤', icon: 'astro' }, { t: '紫微', icon: 'ziwei' },
     { t: '八字', icon: 'pillars' }, { t: '運勢', icon: 'clock' }] },
@@ -24,14 +31,13 @@ const CATS = [
     { t: '卜卦', icon: 'dice' }, { t: '塔羅', icon: 'star' }, { t: '求籤', icon: 'folder' }] },
   { key: 'time', name: '時空', icon: 'calendar', items: [
     { t: '擇日', icon: 'calendar' }, { t: '方位', icon: 'compass' }] },
-  { key: 'people', name: '人際', icon: 'link', items: [
-    { t: '合盤', icon: 'link' }, { t: '面談', icon: 'edit' }] },
-  { key: 'name', name: '名數', icon: 'naming', items: [
+  { key: 'bond', name: '關係', icon: 'link', items: [
+    { t: '合盤', icon: 'link' }, { t: '面談', icon: 'edit' },
     { t: '姓名', icon: 'naming' }, { t: '數字', icon: 'numbers' }] },
-  { key: 'tool', name: '工具', icon: 'settings', items: [
-    { t: '提示', icon: 'prompt' }, { t: '紀錄', icon: 'records' }, { t: '檔案', icon: 'profile' },
-    { t: '設定', icon: 'settings' }, { t: '關於', icon: 'info' }] },
 ];
+
+/** 扇形的弧度：t 是 -1（最左）到 1（最右），中間是 0 */
+const ARC = { rise: 30, tilt: 13 };   // 兩端比中間低幾 px、外傾幾度
 
 /* ── 小工具 ───────────────────────────────────────── */
 const $ = (s, r = document) => r.querySelector(s);
@@ -188,7 +194,7 @@ const LAYOUTS = {
   /* 正圓環：靠「方向」選。學會之後最快，因為方向可以變成肌肉記憶。 */
   radial: {
     name: '輪盤', tag: 'RADIAL', trigger: 'cats',
-    desc: '按住分類，功能繞成一圈；往哪個方向滑就選哪一個。',
+    desc: '點一下分類，功能繞成一圈停在畫面上；點一下要的那一項，或按著滑過去再放開。',
     pros: ['學會之後最快，方向能變肌肉記憶', '不用看也能選，適合每天用的那幾個'],
     cons: ['手機上幾乎排不出整圈 —— 分類在畫面邊上，左右都沒有半徑的空間，'
       + '所以按在邊邊時它會自動退化成扇形（也就是下一個方案）',
@@ -212,7 +218,7 @@ const LAYOUTS = {
      而且落在拇指自然的擺動弧線上。 */
   arc: {
     name: '拇指扇', tag: 'ARC', trigger: 'cats',
-    desc: '按住分類，功能排成一道扇形往上開；左右擺動拇指就能掃過去。',
+    desc: '點一下分類，功能排成一道扇形往上開；左右擺動拇指掃過去。',
     pros: ['永遠不會被邊緣切到，單手最好按', '項目之間角度大，不容易選錯', '文字有位置放，看得懂'],
     cons: ['沒有「正圓」那種四面八方的方向感', '扇形一次頂多六、七項'],
     place(a, n) {
@@ -236,8 +242,8 @@ const LAYOUTS = {
   /* 直列滑選：最好讀，也最像 iOS 的長按選單。
      犧牲速度換可讀性 —— 項目多、名字長的時候反而是這個贏。 */
   list: {
-    name: '滑選清單', tag: 'LIST', trigger: 'cats',
-    desc: '按住分類，功能排成一列；上下滑動高亮，放開選中。',
+    name: '滑選清單', tag: 'LIST · 採用', trigger: 'cats',
+    desc: '點一下分類，功能排成一列停住；點一項，或按著上下滑再放開。（已採用）',
     pros: ['名字完整看得到，最好讀', '十幾項也排得下，不用分頁', '最接近大家熟悉的長按選單'],
     cons: ['最慢，每次都要用眼睛找', '會遮掉一大塊畫面'],
     place(a, n) {
@@ -260,24 +266,6 @@ const LAYOUTS = {
     },
   },
 
-  /* 兩段輪盤：一個手勢走完「分類 → 功能」。
-     內圈是分類，往外拖過門檻就換成那一類的外圈。 */
-  nested: {
-    name: '兩段輪盤', tag: 'NESTED', trigger: 'one',
-    desc: '按住任何地方叫出內圈（分類），往外拖就展開那一類的外圈（功能），放開選中。',
-    pros: ['一個手勢從頭走到尾，不用先點分類', '只要一顆按鈕，版面最乾淨'],
-    cons: ['要學，第一次一定不會用', '兩層都要準，手抖的人會誤選', '外圈項目多的時候角度很擠'],
-    place(a, n, inner) {
-      const R = inner ? opts.radius * 0.74 : opts.radius * 1.52;
-      const cx = a.x, cy = a.y;                 // 同樣咬著手指
-      const step = 360 / n;
-      const pts = fitPts(range(n).map(i => {
-        const deg = -90 + i * step;
-        return { x: cx + Math.cos(deg * RAD) * R, y: cy + Math.sin(deg * RAD) * R, deg };
-      }), cx, cy, R);
-      return { cx, cy, pts, dead: 38, hub: '放開取消' };
-    },
-  },
 };
 
 /* ── 選單 ─────────────────────────────────────────── */
@@ -334,9 +322,32 @@ function render({ anchor, items, plan, sticky, rowStyle, onPick, hubText }) {
 
   if (sticky) {
     els.forEach((el, i) => {
-      el.addEventListener('pointerenter', () => setHot(i));
+      el.addEventListener('pointerenter', () => setHot(i));     // 滑鼠
       el.addEventListener('click', () => commit(i));
     });
+    /* 觸控沒有 hover，所以自己追手指：按著滑過去，放開就選中。
+       單純點一下不在這裡處理 —— 交給上面每一項自己的 click，
+       不然「按下去沒動就放開」會被算兩次。 */
+    let from = null, moved = false;
+    root.addEventListener('pointerdown', (e) => {
+      if (e.target.closest('.scrim')) return;
+      from = { x: e.clientX, y: e.clientY };
+      moved = false;
+      aim(e.clientX, e.clientY);
+    });
+    root.addEventListener('pointermove', (e) => {
+      if (!from) return;
+      if (Math.hypot(e.clientX - from.x, e.clientY - from.y) > 10) moved = true;
+      aim(e.clientX, e.clientY);
+    });
+    root.addEventListener('pointerup', (e) => {
+      if (!from) return;
+      from = null;
+      if (!moved) return;                                   // 純點擊交給 click
+      const i = menu?.plan.hit ? menu.plan.hit(e.clientX, e.clientY) : -1;
+      if (i >= 0) commit(i); else close('取消');
+    });
+    root.addEventListener('pointercancel', () => { from = null; });
     scrim.addEventListener('click', () => close('取消'));
   }
   return menu;
@@ -397,58 +408,42 @@ function closeVisual() {
 /* ── 手勢 ─────────────────────────────────────────────
    一個 pointerdown 開始，之後所有事件都靠 setPointerCapture 綁在同一顆元素上，
    手指滑出去也追得到。滑鼠與觸控走同一條路。 */
+/* 手勢
+   ──────────────────────────────────────────────────────────
+   點一下就叫出選單，選單停在畫面上，再點一下要的那一項。
+
+   原本做的是「長按叫出、不放手滑到底、放開選中」。拿掉的理由有兩個：
+   一是長按每次都要先等三百毫秒，天天用的東西不該每次都等；
+   二是長按加拖曳對手指不方便的人很不友善。
+
+   停住之後仍然可以「按著滑過去再放開」——
+   滑鼠靠 hover、觸控靠 pointermove，兩邊都通。 */
 function arm(el, open) {
   el.addEventListener('contextmenu', e => e.preventDefault());
   el.addEventListener('pointerdown', (e) => {
     if (e.button != null && e.button > 0) return;
     e.preventDefault();
-    el.setPointerCapture(e.pointerId);
     const start = { x: e.clientX, y: e.clientY };
-    let timer = null, opened = false, moved = false;
-
-    const fire = () => {
-      opened = true;
-      el.classList.add('is-armed');
-      buzz(10);
-      open({ anchor: start, sticky: false });
-      aim(start.x, start.y);
-    };
-    timer = setTimeout(fire, opts.hold);
-
+    let moved = false;
     const onMove = (ev) => {
-      const d = Math.hypot(ev.clientX - start.x, ev.clientY - start.y);
-      if (!opened) {
-        // 還沒跳出來就先滑很遠，多半是想捲畫面，放棄這次長按
-        if (d > 14) { moved = true; clearTimeout(timer); cleanup(); }
-        return;
-      }
-      aim(ev.clientX, ev.clientY);
-      stage2?.(ev, d);
+      if (Math.hypot(ev.clientX - start.x, ev.clientY - start.y) > 12) moved = true;
     };
-    const onUp = (ev) => {
-      clearTimeout(timer);
-      el.classList.remove('is-armed');
-      if (opened) {
-        const i = menu ? menu.hot : -1;
-        if (i >= 0) commit(i); else close('取消');
-      } else if (!moved) {
-        // 輕點：選單留在畫面上，改成用點的
-        open({ anchor: start, sticky: true });
-      }
+    const onUp = () => {
       cleanup();
+      if (moved) return;                 // 在按鈕上滑來滑去多半是想捲畫面
+      buzz(8);
+      el.classList.add('is-armed');
+      setTimeout(() => el.classList.remove('is-armed'), 180);
+      open({ anchor: start, sticky: true });
     };
     const cleanup = () => {
-      el.releasePointerCapture?.(e.pointerId);
       el.removeEventListener('pointermove', onMove);
       el.removeEventListener('pointerup', onUp);
-      el.removeEventListener('pointercancel', onUp);
-      el.classList.remove('is-armed');
+      el.removeEventListener('pointercancel', cleanup);
     };
-    let stage2 = null;
-    el.__setStage2 = (fn) => { stage2 = fn; };
     el.addEventListener('pointermove', onMove);
     el.addEventListener('pointerup', onUp);
-    el.addEventListener('pointercancel', onUp);
+    el.addEventListener('pointercancel', cleanup);
   });
 }
 
@@ -478,7 +473,7 @@ function paintStats() {
 }
 
 /* ── 組裝：把某個方案接到假畫面上 ─────────────────── */
-let mode = 'radial';
+let mode = 'list';        // 已經選定：分類底下的細項用滑選清單
 
 function openCat(cat) {
   return ({ anchor, sticky }) => {
@@ -492,81 +487,34 @@ function openCat(cat) {
   };
 }
 
-/* 兩段輪盤自己一套：內圈分類 → 拖出去換外圈功能 */
-function openNested({ anchor, sticky }) {
-  const L = LAYOUTS.nested;
-  let locked = null;
-  const inner = L.place(anchor, CATS.length, true);
-  const R1 = opts.radius * 0.74, GATE = R1 + 44;
-
-  const drawInner = () => {
-    const plan = { ...inner, hit: (px, py) => {
-      if (Math.hypot(px - inner.cx, py - inner.cy) < inner.dead) return -1;
-      return nearestByAngle(inner.pts, inner.cx, inner.cy, px, py).i;
-    } };
-    render({ anchor, items: CATS, plan, sticky, hubText: '放開取消',
-      onPick: (cat) => { openCat(cat)({ anchor, sticky: true }); } });
-  };
-
-  const drawOuter = (cat) => {
-    const n = cat.items.length;
-    const R2 = opts.radius * 1.52;
-    const base = inner.pts[CATS.indexOf(cat)].deg;
-    const span = Math.min(150, n * 34);
-    const step = n > 1 ? span / (n - 1) : 0;
-    const start = base - span / 2;
-    const pts = fitPts(range(n).map(i => {
-      const deg = start + i * step;
-      return { x: inner.cx + Math.cos(deg * RAD) * R2, y: inner.cy + Math.sin(deg * RAD) * R2, deg };
-    }), inner.cx, inner.cy, R2);
-    const plan = { cx: inner.cx, cy: inner.cy, pts, dead: GATE, hub: cat.name,
-      hit: (px, py) => {
-        if (Math.hypot(px - inner.cx, py - inner.cy) < GATE) return -1;
-        const near = nearestByAngle(pts, inner.cx, inner.cy, px, py);
-        return near.off > (n > 1 ? step * 0.7 + 8 : 70) ? -1 : near.i;
-      } };
-    render({ anchor, items: cat.items, plan, sticky, hubText: cat.name,
-      onPick: (it, ms) => { record(it, ms); toast(`選了「${cat.name} · ${it.t}」`); } });
-  };
-
-  drawInner();
-
-  // 拖出門檻就切外圈；縮回來就切回內圈
-  $('#dock').firstElementChild.__setStage2?.((ev, d) => {
-    const i = menu?.hot ?? -1;
-    if (!locked && d > GATE && i >= 0) {
-      locked = CATS[i];
-      buzz(12);
-      drawOuter(locked);
-      aim(ev.clientX, ev.clientY);
-    } else if (locked && d < GATE - 16) {
-      locked = null;
-      buzz(6);
-      drawInner();
-      aim(ev.clientX, ev.clientY);
-    }
-  });
-}
-
 /* ── 畫面 ─────────────────────────────────────────── */
+/* 分類列本身排成扇形：中間最高、兩端往下沉，按鈕也跟著微微外傾。
+   弧度用「index 換算成 -1..1 再取平方」算，不必去量容器寬度，
+   所以轉螢幕、換字級都自己會跟上。
+   正中間下方那顆是首頁 —— 拇指最好按的位置留給最常按的東西。 */
 function buildDock() {
   const dock = $('#dock');
   dock.innerHTML = '';
-  if (LAYOUTS[mode].trigger === 'one') {
-    const b = document.createElement('button');
-    b.className = 'cat cat--wide';
-    b.innerHTML = `${icon('folder')}<span>按住叫出全部功能</span>`;
-    dock.append(b);
-    arm(b, openNested);
-    return;
-  }
-  for (const cat of CATS) {
+  const arc = document.createElement('div');
+  arc.className = 'arcbar';
+  const mid = (CATS.length - 1) / 2;
+  CATS.forEach((cat, i) => {
+    const t = mid ? (i - mid) / mid : 0;
     const b = document.createElement('button');
     b.className = 'cat';
+    b.style.setProperty('--dy', `${(ARC.rise * t * t).toFixed(1)}px`);
+    b.style.setProperty('--rot', `${(ARC.tilt * t).toFixed(1)}deg`);
     b.innerHTML = `${icon(cat.icon)}<span>${cat.name}</span>`;
-    dock.append(b);
+    arc.append(b);
     arm(b, openCat(cat));
-  }
+  });
+  dock.append(arc);
+
+  const home = document.createElement('button');
+  home.className = 'cat cat--home';
+  home.innerHTML = `${icon('home')}<span>首頁</span>`;
+  home.addEventListener('click', () => { buzz(10); toast('回到首頁'); });
+  dock.append(home);
 }
 
 function buildModes() {
@@ -592,8 +540,7 @@ function sync() {
       ${L.pros.map(x => `<span><i>好</i>${x}</span>`).join('')}
       ${L.cons.map(x => `<span><i>代價</i>${x}</span>`).join('')}
     </div>`;
-  $('#stage-hint').textContent = L.trigger === 'one'
-    ? '按住那條按鈕，往外拖' : '按住下面的分類，不放手直接滑';
+  $('#stage-hint').textContent = '點一下下方的分類';
 }
 
 /* ── 參數與雜項 ───────────────────────────────────── */
@@ -605,8 +552,16 @@ function bind() {
     el.addEventListener('input', apply);
     apply();
   };
-  set('hold', 'hold', v => `${v} ms`);
   set('rad', 'radius', v => `${v} px`);
+  // 扇形的起伏與傾斜可以即時調，找到喜歡的數字就定下來
+  const arcIn = (id, out, apply) => {
+    const el = $(`#${id}`);
+    const f = () => { apply(Number(el.value)); $(`#${out}`).textContent = el.value + (id === 'tilt' ? '°' : ' px'); buildDock(); };
+    el.addEventListener('input', f);
+    f();
+  };
+  arcIn('rise', 'rise-v', v => { ARC.rise = v; });
+  arcIn('tilt', 'tilt-v', v => { ARC.tilt = v; });
   $('#haptic').addEventListener('change', e => { opts.haptic = e.target.checked; });
   $('#ray').addEventListener('change', e => { opts.ray = e.target.checked; });
   $('#calm').addEventListener('change', e => {
@@ -638,30 +593,24 @@ function bind() {
   $('#fake').innerHTML = '<i></i>'.repeat(9);
 
   $('#verdict').innerHTML = `
-    <h3>做完之後我改了看法</h3>
-    <p>你想的是<b>輪盤</b>，我一開始也照著做。但把它放到真的分類列上就發現一件事：
-      <b>手機上排不出整圈</b>。圓心必須咬著手指（不然「手指沒移動」就不等於取消，放開會變誤選），
-      而分類列就在畫面邊上，左右根本沒有一個半徑的空間 ——
-      390px 寬的螢幕，只有按在正中間附近才畫得出整圈。</p>
-    <p>所以我讓它<b>放不下時自動退化成扇形</b>。你現在按最左邊那個分類，
-      看到的其實已經是扇形了。換句話說：<b>你要的輪盤，在手機上的最終形態就是拇指扇。</b></p>
-    <h3>我的建議</h3>
-    <p><b>拇指扇</b>當主力。它把輪盤的速度留著，又不用跟邊緣打架，
-      而且角度大、文字放得下 —— 你的功能名稱都是兩個字，圓環擠起來很難讀。</p>
-    <p><b>輕點</b>一律留成靜止選單（四個方案都做了）。長按加拖曳對手指不方便的人很不友善，
-      沒有這條保底路徑，這個設計不能上線。</p>
-    <p><b>兩段輪盤</b>最炫，但它要求使用者先學會。如果你喜歡，我建議放在「更多」當進階手勢，
-      不要當唯一入口。</p>
-    <p><b>滑選清單</b>不炫，但它是唯一「第一次用就會」的。桌機我會直接用這個 ——
-      滑鼠沒有長按的習慣。</p>
-    <h3>玩的時候請特別試這幾件事</h3>
-    <p>一、單手拿手機，用拇指按<b>最左邊</b>和<b>最右邊</b>的分類 —— 邊緣是差異最大的地方。<br>
-      二、長按時間拉到 500ms 再拉到 150ms，感覺一下「等太久」跟「誤觸」哪個比較討厭。<br>
-      三、「工具」那一類有五項，拿它試擠不擠。<br>
-      四、用滑鼠玩一次，看看桌機會不會覺得卡。<br>
-      五、每個方案各選十次，回頭看上面的<b>平均 ms 與取消率</b> —— 那個比手感誠實。</p>`;
+    <h3>這一版改了什麼</h3>
+    <p><b>分類列自己排成扇形。</b>中間最高、兩端往下沉，按鈕也跟著微微外傾。
+      弧度是用「第幾個換算成 -1 到 1 再取平方」算出來的，不必去量容器寬度，
+      所以轉螢幕、換字級都自己會跟上。</p>
+    <p><b>首頁卡在扇形正中央下面的凹處。</b>那是拇指最好按的位置，留給最常按的東西。</p>
+    <p><b>工具移到最左邊。</b>設定、關於這些最少用、也最不想誤觸的，放在最遠的角落。</p>
+    <p><b>人際與名數合併成「關係」。</b>合盤、面談是你跟人的關係，姓名、數字是你跟自己名號的關係 ——
+      老實說這個歸類有點勉強，名字你可以改，我先取一個能用的。</p>
+    <p><b>長按拿掉了，改成點一下叫出停住的選單。</b>理由有兩個：長按每次都要先等三百毫秒，
+      天天用的東西不該每次都等；而且長按加拖曳對手指不方便的人很不友善。
+      停住之後仍然可以「按著滑過去再放開」，兩種都通。</p>
+    <p><b>兩段輪盤拿掉了。</b>它整個設計就建立在「長按住再往外拖」上，沒有長按就沒有它。</p>
+    <h3>還沒決定的</h3>
+    <p>一、「關係」這個名字。<br>
+      二、扇形的弧度與傾斜角（下面可以即時調，找到喜歡的告訴我數字）。<br>
+      三、要不要把這一版套進 App 本體 —— 本體的導覽目前還沒動。</p>`;
 }
 
 /* 測試只要幾何那一段，不要整個畫面跑起來 */
-export { LAYOUTS, CATS, opts, fitPts, bestSpin };
+export { LAYOUTS, CATS, opts, ARC, fitPts, bestSpin };
 if (!globalThis.__LAB_NO_BOOT) { bind(); sync(); }

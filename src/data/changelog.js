@@ -2,11 +2,23 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.18.0';
+export const APP_VERSION = '0.18.1';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.18.1', date: '2026-09-22', title: '導覽原型定案：扇形分類 · 滑選清單',
+    items: [
+      { kind: 'change', text: '原型（lab/nav.html）改成選定的樣子：分類列本身排成扇形，中間最高、兩端往下沉，按鈕跟著微微外傾' },
+      { kind: 'change', text: '首頁卡在扇形正中央下面的凹處 —— 拇指最好按的位置留給最常按的東西' },
+      { kind: 'change', text: '工具移到最左邊；人際與名數合併成「關係」（合盤、面談、姓名、數字），名字待定' },
+      { kind: 'change', text: '長按拿掉了，改成點一下叫出停住的選單，再點一下要的那一項；仍然可以按著滑過去再放開' },
+      { kind: 'change', text: '兩段輪盤一併拿掉 —— 它整個設計建立在「長按住再往外拖」上，沒有長按就沒有它' },
+      { kind: 'change', text: '扇形的起伏與傾斜角可以在原型裡即時調，找到喜歡的數字再定下來' },
+      { kind: 'change', text: 'App 本體的導覽還沒動' },
+    ],
+  },
   {
     v: '0.18.0', date: '2026-09-22', title: '抽牌儀式：星空、洗牌、攤扇、翻牌',
     items: [

@@ -10,7 +10,7 @@ globalThis.__LAB_NO_BOOT = true;            // 只要幾何，不要整個畫面
 Object.defineProperty(globalThis, 'innerWidth', { value: 390, writable: true, configurable: true });
 Object.defineProperty(globalThis, 'innerHeight', { value: 844, writable: true, configurable: true });
 
-const { LAYOUTS, CATS, opts } = await import('../lab/nav.js');
+const { LAYOUTS, CATS, opts, ARC } = await import('../lab/nav.js');
 
 /* 分類列在畫面下方，所以按下的位置大致在下緣；左右從最邊邊掃到最邊邊 */
 const ANCHORS = [];
@@ -18,16 +18,49 @@ for (const x of [24, 60, 120, 195, 270, 330, 366]) for (const y of [700, 760, 80
 
 const COUNTS = [...new Set(CATS.map(c => c.items.length))].sort();
 
+test('分類：工具在最左、人際與名數合併、每一類都有東西', () => {
+  assert.equal(CATS.length, 5);
+  assert.equal(CATS[0].key, 'tool', '工具要在最左邊');
+  const all = CATS.flatMap(c => c.items.map(i => i.t));
+  assert.equal(new Set(all).size, all.length, '同一個功能不該出現在兩類');
+  for (const must of ['合盤', '面談', '姓名', '數字']) {
+    assert.ok(CATS.find(c => c.key === 'bond').items.some(i => i.t === must), `「關係」少了 ${must}`);
+  }
+  for (const c of CATS) {
+    assert.ok(c.items.length >= 2, `${c.name} 只有 ${c.items.length} 項，不值得單獨一類`);
+    assert.ok(c.items.length <= 6, `${c.name} 有 ${c.items.length} 項，一次要挑太多`);
+    assert.ok(c.name.length === 2, `${c.name} 不是兩個字，扇形上排不整齊`);
+  }
+});
+
+test('扇形是對稱的：中間最高、兩端一樣低', () => {
+  const mid = (CATS.length - 1) / 2;
+  const dy = CATS.map((_, i) => ARC.rise * ((i - mid) / mid) ** 2);
+  const rot = CATS.map((_, i) => ARC.tilt * ((i - mid) / mid));
+  assert.equal(dy[mid], 0, '正中間應該是最高點');
+  assert.equal(rot[mid], 0, '正中間不該傾斜');
+  for (let i = 0; i < CATS.length; i++) {
+    const j = CATS.length - 1 - i;
+    assert.ok(Math.abs(dy[i] - dy[j]) < 1e-9, '左右不對稱');
+    assert.ok(Math.abs(rot[i] + rot[j]) < 1e-9, '左右傾斜不對稱');
+    if (i < mid) assert.ok(dy[i] > dy[i + 1], '越靠中間應該越高');
+  }
+  assert.equal(Math.max(...dy), ARC.rise, '兩端的落差要等於設定值');
+});
+
 test('原型的檔案都在，而且 HTML 指到對的地方', () => {
   for (const f of ['lab/nav.html', 'lab/nav.css', 'lab/nav.js']) assert.ok(existsSync(f), `少了 ${f}`);
   const html = readFileSync('lab/nav.html', 'utf8');
+  const js = readFileSync('lab/nav.js', 'utf8');
+  assert.ok(!/長按/.test(html.replace(/已經沒有長按了/, '')), 'HTML 還在講長按');
+  assert.ok(!/setTimeout\(fire/.test(js), '長按的計時器沒清乾淨');
   assert.match(html, /\.\.\/styles\/tokens\.css/, '應該沿用 App 的設計代幣');
   assert.match(html, /\.\/nav\.css/);
   assert.match(html, /type="module" src="\.\/nav\.js"/);
 });
 
-test('四種版面都在，而且各自寫了好處與代價', () => {
-  assert.deepEqual(Object.keys(LAYOUTS), ['radial', 'arc', 'list', 'nested']);
+test('三種版面都在，而且各自寫了好處與代價', () => {
+  assert.deepEqual(Object.keys(LAYOUTS), ['radial', 'arc', 'list']);
   for (const [k, L] of Object.entries(LAYOUTS)) {
     assert.ok(L.name && L.tag && L.desc, k);
     assert.ok(L.pros?.length >= 2, `${k} 至少要講兩個好處`);
