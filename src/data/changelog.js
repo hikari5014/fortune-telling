@@ -2,11 +2,23 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.10.0';
+export const APP_VERSION = '0.11.0';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.11.0', date: '2026-09-22', title: '測試與 CI',
+    items: [
+      { kind: 'add', text: '補上 198 個自動化測試，涵蓋曆法、行星、星盤、八宅、八字、擇日、姓名、數字、易經、塔羅、求籤、紫微、提示詞與語調' },
+      { kind: 'add', text: '每次推送與部署前都會跑一次，沒過就不上線；零相依，用 Node 內建的測試器' },
+      { kind: 'add', text: '模組載入測試：node --check 攔不住重複匯出，只有真的 import 才會發現（之前就是這樣弄壞提示詞頁的）' },
+      { kind: 'add', text: '繪製測試：18 個頁面都要跑得完並吐出內容，沒有出生資料時也不能爆' },
+      { kind: 'fix', text: '八字頁與方位頁的 render 原本是讀全域狀態而不是路由傳進來的資料，與其他 16 頁不一致' },
+      { kind: 'fix', text: '變數面板漏列了 surname、chars、bazi_strength 等 10 個變數，模板用得到卻插不進去' },
+      { kind: 'fix', text: '變數面板有一項重複' },
+    ],
+  },
   {
     v: '0.10.0', date: '2026-09-22', title: '分享碼 · 自訂首頁 · 快速搜尋',
     items: [

@@ -8,8 +8,12 @@ export const VARS = [
   { v: 'astro', d: '星盤區塊' }, { v: 'astro_table', d: '十二宮表' },
   { v: 'ziwei', d: '紫微摘要' }, { v: 'ziwei_table', d: '紫微全盤表' },
   { v: 'naming', d: '姓名五格' }, { v: 'lifepath', d: '生命靈數' }, { v: 'numbers', d: '號碼磁場' },
+  { v: 'bazi_strength', d: '八字旺衰區塊' }, { v: 'astro_aspects', d: '星盤相位區塊' }, { v: 'luck', d: '大運流年區塊' },
+  { v: 'surname', d: '姓氏' }, { v: 'surname_strokes', d: '姓氏筆畫' }, { v: 'stroke_combos', d: '指定的筆畫組合' },
+  { v: 'chars', d: '要查筆畫的字' }, { v: 'candidates', d: '候選號碼' }, { v: 'goal', d: '想強化的面向' },
+  { v: 'dayinfo', d: '擇日：選定日子的資料' }, { v: 'guainfo', d: '方位：本命卦與八方位' },
   { v: 'data', d: '所有勾選的資料區塊' },
-  { v: 'divination', d: '卜卦／塔羅結果' }, { v: 'dayinfo', d: '擇日：選定日子的資料' }, { v: 'other', d: '第二個人的資料' }, { v: 'synastry', d: '合盤分析結果' },
+  { v: 'divination', d: '卜卦／塔羅結果' }, { v: 'other', d: '第二個人的資料' }, { v: 'synastry', d: '合盤分析結果' },
   { v: 'question', d: '我的問題' }, { v: 'focus', d: '從功能頁帶過來的聚焦項目' }, { v: 'lang', d: '輸出語言' }, { v: 'tone', d: '語氣' }, { v: 'register', d: '語調（白話/文言）' },
   { v: 'depth', d: '深度' }, { v: 'format', d: '輸出格式' }, { v: 'length', d: '長度' },
 ];

@@ -24,6 +24,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # 沒過就不部署。零相依：Node 內建的 node:test，不需要 npm install
+      - name: Run tests
+        run: node --test --test-reporter=spec tests/*.test.js
+
       # 避免 App 版號與離線快取版號不同步就上線
       - name: Check version consistency
         run: python3 tools/check_version.py
