@@ -291,7 +291,7 @@
 
 
 /* iOS：Safari 工具列收合會改變 dvh，改用穩定的 svh；水平捲動容器不串連 */
-.yearstrip, .track-row, .tabbar, .deck { scroll-behavior: auto; }
+.yearstrip, .track-row, .dock, .deck { scroll-behavior: auto; }
 
 /* 關於 / 更新紀錄 */
 .verhero { display: grid; gap: var(--sp-2); }
@@ -327,15 +327,16 @@
 .relitem li[data-kind="fix"] .relitem__tag { border-style: dashed; }
 .relitem li[data-kind="data"] .relitem__tag { border-style: dotted; }
 
-/* 有新版本時的提示點 */
-:root[data-updated="1"] #tab-more, :root[data-updated="1"] .rail .tab[data-path="/about"] { position: relative; }
-:root[data-updated="1"] #tab-more::after,
+/* 有新版本時的提示點。關於在「工具」底下，所以點掛在工具那一顆上 */
+:root[data-updated="1"] .dock__cat[data-cat="tool"],
+:root[data-updated="1"] .rail .tab[data-path="/about"] { position: relative; }
+:root[data-updated="1"] .dock__cat[data-cat="tool"]::after,
 :root[data-updated="1"] .rail .tab[data-path="/about"]::after {
-  content: ""; position: absolute; top: 7px; right: 9px; width: 7px; height: 7px; border-radius: 50%;
+  content: ""; position: absolute; top: 4px; right: 6px; width: 7px; height: 7px; border-radius: 50%;
   background: var(--ink); box-shadow: 0 0 0 2px var(--bg);
   animation: dotpulse 1.8s var(--ease) infinite;
 }
-:root[data-updated="1"] #tab-more[aria-current="page"]::after { background: var(--invert-ink); box-shadow: none; }
+:root[data-updated="1"] .dock__cat[data-cat="tool"][aria-expanded="true"]::after { background: var(--invert-ink); box-shadow: none; }
 @keyframes dotpulse { 50% { transform: scale(.62); opacity: .55; } }
 
 /* ── 求籤 ──────────────────────────────────────────── */
@@ -536,7 +537,7 @@
 
 .cmpbar {
   position: fixed; left: 50%; transform: translateX(-50%);
-  bottom: calc(env(safe-area-inset-bottom) + 76px); z-index: 45;
+  bottom: calc(env(safe-area-inset-bottom) + 146px); z-index: 46;
   display: flex; align-items: center; gap: var(--sp-3);
   padding: 9px var(--sp-4); border-radius: var(--r-full);
   background: var(--surface); border: 1px solid var(--line);

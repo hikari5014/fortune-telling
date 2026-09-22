@@ -31,36 +31,58 @@
 .iconbtn svg { width: 20px; height: 20px; }
 
 /* 底部 Tab（手機） */
-.tabbar {
-  position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 10px); z-index: 30;
-  transform: translateX(-50%);
-  display: flex; align-items: center; gap: 2px;
-  padding: 5px; border: 1px solid var(--line); border-radius: var(--r-full);
+/* 底部導覽（手機）─────────────────────────────────
+   四個分類排成扇形：中間最高、兩端往下沉，按鈕跟著微微外傾。
+   弧度由 data/nav.js 的 arcShape() 算成 --dy / --rot 兩個變數丟進來，
+   不量容器寬度，所以轉螢幕、換字級都自己會跟上。
+
+   正中央下面那顆圓的是首頁 —— 它不是分類而是「回到原點」的鍵，
+   形狀不一樣才一眼分得出來，而且拇指最好按的位置留給最常按的東西。 */
+.dock {
+  /* 疊在分類選單之上（30 < 45），選單開著時還看得到是哪一類被點開；
+     但抽屜（50/51）仍然蓋得住它。 */
+  position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 8px); z-index: 45;
+  transform: translateX(-50%) translateZ(0);
+  display: flex; flex-direction: column; align-items: center;
+  padding: 8px 10px 10px; border: 1px solid var(--line); border-radius: var(--r-4);
   background: color-mix(in srgb, var(--bg) 96%, transparent);
   box-shadow: var(--shadow);
-  max-width: calc(100vw - 20px); overflow-x: auto; scrollbar-width: none;
-  overscroll-behavior-x: contain;
-  transform: translateX(-50%) translateZ(0);
+  max-width: calc(100vw - 20px);
 }
 @media (hover: hover) and (pointer: fine) {
-  .tabbar { background: color-mix(in srgb, var(--bg) 78%, transparent); backdrop-filter: blur(18px) saturate(1.3); }
+  .dock { background: color-mix(in srgb, var(--bg) 80%, transparent); backdrop-filter: blur(18px) saturate(1.3); }
 }
-.tabbar::-webkit-scrollbar { display: none; }
-.tabbar__ind {
-  position: absolute; top: 5px; height: calc(100% - 10px); border-radius: var(--r-full);
-  background: var(--invert-bg); z-index: 0;
-  transition: transform var(--dur-4) var(--spring), width var(--dur-4) var(--spring), opacity var(--dur-2);
+.dock__arc { display: flex; align-items: flex-start; gap: 4px; }
+.dock__cat { transform: translateY(var(--dy, 0)) rotate(var(--rot, 0)); }
+.dock__cat:active { transform: translateY(var(--dy, 0)) rotate(var(--rot, 0)) scale(.92); }
+.dock .tab { color: var(--ink-3); }
+/* 「你在這一類」跟「這一類的選單開著」要分得出來：
+   前者亮起來但仍是底色，後者整顆反白 —— 兩個都反白會分不清楚。 */
+.dock__cat[aria-current="page"] { background: var(--surface-2); color: var(--ink); }
+.dock__cat[aria-expanded="true"] { background: var(--invert-bg); color: var(--invert-ink); }
+.dock__cat[aria-expanded="true"] span { color: var(--invert-ink); }
+/* 兩個 class 疊出優先權：通則的 .tab 也在改圓角與尺寸 */
+.dock .tab.dock__home {
+  margin-top: -10px; width: 54px; height: 54px; min-width: 0; padding: 0;
+  border-radius: 50%; place-items: center;
+  border: 1px solid var(--line-2); background: var(--surface-2); color: var(--ink);
+  box-shadow: var(--shadow);
 }
+.dock .tab.dock__home svg { width: 24px; height: 24px; }
+.dock .tab.dock__home[aria-current="page"] {
+  background: var(--invert-bg); color: var(--invert-ink); border-color: var(--invert-bg);
+}
+.dock .tab.dock__home:active { transform: scale(.9); }
 .tab {
   position: relative; z-index: 1; isolation: isolate; display: grid; place-items: center; gap: 1px;
-  min-width: 52px; height: 50px; padding-inline: 7px; border-radius: var(--r-full);
-  color: var(--ink-3); transition: color var(--dur-3) var(--ease), transform var(--dur-2) var(--spring);
+  min-width: 54px; height: 46px; padding-inline: 7px; border-radius: var(--r-3);
+  color: var(--ink-3);
+  transition: color var(--dur-3) var(--ease), background var(--dur-3) var(--ease), transform var(--dur-2) var(--spring);
 }
 .tab:active { transform: scale(.92); }
-.tab svg { width: 21px; height: 21px; }
+.tab svg { width: 20px; height: 20px; }
 .tab span { font-size: 10px; letter-spacing: .12em; }
-.tab[aria-current="page"] { color: var(--invert-ink); }
-@media (min-width: 900px) { .tabbar { display: none; } }
+@media (min-width: 900px) { .dock { display: none; } }
 
 /* 側邊 Rail（桌機） */
 .rail { display: none; }
@@ -81,6 +103,8 @@
   .rail .tab:hover { background: var(--surface-2); color: var(--ink); }
   .rail .tab[aria-current="page"] { background: var(--invert-bg); color: var(--invert-ink); }
   .rail .tab span { font-size: 10px; }
+  /* 側欄照樣把全部頁面列出來（空間夠、滑鼠也快），但順序照分類分段 */
+  .rail__sep { display: block; width: 26px; height: 1px; background: var(--line); margin: var(--sp-2) 0; flex: none; }
 }
 
 /* 卡片 */
@@ -193,7 +217,7 @@
 
 /* 底部抽屜 */
 .sheet-scrim {
-  position: fixed; inset: 0; z-index: 40;
+  position: fixed; inset: 0; z-index: 50;
   background: color-mix(in srgb, var(--bg) 82%, transparent);
   opacity: 0; transition: opacity var(--dur-2) var(--ease);
 }
@@ -205,7 +229,7 @@
   /* 用 margin-inline 置中，不要用 left:50% + translateX(-50%)：
      那會讓開場動畫的 transform 同時補間 X 與 Y，抽屜變成從右下角斜著滑進來。
      transform 保留給動畫獨佔。 */
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 41;
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 51;
   width: min(620px, 100%); margin-inline: auto;
   max-height: calc(88svh - var(--kb, 0px)); display: flex; flex-direction: column;
   background: var(--bg); border: 1px solid var(--line); border-bottom: 0;
@@ -225,7 +249,7 @@
 .sheet__body { padding: var(--sp-5); overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
 
 /* 吐司 */
-.toast-root { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 76px); z-index: 60; transform: translateX(-50%); display: grid; gap: var(--sp-2); pointer-events: none; width: max-content; max-width: calc(100vw - 32px); }
+.toast-root { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 128px); z-index: 60; transform: translateX(-50%); display: grid; gap: var(--sp-2); pointer-events: none; width: max-content; max-width: calc(100vw - 32px); }
 @media (min-width: 900px) { .toast-root { bottom: var(--sp-5); } }
 .toast {
   padding: 11px var(--sp-5); border-radius: var(--r-full);
@@ -244,7 +268,7 @@
    用 :has() 判斷，不必在 JS 那邊記得加減 class。 */
 .fabbar {
   position: fixed; left: 50%; z-index: 28;
-  bottom: calc(env(safe-area-inset-bottom) + 78px);
+  bottom: calc(env(safe-area-inset-bottom) + 130px);
   transform: translateX(-50%) translateZ(0);
   display: flex; align-items: center; gap: 6px;
   padding: 6px; border: 1px solid var(--line); border-radius: var(--r-full);
@@ -264,8 +288,8 @@
 @media (min-width: 900px) { .fabbar { bottom: var(--sp-5); } }
 
 /* 讓位：頁面底部留白、Toast 都要避開這條列 */
-body:has(.fabbar) { padding-bottom: calc(156px + env(safe-area-inset-bottom)); }
-body:has(.fabbar) .toast-root { bottom: calc(env(safe-area-inset-bottom) + 146px); }
+body:has(.fabbar) { padding-bottom: calc(208px + env(safe-area-inset-bottom)); }
+body:has(.fabbar) .toast-root { bottom: calc(env(safe-area-inset-bottom) + 198px); }
 @media (min-width: 900px) {
   body:has(.fabbar) { padding-bottom: calc(var(--sp-6) + 74px); }
   body:has(.fabbar) .toast-root { bottom: calc(var(--sp-5) + 66px); }
@@ -358,3 +382,41 @@ input[type="range"]:active::-webkit-slider-thumb { transform: scale(1.18); }
 :root[data-motion="off"] .tour__panel, :root[data-motion="off"] .tour__art svg { animation: none; }
 @media (prefers-reduced-motion: reduce) { .tour__panel, .tour__art svg { animation: none; } }
 .tour__badge { text-align: center; margin-top: var(--sp-3); }
+
+/* 分類選單（點一下分類跳出來，停在畫面上）────────
+   規矩只有一條：看得到哪一項，放開就要選到那一項。 */
+/* 層次：選單(40) < 導覽列(45) < 抽屜(50/51) < Toast(60) < 抽牌儀式(70)。
+   position: fixed 本身就會開一個堆疊脈絡，所以這裡的 z-index 要一次定好，
+   子元素再怎麼調都跳不出這一層。 */
+.navmenu { position: fixed; inset: 0; z-index: 40; touch-action: none; }
+.navmenu__scrim {
+  position: absolute; inset: 0; background: color-mix(in srgb, var(--bg) 58%, transparent);
+  opacity: 0; transition: opacity var(--dur-3) var(--ease);
+}
+@supports (backdrop-filter: blur(1px)) {
+  .navmenu__scrim { backdrop-filter: blur(0px); transition: opacity var(--dur-3) var(--ease), backdrop-filter var(--dur-3) var(--ease); }
+  .navmenu.is-in .navmenu__scrim { backdrop-filter: blur(7px) saturate(.8); }
+}
+.navmenu.is-in .navmenu__scrim { opacity: 1; }
+.navmenu__list { position: absolute; transform: translateX(-50%); display: grid; gap: 4px; }
+.navmenu__i {
+  display: grid; grid-template-columns: 24px 1fr auto; align-items: center; gap: var(--sp-3);
+  height: 46px; padding: 0 var(--sp-4);
+  border: 1px solid var(--line); border-radius: var(--r-2);
+  background: var(--surface); color: var(--ink); box-shadow: var(--shadow);
+  user-select: none; -webkit-user-drag: none;
+  opacity: 0; transform: translateY(10px) scale(.96);
+  transition: opacity var(--dur-2) var(--ease), transform var(--dur-4) var(--spring),
+              background var(--dur-2) var(--ease), border-color var(--dur-2) var(--ease), color var(--dur-2) var(--ease);
+  transition-delay: calc(var(--i, 0) * 22ms);
+}
+.navmenu.is-in .navmenu__i { opacity: 1; transform: none; }
+.navmenu__i svg { width: 20px; height: 20px; }
+.navmenu__i span { font-size: var(--step--1); letter-spacing: .1em; }
+.navmenu__i em { font-family: var(--font-num); font-style: normal; font-size: 9px; letter-spacing: .14em; color: var(--ink-4); }
+.navmenu__i[aria-current="page"] { border-color: var(--ink-3); }
+.navmenu__i.is-hot {
+  background: var(--invert-bg); color: var(--invert-ink); border-color: var(--invert-bg);
+  transform: scale(1.03);
+}
+.navmenu__i.is-hot em { color: color-mix(in srgb, var(--invert-ink) 55%, transparent); }

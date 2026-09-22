@@ -2,11 +2,26 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.18.2';
+export const APP_VERSION = '0.19.0';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.19.0', date: '2026-09-22', title: '導覽大改：扇形分類 · 圓形首頁',
+    items: [
+      { kind: 'change', text: '底部導覽換成四個分類排成的扇形：工具、命盤、占卜、人際。中間最高、兩端往下沉，按鈕跟著微微外傾' },
+      { kind: 'change', text: '正中央下面那顆圓的是首頁 —— 拇指最好按的位置留給最常按的東西' },
+      { kind: 'add', text: '點一下分類，底下的功能排成一列停在畫面上；再點一下要的那一項，或按著滑過去再放開' },
+      { kind: 'change', text: '沒有長按：長按每次都要先等三百毫秒，而且對手指不方便的人不友善' },
+      { kind: 'change', text: '「更多」那顆按鈕拿掉了 —— 十九個功能現在四類全包，不必再開一層面板' },
+      { kind: 'change', text: '「你在這一類」跟「這一類的選單開著」分成兩種樣子：前者亮起但仍是底色，後者整顆反白' },
+      { kind: 'change', text: '選單開著時導覽列浮在遮罩之上，看得到是哪一類被點開；抽屜仍然蓋得住全部' },
+      { kind: 'change', text: '左右滑動切頁與左右方向鍵改照畫面上的順序走，跟桌機側欄看到的一致' },
+      { kind: 'change', text: '桌機側欄照樣把全部頁面列出來（空間夠、滑鼠也快），但順序照分類分段' },
+      { kind: 'data', text: '路由表與分類合併到 src/data/nav.js，改了一邊不會忘了另一邊' },
+    ],
+  },
   {
     v: '0.18.2', date: '2026-09-22', title: '導覽原型：併成四類、首頁改圓形',
     items: [
