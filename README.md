@@ -6,6 +6,12 @@
 
 > 零建置、零相依套件。原生 ES Modules + CSS，開一個靜態伺服器就能跑。
 
+## 版本
+
+目前 **v0.3.0（demo）**。版號與完整更新紀錄都在 App 的「關於」頁，
+單一來源在 `src/data/changelog.js`；`tools/check_version.py` 會確認它與 `sw.js`
+的離線快取版號一致，CI 在部署前會跑這個檢查。
+
 ## 快速開始
 
 ```bash

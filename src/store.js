@@ -38,6 +38,8 @@ const DEFAULT_SETTINGS = {
   promptDisclaimer: true,
   promptPrefix: '',
   promptSuffix: '',
+  // 內部：上次看過的版號
+  seenVersion: null,
 };
 
 const listeners = new Set();

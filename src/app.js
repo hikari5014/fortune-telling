@@ -5,6 +5,7 @@ import { html, raw, $, $$, toast, haptic } from './ui.js';
 import { observeReveal, initFeedback, initSwipe, runCountUps } from './motion.js';
 import { register, navigate, resolve, start, path, query } from './router.js';
 import { computeAll } from './prompt/context.js';
+import { APP_VERSION } from './data/changelog.js';
 
 export const NAV = [
   { p: '/',          t: '首頁', icon: 'home',     eyebrow: 'XUAN JIAN',      tab: 1 },
@@ -20,6 +21,7 @@ export const NAV = [
   { p: '/records',   t: '紀錄', icon: 'records',  eyebrow: 'READINGS' },
   { p: '/profile',   t: '檔案', icon: 'profile',  eyebrow: 'PROFILES' },
   { p: '/settings',  t: '設定', icon: 'settings', eyebrow: 'SETTINGS' },
+  { p: '/about',     t: '關於', icon: 'info',     eyebrow: 'ABOUT' },
 ];
 
 const VIEWS = {
@@ -36,6 +38,7 @@ const VIEWS = {
   '/records':  () => import('./views/records.js'),
   '/profile':  () => import('./views/profile.js'),
   '/settings': () => import('./views/settings.js'),
+  '/about':    () => import('./views/about.js'),
 };
 for (const [p, loader] of Object.entries(VIEWS)) register(p, async () => (await loader()).default);
 
@@ -141,9 +144,19 @@ function trackKeyboard() {
   sync();
 }
 
+/** 比對上次看過的版號，決定是否顯示「有新版本」提示 */
+function checkVersionSeen() {
+  const seen = store.settings.seenVersion;
+  if (seen === APP_VERSION) return;
+  if (!seen) { store.setSettings({ seenVersion: APP_VERSION }); return; }   // 初次使用不提示
+  document.documentElement.dataset.updated = '1';
+  setTimeout(() => toast(`已更新到 v${APP_VERSION}，點「關於」看更新內容`, 4200), 1400);
+}
+
 function boot() {
   applyChrome();
   trackKeyboard();
+  checkVersionSeen();
   buildNav();
   syncThemeBtn();
   initFeedback();
@@ -188,7 +201,16 @@ function boot() {
   addEventListener('resize', () => syncNav(path()));
 
   if ('serviceWorker' in navigator) {
-    addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+    const hadController = !!navigator.serviceWorker.controller;
+    let reloading = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!hadController || reloading) return;   // 首次安裝不重載
+      reloading = true;
+      location.reload();
+    });
+    addEventListener('load', () => navigator.serviceWorker.register('./sw.js')
+      .then(reg => { window.__swReg = reg; })
+      .catch(() => {}));
   }
   let deferred = null;
   addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferred = e; window.__installPrompt = e; });
