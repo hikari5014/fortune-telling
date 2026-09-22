@@ -2,7 +2,7 @@ import { html, raw, $, $$, sheet, toast, copyText, confirmSheet, md, fmtDate, do
 import { icon } from '../icons.js';
 import { store } from '../store.js';
 import { resolve } from '../router.js';
-import { DISCLAIMER, sectionHead } from './_shared.js';
+import { DISCLAIMER, sectionHead, doShare } from './_shared.js';
 
 export default {
   title: '解讀紀錄', eyebrow: 'READINGS',
@@ -47,11 +47,16 @@ export default {
           <div class="md">${raw(md(r.content))}</div>`,
         actions: html`<div class="row" style="gap:var(--sp-2)">
           <button class="btn btn--ghost press" data-copy style="flex:1">${raw(icon('copy'))} 複製內容</button>
+          <button class="btn btn--ghost press" data-share>${raw(icon('share'))} 長圖</button>
           <button class="btn btn--ghost press" data-prompt>${raw(icon('prompt'))} 原提示詞</button>
           <button class="btn btn--ghost press" data-del>${raw(icon('trash'))}</button>
         </div>`,
         onMount(sr, close) {
           $('[data-copy]', sr).addEventListener('click', () => copyText(r.content));
+          $('[data-share]', sr).addEventListener('click', async () => {
+            const { recordCard } = await import('../sharecards.js');
+            doShare(() => recordCard(r), `玄鑑-${r.templateName || '解讀'}.png`);
+          });
           $('[data-prompt]', sr).addEventListener('click', () => {
             close();
             setTimeout(() => sheet({

@@ -4,7 +4,7 @@ import { store } from '../store.js';
 import { resolve } from '../router.js';
 import { shakeQian, castJiao, toText, BUILTIN_SET, normalizeSet, SET_SCHEMA, luckScore } from '../engines/qian.js';
 import { observeReveal } from '../motion.js';
-import { DISCLAIMER, sectionHead, kv } from './_shared.js';
+import { DISCLAIMER, sectionHead, kv, shareBtn, doShare } from './_shared.js';
 
 const luckCls = (l) => ['大吉', '上吉', '吉'].includes(l) ? 'luck--good' : l === '中吉' || l === '中平' ? 'luck--half' : 'luck--bad';
 const allSets = () => [BUILTIN_SET, ...store.qianSets];
@@ -194,6 +194,7 @@ export default {
         <div class="row" style="gap:var(--sp-2);margin-top:var(--sp-4)">
           <button class="btn btn--primary press" id="ask">${raw(icon('prompt'))} 請 LLM 解籤</button>
           <button class="btn btn--ghost press" id="copy-q">${raw(icon('copy'))} 複製籤詩</button>
+          ${shareBtn('q-share', '長圖')}
           <button class="btn btn--ghost press" id="again">${raw(icon('refresh'))} 重新求籤</button>
         </div>`;
       observeReveal(stage);
@@ -207,6 +208,10 @@ export default {
       });
       $('#copy-q', stage).addEventListener('click', () => copyText(plain, '籤詩已複製'));
       $('#again', stage).addEventListener('click', reset);
+      $('#q-share', stage).addEventListener('click', async () => {
+        const { qianCard } = await import('../sharecards.js');
+        doShare(() => qianCard(poem, q, set.name, set.source), `玄鑑-第${poem.n}籤.png`);
+      });
       $('#ask', stage).addEventListener('click', () => {
         store.setDraft('qianResult', plain);
         location.hash = `/prompt?t=qian&q=${encodeURIComponent(q)}`;

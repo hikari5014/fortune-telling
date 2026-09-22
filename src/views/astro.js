@@ -1,7 +1,7 @@
 import { html, raw, $, $$, sheet } from '../ui.js';
 import { icon } from '../icons.js';
 import { wheelSVG, SIGNS, HOUSE_MEANING } from '../engines/astro.js';
-import { DISCLAIMER, needProfile, sectionHead, kv, promptLink, pad } from './_shared.js';
+import { DISCLAIMER, needProfile, sectionHead, kv, promptLink, pad, shareBtn, doShare } from './_shared.js';
 
 const ELEMENT_TEXT = { 火: '行動、直覺、熱度', 土: '務實、穩定、累積', 風: '思考、交流、彈性', 水: '情感、直覺、連結' };
 
@@ -76,11 +76,16 @@ export default {
           ${raw(promptLink('astro-big3', '解讀日月升'))}
           <a class="btn btn--ghost press" href="#/prompt?t=bazi-deep">${raw(icon('prompt'))} 八字格局</a>
           <a class="btn btn--ghost press" href="#/prompt?t=overview">${raw(icon('spark'))} 命盤總覽</a>
+          ${shareBtn('a-share', '存成長圖')}
         </div>
       </section>
       ${DISCLAIMER}`;
   },
-  mount(root, { all }) {
+  mount(root, { all, profile }) {
+    $('#a-share', root)?.addEventListener('click', async () => {
+      const { natalCard } = await import('../sharecards.js');
+      doShare(() => natalCard(all, profile), '玄鑑-命盤.png');
+    });
     const btn = $('#toggle-houses', root);
     btn?.addEventListener('click', () => {
       const box = $('#houses', root);
