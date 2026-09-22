@@ -61,6 +61,14 @@ export default {
           ${raw(row('左右滑動切頁', '在觸控裝置上左右滑動切換分頁。方向鎖定後才會跟手，螢幕邊緣讓給系統返回手勢。', sw('set-swipe', s.swipeNav)))}
           ${raw(row('觸覺回饋', hapticNote(), sw('set-haptics', s.haptics)))}
           ${raw(row('指標光暈', '游標附近的漸層光暈。觸控裝置一律關閉，避免拖曳時畫面抖動。', sw('set-glow', s.pointerGlow)))}
+          ${raw(row('命盤特效',
+            '完整：星盤畫出相位連線、星體有光暈、刻度環極慢自轉；紫微的宮格依序浮現、三方四正描邊。'
+            + '輕量：只保留進場動畫。動畫強度設為「關閉」或系統要求減少動態時，這裡一律失效。',
+            seg('set-fx', [['off', '關閉'], ['subtle', '輕量'], ['full', '完整']], s.chartEffects)))}
+          ${raw(row('分數用色階',
+            '契合度、擇日、姓名、號碼的分數環用 0 紅 → 100 綠的色階。'
+            + '關閉則維持純黑白。色階只是輔助，圈中央的數字本來就在，紅綠色盲也讀得到。',
+            sw('set-scorecolor', s.scoreColor !== false)))}
         </section>
 
         <section class="setgroup reveal">
@@ -145,10 +153,11 @@ export default {
     bindSeg('set-theme', 'theme');
     bindSeg('set-density', 'density');
     bindSeg('set-register', 'register');
+    bindSeg('set-fx', 'chartEffects');
     bindSeg('set-motion', 'motion');
     bindSeg('set-zi', 'lateZiRule');
     bindSeg('set-wai', 'wageWaiRule');
-    ['set-swipe|swipeNav', 'set-haptics|haptics', 'set-glow|pointerGlow', 'set-tst|trueSolarTime', 'set-pdisc|promptDisclaimer', 'set-numeral|numeralRule']
+    ['set-swipe|swipeNav', 'set-haptics|haptics', 'set-glow|pointerGlow', 'set-scorecolor|scoreColor', 'set-tst|trueSolarTime', 'set-pdisc|promptDisclaimer', 'set-numeral|numeralRule']
       .forEach(x => { const [id, key] = x.split('|'); bindSw(id, key); });
     bindVal('set-tz', 'tzOffset', Number);
     bindVal('set-city', 'city');

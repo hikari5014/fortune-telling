@@ -5,14 +5,20 @@ import { focusBtn, goFocus, hourWarning, DISCLAIMER, needProfile, sectionHead, k
 
 export default {
   title: '紫微斗數', eyebrow: 'ZI WEI DOU SHU',
-  render({ all, profile }) {
+  render({ all, profile, settings }) {
     if (!all?.ziwei) return needProfile();
     const z = all.ziwei;
+    const fx = settings.chartEffects ?? 'full';
+    // 命宮的三方四正（本宮、對宮、兩個三合宮）在完整特效下描邊
+    const life = z.lifePalace.branch;
+    const TRI = new Set([life, (life + 4) % 12, (life + 8) % 12, (life + 6) % 12]);
+    let ci = 0;
 
     const cell = (p) => p === null ? '' : html`
-      <div class="zw__cell press ${p.isLife ? 'is-life' : ''}" data-b="${p.branch}" tabindex="0" role="button" aria-label="${p.name}">
+      <div class="zw__cell press ${p.isLife ? 'is-life' : ''} ${fx === 'full' && TRI.has(p.branch) && !p.isLife ? 'is-tri' : ''}"
+           style="--i:${ci++}" data-b="${p.branch}" tabindex="0" role="button" aria-label="${p.name}">
         <div class="zw__stars">
-          ${raw(p.main.map(s => `<span class="s-main">${s}</span>`).join(''))}
+          ${raw(p.main.map((s, k) => `<span class="s-main" style="--i:${k}">${s}</span>`).join(''))}
           ${raw(p.lucky.map(s => `<span class="s-sub">${s}</span>`).join(''))}
           ${raw(p.sha.map(s => `<span class="s-sub">${s}</span>`).join(''))}
           ${raw(p.hua.map(s => `<span class="s-sub">${s.slice(-2)}</span>`).join(''))}
@@ -26,7 +32,7 @@ export default {
     return html`
       ${raw(hourWarning(profile, ['紫微']))}
       <section class="reveal">
-        <div class="zw">
+        <div class="zw ${fx !== 'off' ? 'zw--fx' : ''}">
           ${raw(z.grid.slice(0, 4).map(cell).join(''))}
           ${raw(cell(z.grid[4]))}
           <div class="zw__center">

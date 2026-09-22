@@ -2,11 +2,24 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.12.0';
+export const APP_VERSION = '0.13.0';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.13.0', date: '2026-09-22', title: '分數色階 · 命盤特效',
+    items: [
+      { kind: 'add', text: '契合度、擇日、姓名、號碼的分數環改用色階：0 紅 → 100 綠，填滿的動畫照舊' },
+      { kind: 'change', text: '顏色只是第三個管道 —— 同一個分數同時由圓環填滿的長度、中央的數字與顏色表達，紅綠色盲照樣讀得到' },
+      { kind: 'change', text: '八字旺衰的圈圈刻意不套色階：那裡 100 分代表「極度身強」而不是「好」，染成綠色會誤導' },
+      { kind: 'add', text: '星盤特效：內圈畫出相位連線（實線和諧、虛線緊張，容許度越小畫得越實）、星體有光暈、刻度環極慢自轉、盤面依序繪出' },
+      { kind: 'add', text: '紫微特效：宮格依序浮現、命宮的三方四正描邊、主星逐一浮現' },
+      { kind: 'add', text: '設定頁可切命盤特效的關閉／輕量／完整，以及分數色階的開關' },
+      { kind: 'change', text: '光暈用一圈低透明度描邊做，不用 SVG 濾鏡 —— 濾鏡在手機上很貴' },
+      { kind: 'change', text: '動畫強度設為「關閉」或系統要求減少動態時，特效一律失效；特效也不會改變任何位置與數字' },
+    ],
+  },
   {
     v: '0.12.0', date: '2026-09-22', title: '觸覺回饋 · 分享碼 · 時辰不詳',
     items: [

@@ -47,7 +47,7 @@ export default {
             <p class="hint">康熙總筆畫 <span class="num">${n.totalStrokes}</span> · 三才 ${n.sancai.config}
               <span class="luck ${luckCls(n.sancai.luck)}">${n.sancai.luck}</span></p>
           </div>
-          ${raw(dial(n.score, '姓名評分'))}
+          ${raw(dial(n.score, '姓名評分', { scale: true }))}
         </div>
         <p style="margin-top:var(--sp-3);font-size:var(--step--1);color:var(--ink-2);line-height:1.8">${n.sancai.detail}<br>${n.sancai.text}</p>
       </section>

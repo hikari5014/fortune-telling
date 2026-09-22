@@ -53,7 +53,7 @@ export default {
               ${label(pa)} × ${label(pb)}　${r.bazi ? r.bazi.dayMasters : ''}
             </p>
           </div>
-          ${raw(dial(r.score, '契合度'))}
+          ${raw(dial(r.score, '契合度', { scale: true }))}
         </div>
       </section>
 
