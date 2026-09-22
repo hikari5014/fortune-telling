@@ -84,10 +84,16 @@ b { font-weight: 500; }
 .arcbar { display: flex; align-items: flex-start; gap: 2px; }
 .arcbar .cat { transform: translateY(var(--dy, 0)) rotate(var(--rot, 0)); }
 .arcbar .cat.is-armed { transform: translateY(var(--dy, 0)) rotate(var(--rot, 0)) scale(1.14); }
-/* 首頁卡在扇形正中央下面的凹處 */
-.cat--home { margin-top: -2px; background: var(--invert-bg); color: var(--invert-ink); min-width: 64px; box-shadow: var(--shadow); }
-.cat--home span { color: var(--invert-ink); }
-.cat--home.is-armed { transform: scale(1.1); }
+/* 首頁卡在扇形正中央下面的凹處。做成圓的 ——
+   它不是分類而是一顆「回到原點」的鍵，形狀不一樣才一眼分得出來。 */
+/* 用兩個 class 疊出優先權 —— 通則的 .cat 寫在後面，不加重就會被蓋回去 */
+.cat.cat--home {
+  margin-top: 2px; width: 58px; height: 58px; min-width: 0; padding: 0;
+  border-radius: 50%; place-items: center;
+  background: var(--invert-bg); color: var(--invert-ink); box-shadow: var(--shadow);
+}
+.cat.cat--home svg { width: 25px; height: 25px; }
+.cat.cat--home.is-armed { transform: scale(1.1); }
 .cat {
   position: relative; display: grid; place-items: center; gap: 2px;
   min-width: 56px; padding: 9px 8px; border-radius: var(--r-3);
