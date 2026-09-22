@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5">
-<title>玄鑑 — 導覽方案試玩</title>
+<title>玄鑑 — 導覽（扇形分類 · 滑選清單）</title>
 <meta name="description" content="四種分類導覽互動的可試玩原型：輪盤、拇指扇、滑選清單、兩段輪盤。">
 <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)">
 <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
@@ -28,17 +28,18 @@
 <header class="bar">
   <div>
     <p class="bar__eyebrow">NAVIGATION LAB</p>
-    <h1 class="bar__title">導覽方案試玩</h1>
+    <h1 class="bar__title">導覽試玩</h1>
   </div>
   <button class="iconbtn" id="theme" aria-label="切換深淺色"></button>
 </header>
 
 <main id="app">
   <section class="intro">
-    <p>功能變多以後，平鋪的清單就不好找了。這裡有四種「分類 → 細項」的互動可以直接玩，
-      每一種都同時支援<b>觸控</b>與<b>滑鼠</b>。</p>
-    <p class="hint">用法一樣：<b>按住</b>分類不放 → 跳出選單 → <b>不放手直接滑</b>到想要的 →
-      放開就選中。想慢慢看的話，<b>輕點一下</b>分類，選單會停在畫面上讓你點。</p>
+    <p>分類列排成<b>扇形</b>，正中央下面那顆是<b>首頁</b>，工具收在最左邊。
+      底下的細項用<b>滑選清單</b>呈現 —— 這是已經選定的方向。</p>
+    <p class="hint">用法：<b>點一下</b>分類，選單就停在畫面上；再<b>點一下</b>要的那一項。
+      也可以<b>按著滑過去再放開</b>，兩種都通。已經沒有長按了。<br>
+      另外兩種排法（輪盤、拇指扇）留著讓你對照，換過去之後操作方式完全一樣。</p>
   </section>
 
   <nav class="modes" id="modes" aria-label="選擇方案"></nav>
@@ -60,9 +61,11 @@
 
   <section class="card">
     <div class="card__head"><h2>參數</h2></div>
-    <label class="opt"><span>長按多久跳出選單<b id="hold-v">260 ms</b></span>
-      <input type="range" id="hold" min="120" max="600" step="20" value="260"></label>
-    <label class="opt"><span>選單半徑<b id="rad-v">118 px</b></span>
+    <label class="opt"><span>扇形起伏<b id="rise-v">30 px</b></span>
+      <input type="range" id="rise" min="0" max="56" step="2" value="30"></label>
+    <label class="opt"><span>按鈕外傾<b id="tilt-v">13°</b></span>
+      <input type="range" id="tilt" min="0" max="26" step="1" value="13"></label>
+    <label class="opt"><span>選單半徑（輪盤／拇指扇才用得到）<b id="rad-v">118 px</b></span>
       <input type="range" id="rad" min="80" max="170" step="2" value="118"></label>
     <label class="opt opt--row"><span>震動回饋</span><input type="checkbox" id="haptic" checked></label>
     <label class="opt opt--row"><span>畫出手指的方向線</span><input type="checkbox" id="ray" checked></label>
