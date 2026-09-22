@@ -44,6 +44,8 @@ const DEFAULT_SETTINGS = {
   qianNeed: 1,               // 擲筊確認需要幾個聖筊（1 或 3）
   qianVertical: false,       // 籤詩直書（部分字型缺垂直度量，預設關閉）
   dayPurpose: 'open',        // 擇日預設事項
+  compassNorthUp: true,      // 方位盤上北（手機指南針畫法）；false 為傳統上南
+  zhaiSit: '',               // 住宅坐向（八卦方位名，空字串為未設定）
 };
 
 const listeners = new Set();

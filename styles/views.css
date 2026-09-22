@@ -440,3 +440,25 @@
 .sheetcards { display: grid; }
 .sheetcards .card { border: 0; background: transparent; padding: 0; margin-top: var(--sp-5) !important; }
 .sheetcards .card:first-child { margin-top: 0 !important; }
+
+/* ── 方位（八宅） ─────────────────────────────────── */
+.guahead { font-family: var(--font-display); font-size: clamp(2rem, 9vw, 2.8rem); line-height: 1.1; letter-spacing: .04em; display: flex; align-items: baseline; gap: 8px; margin: 2px 0 4px; }
+.guahead b { font-weight: 700; }
+
+.compass { width: 100%; max-width: 330px; margin-inline: auto; display: block; }
+.compass .cp__ring { fill: none; stroke: var(--line); }
+.compass .cp__sec { cursor: pointer; }
+.compass .cp__sec path { stroke: var(--line); stroke-width: 1; transition: fill var(--dur-2) var(--ease), stroke var(--dur-2) var(--ease); }
+.compass .cp__sec.is-good path { fill: var(--surface-2); }
+.compass .cp__sec.is-bad  path { fill: transparent; stroke-dasharray: 3 3; stroke: var(--line-2); }
+.compass .cp__sec text { text-anchor: middle; fill: var(--ink-2); font-family: var(--font-body); pointer-events: none; }
+.compass .cp__dir  { font-size: 13px; fill: var(--ink); letter-spacing: .06em; }
+.compass .cp__star { font-size: 11px; letter-spacing: .06em; }
+.compass .cp__sym  { font-size: 13px; fill: var(--ink-3); }
+.compass .cp__top  { text-anchor: middle; font-size: 11px; fill: var(--ink-3); letter-spacing: .2em; }
+.compass .cp__sec.is-good:hover path,
+.compass .cp__sec.is-active path { fill: var(--invert-bg); stroke: var(--invert-bg); }
+.compass .cp__sec.is-good:hover text,
+.compass .cp__sec.is-active text { fill: var(--invert-ink); }
+.compass .cp__sec.is-bad:hover path { fill: var(--surface-2); stroke-dasharray: none; }
+.compass .cp__sec:focus-visible path { stroke: var(--ink); stroke-width: 2; }

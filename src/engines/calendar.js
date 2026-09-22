@@ -326,6 +326,7 @@ export function fourPillars({ y, m, d, h = 12, minute = 0, tz = 8, lateZiRule = 
   });
   return {
     year: mk(yearGZ), month: mk(monthGZ), day: mk(dayGZ), hour: mk(hourGZ),
+    yearForGZ,                                   // 以立春為界的「命理年」，八宅本命卦要用
     zodiac: ZODIAC[yearGZ % 12],
     jieqi: jie.name,
     hourName: HOUR_NAMES[hourIdx] + '時',

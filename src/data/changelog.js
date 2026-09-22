@@ -2,11 +2,24 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.5.1';
+export const APP_VERSION = '0.6.0';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.6.0', date: '2026-09-22', title: '方位',
+    items: [
+      { kind: 'add', text: '新增「方位」頁：由出生年與性別推本命卦，定東四命／西四命' },
+      { kind: 'add', text: '八個方位的生氣、天醫、延年、伏位、絕命、五鬼、六煞、禍害，各附適合擺什麼' },
+      { kind: 'add', text: '可轉的方位盤，吉方實心、凶方虛線，點任一格看細節；可切上北（指南針畫法）或上南（傳統風水圖）' },
+      { kind: 'add', text: '可填住宅坐向，算出宅卦並判斷與本命卦合不合' },
+      { kind: 'change', text: '方位的八星與數字磁場是同一套，方位細節裡直接列出對應的數字組合' },
+      { kind: 'add', text: '新增「方位建議」提示詞模板，要求 LLM 分清楚哪些有實際道理、哪些屬象徵層面，且不得推銷開運物品' },
+      { kind: 'data', text: '遊年卦變全部由爻象推導，不查表：對稱性、八星不重不漏、東西四命分組三項結構檢驗皆通過' },
+      { kind: 'change', text: '四柱多回傳一個以立春為界的「命理年」，供本命卦使用' },
+    ],
+  },
   {
     v: '0.5.1', date: '2026-09-22', title: '擇日修正',
     items: [
