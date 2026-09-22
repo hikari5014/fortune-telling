@@ -6,6 +6,7 @@ import { observeReveal, initFeedback, initSwipe, runCountUps, initSeg } from './
 import { register, navigate, resolve, start, path, query } from './router.js';
 import { computeAll } from './prompt/context.js';
 import { APP_VERSION } from './data/changelog.js';
+import { isPrivate, CHART_WARNING } from './privacy.js';
 
 export const NAV = [
   { p: '/',          t: '首頁', icon: 'home',     eyebrow: 'XUAN JIAN',      tab: 1 },
@@ -113,13 +114,24 @@ function syncThemeBtn() {
 }
 
 /* ── 繪製 ──────────────────────────────── */
+
+/* 保密檔案在命盤頁上的提醒：擋不住的事要先講，不要讓人誤以為擋得住 */
+const CHART_PAGES = new Set(['/astro', '/ziwei', '/bazi', '/fortune', '/direction',
+  '/synastry', '/numbers', '/naming', '/prompt']);
+const privacyNote = (c, p) => (CHART_PAGES.has(p) && isPrivate(c.profile)
+  ? `<div class="warn" style="margin-bottom:var(--sp-4)">
+       <div class="warn__head">${icon('info')} 保密檔案</div>
+       <p class="warn__p">${CHART_WARNING}</p>
+     </div>`
+  : '');
+
 let lastPath = '/';
 async function paint(view, p) {
   const c = ctx();
   const nav = NAV.find(n => n.p === p) || NAV[0];
   const doRender = (animateFallback) => {
     const root = $('#view');
-    root.innerHTML = view.render(c);
+    root.innerHTML = privacyNote(c, p) + view.render(c);
     $('#top-title').textContent = typeof view.title === 'function' ? view.title(c) : (view.title || nav.t);
     $('#top-eyebrow').textContent = view.eyebrow || nav.eyebrow;
     $('#btn-back').hidden = p === '/';

@@ -275,8 +275,13 @@ function writeFormat(t, ec, mask, size) {
   t[size - 8][8] = true;                      // 固定的深色模組
 }
 
-/** 畫成 SVG（黑白線稿，可縮放） */
-export function toSVG(text, { ec = 'M', margin = 4, cls = 'qr' } = {}) {
+/**
+ * 畫成 SVG。顏色直接寫在屬性上而不是只靠 class：
+ * 這張圖可能被存成圖片、貼到別的地方、或由 <img> 載入 ——
+ * 那些情境都吃不到外部樣式表，只剩一片黑。class 仍然留著當掛勾。
+ * 也刻意不跟著深色主題反轉：不是每台掃描器都讀得了反相的碼。
+ */
+export function toSVG(text, { ec = 'M', margin = 4, cls = 'qr', light = '#ffffff', dark = '#0a0a0a' } = {}) {
   const { modules, size } = encode(text, { ec });
   const dim = size + margin * 2;
   let path = '';
@@ -290,8 +295,8 @@ export function toSVG(text, { ec = 'M', margin = 4, cls = 'qr' } = {}) {
       c += run;
     }
   }
-  return `<svg class="${cls}" viewBox="0 0 ${dim} ${dim}" role="img" aria-label="QR code" shape-rendering="crispEdges">
-    <rect width="${dim}" height="${dim}" class="qr__bg"/>
-    <path d="${path}" class="qr__fg"/>
+  return `<svg class="${cls}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${dim} ${dim}" role="img" aria-label="QR code" shape-rendering="crispEdges">
+    <rect width="${dim}" height="${dim}" class="qr__bg" fill="${light}"/>
+    <path d="${path}" class="qr__fg" fill="${dark}"/>
   </svg>`;
 }

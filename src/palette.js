@@ -3,6 +3,7 @@
 import { html, raw, $, $$, sheet, fmtDate } from './ui.js';
 import { icon } from './icons.js';
 import { store } from './store.js';
+import { isPrivate, nameOf } from './privacy.js';
 
 const norm = (s) => String(s || '').toLowerCase();
 
@@ -12,11 +13,13 @@ function buildIndex(NAV) {
     hay: norm(`${n.t} ${n.eyebrow} ${n.p}`),
   }));
   for (const p of store.profiles) {
-    const name = (p.surname || '') + (p.givenName || '') || p.label || '未命名';
+    const name = nameOf(p);
+    // 保密檔案連搜尋結果都不露出生日，也不讓生日當搜尋關鍵字
     items.push({
       kind: '檔案', icon: 'profile', title: name,
-      sub: `${p.birth.y}-${String(p.birth.m).padStart(2, '0')}-${String(p.birth.d).padStart(2, '0')}　${p.city || ''}`,
-      href: '#/profile', hay: norm(`${name} ${p.label} ${p.city} ${p.birth.y}`),
+      sub: isPrivate(p) ? '保密' : `${p.birth.y}-${String(p.birth.m).padStart(2, '0')}-${String(p.birth.d).padStart(2, '0')}　${p.city || ''}`,
+      href: '#/profile',
+      hay: norm(isPrivate(p) ? `${name} ${p.label || ''}` : `${name} ${p.label} ${p.city} ${p.birth.y}`),
     });
   }
   for (const r of store.records.slice(0, 80)) {

@@ -116,6 +116,15 @@
 }
 .counter { font-family: var(--font-num); font-size: var(--step--2); color: var(--ink-3); }
 
+/* QR ——────────────────────────────────────────────
+   刻意不跟著深色主題反轉：黑底白碼雖然多數掃描器讀得出來，
+   但不是全部，而這張圖的唯一用途就是被掃。 */
+.qrbox { display: grid; place-items: center; gap: var(--sp-3); padding: var(--sp-4); background: #fff; border: 1px solid var(--line); border-radius: var(--r-2); }
+.qr { width: min(58vw, 232px); height: auto; display: block; }
+.qrbox small { color: #555; font-size: var(--step--2); font-family: var(--font-num); letter-spacing: .04em; }
+.qrbox.is-fail { background: var(--bg-2); }
+.qrbox.is-fail small { color: var(--ink-3); }
+
 /* 紀錄 */
 .rec { display: grid; gap: 6px; padding: var(--sp-4); border: 1px solid var(--line); border-radius: var(--r-3); background: var(--surface); text-align: left; width: 100%; }
 .rec__meta { display: flex; gap: var(--sp-2); flex-wrap: wrap; font-size: var(--step--2); color: var(--ink-3); font-family: var(--font-num); }

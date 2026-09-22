@@ -42,7 +42,14 @@ export function buildBlocks(A, settings) {
   const B = {};
   if (!A) return B;
   const p = A.profile;
-  B.basic = [
+  // 保密檔案：基本資料這一段不寫生日與農曆，其餘照常
+  B.basic = (p.private ? [
+    `姓名：${(p.surname || '') + (p.givenName || '') || '（未填）'}`,
+    `性別：${p.gender || '未填'}`,
+    '國曆生日：**當事人選擇不揭露**（推算已經用實際生日算完，只是不寫在這裡）',
+    p.birth?.hourUnknown ? '出生時辰不詳（一律用中午 12:00 代入）' : '',
+    `出生地：${p.city || settings.city}`,
+  ] : [
     `姓名：${(p.surname || '') + (p.givenName || '') || '（未填）'}`,
     `性別：${p.gender || '未填'}`,
     p.birth?.hourUnknown
@@ -50,7 +57,7 @@ export function buildBlocks(A, settings) {
       : `國曆生日：${A.base.y}-${pad(A.base.m)}-${pad(A.base.d)} ${pad(A.base.h)}:${pad(A.base.minute)}`,
     A.lunar ? `農曆：${A.lunar.year} 年 ${A.lunar.monthName}${A.lunar.dayName}` : '',
     `出生地：${p.city || settings.city}（東經 ${A.base.lon}、北緯 ${A.base.lat}，時區 UTC${A.base.tz >= 0 ? '+' : ''}${A.base.tz}）`,
-  ].filter(Boolean).join('\n');
+  ]).filter(Boolean).join('\n');
 
   if (A.bazi) {
     const z = A.bazi;

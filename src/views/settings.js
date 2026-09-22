@@ -106,7 +106,8 @@ export default {
         <section class="setgroup reveal">
           <div class="setgroup__head">資料</div>
           ${raw(row('檔案 / 模板 / 紀錄',
-            `${store.profiles.length} 份檔案 · ${store.templates.length} 個自訂模板 · ${store.records.length} 筆紀錄`,
+            `${store.profiles.length} 份檔案 · ${store.templates.length} 個自訂模板 · ${store.records.length} 筆紀錄`
+            + (store.profiles.some(p => p.private) ? `（其中 ${store.profiles.filter(p => p.private).length} 份保密，不會進備份檔）` : ''),
             `<button class="btn btn--ghost btn--sm press" id="btn-export">${icon('down')} 匯出</button>`))}
           ${raw(row('匯入備份', '會覆蓋同 ID 的資料。', `<button class="btn btn--ghost btn--sm press" id="btn-import">${icon('up')} 匯入</button>`))}
           ${raw(row('安裝為 App', `偵測到：${plat.os} · ${plat.browser}${plat.installed ? '（已從主畫面開啟）' : ''}。加到主畫面後是全螢幕、可離線。`,

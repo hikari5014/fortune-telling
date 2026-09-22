@@ -2,11 +2,26 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.14.0';
+export const APP_VERSION = '0.15.0';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.15.0', date: '2026-09-22', title: 'QR 分享 · 保密檔案',
+    items: [
+      { kind: 'add', text: '分享面板改頭換面：一張 QR、一條連結、一顆「傳給朋友」' },
+      { kind: 'add', text: 'QR 的內容是網址 —— 對方用內建相機對著掃就會跳出連結，點開直接把資料帶進 App，不必先安裝' },
+      { kind: 'add', text: '「傳給朋友」叫出系統分享面板，LINE、訊息、Telegram 由系統自己列；沒有系統分享的裝置改給各家的分享連結' },
+      { kind: 'add', text: '點連結進來會先讓你看清楚是誰、什麼時候生的，再決定要不要存' },
+      { kind: 'add', text: 'QR 產生器是自己寫的，零相依：1–15 版、四種更正等級、八種遮罩都實作了' },
+      { kind: 'add', text: '代填（保密檔案）：把手機遞給對方讓他自己填，按下確認後出生資料就不再顯示，只留名字' },
+      { kind: 'change', text: '保密檔案不能編輯、不能產生分享碼與 QR，備份匯出整份跳過，快速搜尋也不以生日為關鍵字' },
+      { kind: 'change', text: '保密檔案的提示詞會自動拿掉生日那幾行，並註明是當事人選擇不揭露' },
+      { kind: 'change', text: '說清楚它不是加密：資料仍在本機，而且命盤本身可以回推生日 —— 這句話在介面上照實寫出來' },
+      { kind: 'change', text: 'QR 不跟著深色主題反轉，永遠黑碼白底，因為不是每台掃描器都讀得了反相的碼' },
+    ],
+  },
   {
     v: '0.14.0', date: '2026-09-22', title: '新手教學 · 安裝指引',
     items: [

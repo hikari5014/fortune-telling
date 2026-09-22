@@ -141,10 +141,12 @@ export const store = {
   get drafts() { return read(K.drafts, {}); },
   setDraft(key, value) { const d = this.drafts; d[key] = value; write(K.drafts, d); },
 
+  /** 備份匯出。保密檔案整份跳過 —— 那是它承諾過的事。 */
   exportAll() {
+    const profiles = this.profiles.filter(p => !p.private);
     return {
       app: 'xuanjian', version: 1, exportedAt: new Date().toISOString(),
-      settings: this.settings, profiles: this.profiles, currentId: this.currentId,
+      settings: this.settings, profiles, currentId: this.currentId,
       templates: this.templates, records: this.records, candidates: this.candidates,
       qianSets: this.qianSets,
     };

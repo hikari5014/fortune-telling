@@ -267,6 +267,10 @@ test('toSVG 畫出四格留白與正確的方格數', () => {
   assert.match(svg, new RegExp(`viewBox="0 0 ${size + 8} ${size + 8}"`));
   assert.match(svg, /class="qr__bg"/);
   assert.match(svg, /class="qr__fg"/);
+  // 顏色要寫在屬性上：存成圖片或用 <img> 載入時吃不到外部樣式表
+  assert.match(svg, /<rect[^>]*fill="#ffffff"/);
+  assert.match(svg, /<path[^>]*fill="#0a0a0a"/);
+  assert.match(svg, /xmlns="http:\/\/www\.w3\.org\/2000\/svg"/);
   assert.match(svg, /role="img"/);
   assert.match(svg, /shape-rendering="crispEdges"/);
   // 路徑裡所有橫條的長度加起來，要等於黑格總數
