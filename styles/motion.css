@@ -1,19 +1,28 @@
 /* ── 動態系統：過場、進場、回饋 ─────────────────────────── */
 
-/* 1. 頁面過場（View Transitions；不支援時用下方 fallback） */
-@view-transition { navigation: auto; }
-::view-transition-old(root) { animation: vt-out var(--dur-3) var(--ease-in) both; }
-::view-transition-new(root) { animation: vt-in var(--dur-4) var(--ease-out) both; }
-@keyframes vt-out { to { opacity: 0; transform: translate3d(0,-10px,0) scale(.985); filter: blur(3px); } }
-@keyframes vt-in  { from { opacity: 0; transform: translate3d(0,16px,0) scale(.99); filter: blur(4px); } }
+/* 1. 頁面過場
+   只讓主內容區做過場。原本是對整頁（root）做快照，連帶把固定的側欄、
+   吸頂列、底部分頁一起位移縮放模糊，切換功能區塊時整個視窗都會晃。
+   改成只有 #view 有自己的 view-transition-name，其餘凍結不動。 */
+#view { view-transition-name: xj-view; }
 
-:root[data-nav="back"] ::view-transition-old(root) { animation-name: vt-out-back; }
-:root[data-nav="back"] ::view-transition-new(root) { animation-name: vt-in-back; }
-@keyframes vt-out-back { to { opacity: 0; transform: translate3d(0,14px,0) scale(1.01); } }
-@keyframes vt-in-back  { from { opacity: 0; transform: translate3d(0,-12px,0) scale(.99); } }
+::view-transition-old(root) { animation: none; opacity: 0; }
+::view-transition-new(root) { animation: none; opacity: 1; }
 
+::view-transition-old(xj-view) { animation: vt-out var(--dur-3) var(--ease-in) both; }
+::view-transition-new(xj-view) { animation: vt-in var(--dur-4) var(--ease-out) both; }
+/* 位移控制在 8px 以內、不做縮放與模糊：含蓄、也不會讓整片畫面重繪 */
+@keyframes vt-out { to { opacity: 0; transform: translate3d(0, -8px, 0); } }
+@keyframes vt-in  { from { opacity: 0; transform: translate3d(0, 8px, 0); } }
+
+:root[data-nav="back"] ::view-transition-old(xj-view) { animation-name: vt-out-back; }
+:root[data-nav="back"] ::view-transition-new(xj-view) { animation-name: vt-in-back; }
+@keyframes vt-out-back { to { opacity: 0; transform: translate3d(0, 8px, 0); } }
+@keyframes vt-in-back  { from { opacity: 0; transform: translate3d(0, -8px, 0); } }
+
+/* 不支援 View Transitions 時的退場方案（支援時不加這個 class，避免兩段動畫疊加） */
 .view.is-entering { animation: page-in var(--dur-4) var(--ease-out) both; }
-@keyframes page-in { from { opacity: 0; transform: translate3d(0, 14px, 0); } }
+@keyframes page-in { from { opacity: 0; transform: translate3d(0, 8px, 0); } }
 
 /* 2. 逐項進場（IntersectionObserver 加上 .is-in） */
 .reveal { opacity: 0; transform: translate3d(0, 18px, 0); will-change: opacity, transform; }
@@ -28,9 +37,17 @@
 .press:active { transform: scale(.972); }
 @media (hover: hover) { .press:hover { border-color: var(--line-2); } }
 
-/* 4. 漣漪 */
-.ripple { position: absolute; border-radius: 50%; pointer-events: none; transform: translate(-50%, -50%) scale(0); background: currentColor; opacity: .16; animation: ripple var(--dur-5) var(--ease-out) forwards; }
-@keyframes ripple { to { transform: translate(-50%,-50%) scale(1); opacity: 0; } }
+/* 4. 漣漪：放在裁切框內，按鈕本身不裁切，提示泡泡才不會被切掉 */
+.ripple-box { position: absolute; inset: 0; z-index: -1; overflow: hidden; border-radius: inherit; pointer-events: none; }
+.ripple {
+  position: absolute; border-radius: 50%; pointer-events: none;
+  background: currentColor; opacity: .16;
+  transform: translate(-50%, -50%) scale(0);
+  animation: ripple-in 520ms var(--ease-out) forwards;
+}
+.ripple.is-out { animation: ripple-in 520ms var(--ease-out) forwards, ripple-out 260ms linear forwards; }
+@keyframes ripple-in { to { transform: translate(-50%, -50%) scale(1); } }
+@keyframes ripple-out { to { opacity: 0; } }
 
 /* 5. 指標追蹤光暈（只在有滑鼠的裝置） */
 .track { position: relative; overflow: hidden; }
@@ -77,3 +94,103 @@
     animation-duration: 1ms !important; transition-duration: 1ms !important;
   }
 }
+
+/* ── 圖示互動層 ─────────────────────────────────────────
+   參考 Material Symbols 的 FILL / wght 概念：我們用的是自繪 SVG，
+   所以「變實心加粗」對應成 stroke-width 變粗，「語意動作」用 --ix 變數
+   替每個圖示定義滑過時要演的動作。全部只在有滑鼠的裝置啟用。 */
+svg[data-icon] {
+  transition: stroke-width var(--dur-2) var(--ease),
+              transform var(--dur-3) var(--ease),
+              color var(--dur-2) var(--ease),
+              opacity var(--dur-2) var(--ease);
+}
+
+/* 每個圖示滑過時「演一下」自己的意思 */
+svg[data-icon="home"]     { --ix: translateY(-2px); }
+svg[data-icon="profile"]  { --ix: scale(1.09); }
+svg[data-icon="astro"]    { --ix: rotate(45deg); }
+svg[data-icon="ziwei"]    { --ix: scale(1.08); }
+svg[data-icon="naming"]   { --ix: scale(1.07); }
+svg[data-icon="numbers"]  { --ix: rotate(12deg); }
+svg[data-icon="prompt"]   { --ix: translateX(2px); }
+svg[data-icon="records"]  { --ix: translateY(-2px); }
+svg[data-icon="settings"] { --ix: rotate(60deg); }
+svg[data-icon="refresh"]  { --ix: rotate(-120deg); }
+svg[data-icon="back"]     { --ix: translateX(-3px); }
+svg[data-icon="chev"]     { --ix: translateX(3px); }
+svg[data-icon="sun"]      { --ix: rotate(45deg); }
+svg[data-icon="moon"]     { --ix: rotate(-18deg); }
+svg[data-icon="copy"]     { --ix: translate(-2px, -2px); }
+svg[data-icon="check"]    { --ix: scale(1.16); }
+svg[data-icon="plus"]     { --ix: rotate(90deg); }
+svg[data-icon="close"]    { --ix: rotate(90deg); }
+svg[data-icon="trash"]    { --ix: rotate(-9deg); }
+svg[data-icon="down"]     { --ix: translateY(2px); }
+svg[data-icon="up"]       { --ix: translateY(-2px); }
+svg[data-icon="install"]  { --ix: translateY(2px); }
+svg[data-icon="share"]    { --ix: rotate(-14deg); }
+svg[data-icon="edit"]     { --ix: translate(2px, -2px); }
+svg[data-icon="dice"]     { --ix: rotate(-15deg) scale(1.06); }
+svg[data-icon="star"]     { --ix: rotate(72deg) scale(1.08); }
+svg[data-icon="spark"]    { --ix: rotate(15deg) scale(1.12); }
+svg[data-icon="clock"]    { --ix: rotate(30deg); }
+svg[data-icon="pin"]      { --ix: translateY(-2px); }
+svg[data-icon="search"]   { --ix: scale(1.13); }
+svg[data-icon="link"]     { --ix: rotate(-20deg); }
+svg[data-icon="swap"]     { --ix: translateX(2px); }
+svg[data-icon="info"]     { --ix: scale(1.11); }
+svg[data-icon="folder"]   { --ix: translateY(-2px); }
+
+@media (hover: hover) and (pointer: fine) {
+  :is(button, a, [role="button"], [role="switch"], .tile, .card, .chip, .tmpl, .profile, .rec, .signcard):hover svg[data-icon],
+  :is(button, a, [role="button"]):focus-visible svg[data-icon] {
+    stroke-width: 2.1;
+    transform: var(--ix, none);
+  }
+}
+/* 鍵盤聚焦也要看得到同樣的變化 */
+:is(button, a, [role="button"]):focus-visible svg[data-icon] { stroke-width: 2.1; }
+
+/* 提示泡泡（取代反應慢的瀏覽器 title）。佔用 ::after，裝飾請用 ::before */
+@media (hover: hover) and (pointer: fine) {
+  [data-tip] { position: relative; }
+  [data-tip]::after {
+    content: attr(data-tip);
+    position: absolute; top: calc(100% + 8px); left: 50%; z-index: 60;
+    padding: 5px 10px; border-radius: var(--r-1);
+    background: var(--invert-bg); color: var(--invert-ink);
+    font-size: var(--step--2); letter-spacing: .06em; white-space: nowrap;
+    opacity: 0; pointer-events: none;
+    transform: translate(-50%, -4px);
+    transition: opacity var(--dur-1) var(--ease), transform var(--dur-1) var(--ease);
+  }
+  [data-tip]:hover::after, [data-tip]:focus-visible::after {
+    opacity: 1; transform: translate(-50%, 0); transition-delay: 350ms;
+  }
+  [data-tip-pos="right"]::after { left: auto; right: 0; transform: translate(0, -4px); }
+  [data-tip-pos="right"]:hover::after { transform: translate(0, 0); }
+}
+
+/* 桌面側欄：指示條從中間長出來 */
+@media (min-width: 900px) {
+  .rail .tab::before {
+    content: ""; position: absolute; left: 0; top: 12px; bottom: 12px; width: 3px;
+    border-radius: 3px; background: var(--ink);
+    transform: scaleY(0); transform-origin: center;
+    transition: transform var(--dur-3) var(--ease);
+  }
+  .rail .tab:hover::before { transform: scaleY(.55); }
+  .rail .tab[aria-current="page"]::before { transform: scaleY(0); }
+}
+
+/* 分段控制：選中色塊滑到新位置，而不是瞬間跳過去 */
+.seg { isolation: isolate; }
+.seg__ind {
+  position: absolute; top: 3px; bottom: 3px; left: 0; width: var(--seg-w, 0);
+  border-radius: var(--r-full); background: var(--invert-bg); z-index: 0;
+  transform: translateX(var(--seg-x, 0));
+  transition: transform var(--dur-3) var(--spring), width var(--dur-3) var(--spring), opacity var(--dur-2);
+}
+.seg__ind[hidden] { display: none; }
+.seg:has(.seg__ind) button[aria-pressed="true"] { background: transparent; }

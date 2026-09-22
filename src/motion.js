@@ -32,18 +32,32 @@ export function observeReveal(root = document) {
 /* 漣漪 + 指標光暈（事件委派，全站生效） */
 const FINE_POINTER = matchMedia('(hover: hover) and (pointer: fine)').matches;
 
+const RIPPLE_SEL = '.btn, .iconbtn, .tab, .tile, .chip, .tmpl, .profile, .rec, .zw__cell, .luckstep, .yearstrip__y, .pair, .signcard';
+
 export function initFeedback() {
+  // 水波紋：按住不放時停在滿版，放開或移出才淡出（跟 Material 的手感一致）
   document.addEventListener('pointerdown', (e) => {
-    const t = e.target.closest('.btn, .iconbtn, .tab, .tile, .chip, .tmpl, .profile, .rec, .zw__cell');
-    if (!t || !motionOn()) return;
-    const r = t.getBoundingClientRect();
+    const host = e.target.closest(RIPPLE_SEL);
+    if (!host || host.disabled || !motionOn() || e.button !== 0) return;
+    const r = host.getBoundingClientRect();
+    let box = host.querySelector(':scope > .ripple-box');
+    if (!box) {
+      box = document.createElement('span');
+      box.className = 'ripple-box';
+      host.append(box);
+    }
     const span = document.createElement('span');
     span.className = 'ripple';
-    const size = Math.max(r.width, r.height) * 2.1;
+    const size = Math.hypot(r.width, r.height) * 2;
     span.style.cssText = `left:${e.clientX - r.left}px;top:${e.clientY - r.top}px;width:${size}px;height:${size}px`;
-    if (getComputedStyle(t).position === 'static') t.style.position = 'relative';
-    t.appendChild(span);
-    setTimeout(() => span.remove(), 820);
+    box.append(span);
+    const leave = () => {
+      span.classList.add('is-out');
+      setTimeout(() => span.remove(), 340);
+    };
+    host.addEventListener('pointerup', leave, { once: true });
+    host.addEventListener('pointerleave', leave, { once: true });
+    addEventListener('pointercancel', leave, { once: true });
   }, { passive: true });
 
   // 指標光暈只在真正有滑鼠時啟用：觸控裝置上每次拖曳都重繪固定層會造成畫面抖動
@@ -61,6 +75,39 @@ export function initFeedback() {
     }
   }, { passive: true });
 }
+
+/* ── 分段控制：選中色塊滑到新位置 ─────────────────────── */
+export function moveSegThumb(seg) {
+  const ind = seg.querySelector(':scope > .seg__ind');
+  if (!ind) return;
+  const on = seg.querySelector('button[aria-pressed="true"]');
+  if (!on || !on.offsetWidth) { ind.hidden = true; return; }   // 隱藏中量不到寬度
+  ind.hidden = false;
+  ind.style.setProperty('--seg-x', `${on.offsetLeft}px`);
+  ind.style.setProperty('--seg-w', `${on.offsetWidth}px`);
+}
+
+export function initSeg(root = document) {
+  root.querySelectorAll('.seg').forEach(seg => {
+    let ind = seg.querySelector(':scope > .seg__ind');
+    const first = !ind;
+    if (first) {
+      ind = document.createElement('span');
+      ind.className = 'seg__ind';
+      ind.setAttribute('aria-hidden', 'true');
+      ind.style.transition = 'none';                 // 第一次定位不要從 0 滑過來
+      seg.prepend(ind);
+    }
+    if (!seg.dataset.segBound) {
+      seg.dataset.segBound = '1';
+      // 各頁自己的 click 監聽先跑完改好 aria-pressed，這裡再量位置
+      seg.addEventListener('click', () => requestAnimationFrame(() => moveSegThumb(seg)));
+    }
+    moveSegThumb(seg);
+    if (first) requestAnimationFrame(() => { ind.style.transition = ''; });
+  });
+}
+addEventListener('resize', () => document.querySelectorAll('.seg').forEach(moveSegThumb));
 
 /* ── 左右滑動切頁 ──────────────────────────────────────────
    iOS 上會晃動的成因與對策：

@@ -8,6 +8,7 @@ const K = {
   records: 'xj.records',
   drafts: 'xj.drafts',
   candidates: 'xj.candidates',
+  qianSets: 'xj.qiansets',
 };
 
 const DEFAULT_SETTINGS = {
@@ -40,6 +41,9 @@ const DEFAULT_SETTINGS = {
   promptSuffix: '',
   // 內部：上次看過的版號
   seenVersion: null,
+  qianSetId: 'xuanjian60',
+  qianNeed: 1,               // 擲筊確認需要幾個聖筊（1 或 3）
+  qianVertical: false,       // 籤詩直書（部分字型缺垂直度量，預設關閉）
 };
 
 const listeners = new Set();
@@ -107,6 +111,11 @@ export const store = {
   addCandidate(c) { this.candidates = [c, ...this.candidates.filter(x => x.full !== c.full)].slice(0, 60); return c; },
   removeCandidate(id) { this.candidates = this.candidates.filter(c => c.id !== id); },
 
+  get qianSets() { return read(K.qianSets, []); },
+  set qianSets(v) { write(K.qianSets, v); emit('qianSets', v); },
+  addQianSet(set) { this.qianSets = [set, ...this.qianSets.filter(s => s.id !== set.id)].slice(0, 12); return set; },
+  removeQianSet(id) { this.qianSets = this.qianSets.filter(s => s.id !== id); },
+
   get drafts() { return read(K.drafts, {}); },
   setDraft(key, value) { const d = this.drafts; d[key] = value; write(K.drafts, d); },
 
@@ -115,6 +124,7 @@ export const store = {
       app: 'xuanjian', version: 1, exportedAt: new Date().toISOString(),
       settings: this.settings, profiles: this.profiles, currentId: this.currentId,
       templates: this.templates, records: this.records, candidates: this.candidates,
+      qianSets: this.qianSets,
     };
   },
   importAll(data, { merge = false } = {}) {
@@ -124,6 +134,7 @@ export const store = {
     if (data.templates) write(K.templates, merge ? dedupe([...this.templates, ...data.templates]) : data.templates);
     if (data.records) write(K.records, merge ? dedupe([...this.records, ...data.records]) : data.records);
     if (data.candidates) write(K.candidates, merge ? dedupe([...this.candidates, ...data.candidates]) : data.candidates);
+    if (data.qianSets) write(K.qianSets, merge ? dedupe([...this.qianSets, ...data.qianSets]) : data.qianSets);
     if (data.currentId) write(K.current, data.currentId);
     applyChrome(this.settings);
     emit('all', null);
