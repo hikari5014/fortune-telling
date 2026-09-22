@@ -2,11 +2,24 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.13.0';
+export const APP_VERSION = '0.14.0';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.14.0', date: '2026-09-22', title: '新手教學 · 安裝指引',
+    items: [
+      { kind: 'add', text: '第一次打開會跑一次新手教學：這個 App 怎麼運作、怎麼建資料、怎麼看盤、提示詞器三步驟、怎麼裝到主畫面' },
+      { kind: 'add', text: '教學可以隨時跳過，之後在設定頁「新手教學」可以重看；已經有出生資料的人視同老手，不會被打擾' },
+      { kind: 'add', text: '安裝指引會自動偵測裝置與瀏覽器，只給你這一台該做的步驟' },
+      { kind: 'data', text: '涵蓋 iPhone Safari／iPhone 其他瀏覽器／Android Chrome／Samsung Internet／Android Firefox／桌面 Chrome／Edge／Mac Safari／桌面 Firefox' },
+      { kind: 'change', text: 'iPad 會謊報成 Mac，改用觸控點數補判；Edge 與 Samsung 的 UA 裡都有 Chrome，判斷順序也處理了' },
+      { kind: 'change', text: '桌面 Firefox 沒有內建安裝功能，就直說沒有，不給錯的步驟' },
+      { kind: 'change', text: '偵測靠 User-Agent 不一定準，所以一定附上「其他平台的做法」讓人自己找' },
+      { kind: 'change', text: '能叫出瀏覽器原生安裝提示時就直接叫，不靠猜' },
+    ],
+  },
   {
     v: '0.13.0', date: '2026-09-22', title: '分數色階 · 命盤特效',
     items: [

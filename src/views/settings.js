@@ -6,6 +6,7 @@ import { resolve } from '../router.js';
 import { dictSize } from '../data/strokes.js';
 import { APP_VERSION, APP_STAGE, CHANGELOG } from '../data/changelog.js';
 import { DISCLAIMER } from './_shared.js';
+import { detect } from '../platform.js';
 
 
 const row = (title, desc, control) => html`
@@ -40,6 +41,7 @@ const select = (id, list, value) => html`<select class="select" id="${id}" style
 export default {
   title: '設定', eyebrow: 'SETTINGS',
   render({ settings: s }) {
+    const plat = detect();
     return html`
       <div class="stack">
         <section class="setgroup reveal">
@@ -107,7 +109,12 @@ export default {
             `${store.profiles.length} 份檔案 · ${store.templates.length} 個自訂模板 · ${store.records.length} 筆紀錄`,
             `<button class="btn btn--ghost btn--sm press" id="btn-export">${icon('down')} 匯出</button>`))}
           ${raw(row('匯入備份', '會覆蓋同 ID 的資料。', `<button class="btn btn--ghost btn--sm press" id="btn-import">${icon('up')} 匯入</button>`))}
-          ${raw(row('安裝為 App', '加到主畫面後可離線使用。', `<button class="btn btn--ghost btn--sm press" id="btn-install">${icon('install')} 安裝</button>`))}
+          ${raw(row('安裝為 App', `偵測到：${plat.os} · ${plat.browser}${plat.installed ? '（已從主畫面開啟）' : ''}。加到主畫面後是全螢幕、可離線。`,
+            `<button class="btn btn--ghost btn--sm press" id="btn-install">${icon('install')} ${plat.installed ? '已安裝' : '安裝'}</button>`))}
+          ${raw(row('安裝步驟說明', '看這台裝置該怎麼裝，也可以展開其他平台的做法。',
+            `<button class="btn btn--ghost btn--sm press" id="btn-guide">${icon('info')} 看說明</button>`))}
+          ${raw(row('新手教學', '從頭走一次：建立出生資料、看命盤、用提示詞器。',
+            `<button class="btn btn--ghost btn--sm press" id="btn-tour">${icon('spark')} 重看</button>`))}
           ${raw(row('重設所有設定', '不會刪除檔案與紀錄。', `<button class="btn btn--ghost btn--sm press" id="btn-reset">${icon('refresh')} 重設</button>`))}
           ${raw(row('清除全部資料', '檔案、模板、紀錄、設定都會刪除。', `<button class="btn btn--ghost btn--sm press" id="btn-clear">${icon('trash')} 清除</button>`))}
         </section>
@@ -193,22 +200,9 @@ export default {
       };
       input.click();
     });
-    $('#btn-install', root).addEventListener('click', async () => {
-      const p = window.__installPrompt;
-      if (!p) {
-        sheet({ title: '安裝說明', body: html`<div class="stack">
-          <p style="color:var(--ink-2);line-height:1.9">
-            <b>iOS Safari</b>：分享 → 加入主畫面<br>
-            <b>Android Chrome</b>：右上選單 → 安裝應用程式<br>
-            <b>桌面 Chrome / Edge</b>：網址列右側的安裝圖示
-          </p>
-          <p class="hint">若瀏覽器沒有提供安裝選項，通常是因為網站需要以 HTTPS 提供。</p></div>` });
-        return;
-      }
-      p.prompt(); const { outcome } = await p.userChoice;
-      toast(outcome === 'accepted' ? '安裝中…' : '已取消');
-      window.__installPrompt = null;
-    });
+    $('#btn-install', root).addEventListener('click', () => import('../install.js').then(m => m.openInstall()));
+    $('#btn-guide', root).addEventListener('click', () => import('../install.js').then(m => m.showGuide()));
+    $('#btn-tour', root).addEventListener('click', () => import('../onboarding.js').then(m => m.startTour()));
     $('#btn-reset', root).addEventListener('click', async () => {
       if (await confirmSheet('重設設定', '所有偏好會回到預設值，檔案與紀錄保留。', '重設')) {
         store.resetSettings(); invalidate(); toast('已重設'); resolve();
