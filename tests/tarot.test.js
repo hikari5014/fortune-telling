@@ -1,7 +1,7 @@
 /* 塔羅：牌組完整性、三十六旬、本命牌、今日一張、命盤對照 */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readdirSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { installDOM } from './_dom.js';
 installDOM();
 
@@ -48,9 +48,11 @@ test('每一張都有正逆位與關鍵字，沒有空欄位', () => {
   assert.equal(COURT_ROLE.length, 4);
 });
 
-test('圖檔跟牌一一對應，檔案真的在', () => {
+test('圖檔跟牌一一對應，檔案真的在（外加一張牌背）', () => {
   const files = new Set(readdirSync('assets/tarot').filter(f => f.endsWith('.webp')).map(f => f.slice(0, -5)));
-  assert.equal(files.size, 78, '圖檔數不對');
+  assert.ok(files.has('back'), '少了牌背 back.webp');
+  files.delete('back');
+  assert.equal(files.size, 78, '牌面圖檔數不對');
   for (const c of DECK) assert.ok(files.has(c.img), `${c.full} 少了圖 ${c.img}.webp`);
 });
 
@@ -250,4 +252,70 @@ test('輸出的文字帶得上加厚的牌義與命盤對照', () => {
   const bare = T.toText(r, '');
   assert.ok(!/對照本命盤/.test(bare));
   assert.ok(!/本命牌/.test(bare));
+});
+
+/* ── 抽牌儀式 ─────────────────────────────────────── */
+
+/** 讀 WebP（lossy VP8）的寬高 —— 只為了確認牌背與牌面比例一致 */
+function webpSize(file) {
+  const b = readFileSync(file);
+  assert.equal(b.toString('latin1', 0, 4), 'RIFF', file);
+  assert.equal(b.toString('latin1', 8, 12), 'WEBP', file);
+  assert.equal(b.toString('latin1', 12, 16), 'VP8 ', `${file} 不是 lossy VP8，這個讀法看不懂`);
+  return { w: b.readUInt16LE(26) & 0x3fff, h: b.readUInt16LE(28) & 0x3fff };
+}
+
+test('牌背跟牌面同一個比例 —— 翻牌時尺寸不能變', () => {
+  const back = webpSize('assets/tarot/back.webp');
+  const face = webpSize('assets/tarot/major-00.webp');
+  const rb = back.w / back.h, rf = face.w / face.h;
+  assert.ok(Math.abs(rb - rf) < 0.005,
+    `牌背 ${back.w}×${back.h}（${rb.toFixed(4)}）跟牌面 ${face.w}×${face.h}（${rf.toFixed(4)}）比例不同，翻牌會抽動`);
+  assert.ok(back.w >= 280, '牌背解析度太低，放大會糊');
+});
+
+test('儀式要不要播，該聽的設定都聽', async () => {
+  const { ceremonyOn } = await import('../src/tarotdraw.js');
+  assert.equal(ceremonyOn({}), true, '預設要播');
+  assert.equal(ceremonyOn({ tarotCeremony: true }), true);
+  assert.equal(ceremonyOn({ tarotCeremony: false }), false, '設定關掉就不播');
+  assert.equal(ceremonyOn({ motion: 'off' }), false, '動畫關閉就不播');
+  assert.equal(ceremonyOn({ motion: 'light' }), true);
+});
+
+test('挑位置抽牌：挑到第幾個位置就拿到洗好的第幾張', () => {
+  const order = T.shuffle(DECK, T.seededRandom('fixed'));
+  const picks = [5, 40, 77];
+  const r = T.fromPicks({ spread: 'advice', order, picks, reversed: [false, true, false] });
+  assert.equal(r.cards.length, 3);
+  r.cards.forEach((c, i) => {
+    assert.equal(c.id, order[picks[i]].id, `第 ${i} 張應該是洗好的第 ${picks[i]} 張`);
+    assert.equal(c.slot, ['現況', '阻礙', '建議'][i]);
+  });
+  assert.equal(r.cards[1].reversed, true);
+  assert.equal(r.cards[1].meaning, order[40].rev, '逆位要用逆位的解釋');
+  assert.equal(r.cards[0].meaning, order[5].up);
+  // 同一副牌、同樣的位置，結果必須一樣 —— 不能每次算出不同的牌
+  const again = T.fromPicks({ spread: 'advice', order, picks, reversed: [false, true, false] });
+  assert.deepEqual(again.cards.map(c => c.id), r.cards.map(c => c.id));
+});
+
+test('挑位置抽牌的整體判讀跟直接抽牌是同一套', () => {
+  const order = T.shuffle(DECK, T.seededRandom('n'));
+  // 湊一手全是大牌的，看「大牌偏多」有沒有跳出來
+  const majors = order.map((c, i) => [c, i]).filter(([c]) => c.arcana === '大').slice(0, 3).map(([, i]) => i);
+  const r = T.fromPicks({ spread: 'advice', order, picks: majors, reversed: [false, false, false] });
+  assert.equal(r.majors, 3);
+  assert.equal(r.revs, 0);
+  assert.ok(r.note.some(x => x.includes('大牌偏多')), r.note);
+  assert.ok(r.note.some(x => x.includes('全為正位')), r.note);
+});
+
+test('自訂牌陣也挑得了位置，位置名稱對得上', () => {
+  const order = T.shuffle(DECK, T.seededRandom('c'));
+  const mine = { key: 'mine', name: '我的', n: 2, slots: ['起', '落'], desc: '' };
+  const r = T.fromPicks({ spread: 'mine', order, picks: [1, 2], spreads: [...SPREADS, mine] });
+  assert.equal(r.spread.name, '我的');
+  assert.deepEqual(r.cards.map(c => c.slot), ['起', '落']);
+  assert.ok(r.cards.every(c => c.reversed === false), '沒給正逆位就一律正位');
 });

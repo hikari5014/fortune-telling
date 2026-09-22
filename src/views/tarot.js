@@ -12,7 +12,7 @@ import { html, raw, $, $$, sheet, copyText, haptic, toast, confirmSheet } from '
 import { icon } from '../icons.js';
 import { store, uid } from '../store.js';
 import { navigate } from '../router.js';
-import { draw, toText, SPREADS, DECK, birthCard, yearCard, chartLink, dailyCard, todayKey } from '../engines/tarot.js';
+import { draw, fromPicks, pickSpread, shuffle, toText, SPREADS, DECK, birthCard, yearCard, chartLink, dailyCard, todayKey } from '../engines/tarot.js';
 import { observeReveal } from '../motion.js';
 import { nameOf } from '../privacy.js';
 import { DISCLAIMER, sectionHead, needProfile } from './_shared.js';
@@ -311,7 +311,7 @@ export default {
       ${DISCLAIMER}`;
   },
 
-  mount(root, { profile, all, query }) {
+  mount(root, { profile, all, query, settings }) {
     const tab = TABS.some(t => t[0] === query.tab) ? query.tab : 'draw';
     $$('#ttab button', root).forEach(b => b.addEventListener('click', () => {
       haptic(6);
@@ -364,7 +364,21 @@ export default {
     const table = $('#table', root);
     $('#shuffle', root).addEventListener('click', async () => {
       const allowReversed = sw.getAttribute('aria-checked') === 'true';
-      const res = draw({ spread: sel.value, allowReversed, spreads: list });
+      const question = $('#tq', root).value.trim();
+
+      /* 儀式：洗牌 → 攤成扇形 → 自己挑 → 翻開。
+         牌在洗好的那一刻就定了，挑的是位置 —— 跟實體牌一樣。 */
+      let res = null;
+      const { ceremony, ceremonyOn } = await import('../tarotdraw.js');
+      if (ceremonyOn(settings)) {
+        const spread = pickSpread(sel.value, list);
+        const order = shuffle(DECK);
+        const got = await ceremony({ spread, order, question, allowReversed });
+        if (!got) return;                          // 中途離開就什麼都不做
+        res = fromPicks({ spread: sel.value, order, picks: got.picks, reversed: got.reversed, spreads: list });
+      } else {
+        res = draw({ spread: sel.value, allowReversed, spreads: list });
+      }
       const fast = document.documentElement.dataset.motion === 'off';
 
       table.innerHTML = html`
@@ -375,13 +389,14 @@ export default {
         <div id="detail"></div>`;
 
       const cells = $$('#deck .tcard', table);
+      const step = fast || ceremonyOn(settings) ? 10 : 210;   // 儀式裡已經一張一張翻過了
       for (let i = 0; i < res.cards.length; i++) {
-        await new Promise(r => setTimeout(r, fast ? 10 : 210));
+        await new Promise(r => setTimeout(r, step));
         cells[i].outerHTML = cardCell(res.cards[i], i);
-        haptic(8);
+        if (step > 100) haptic(8);
       }
 
-      const plain = toText(res, $('#tq', root).value.trim(), { astro: all?.astro, profile });
+      const plain = toText(res, question, { astro: all?.astro, profile });
       $('#detail', table).innerHTML = html`
         <div class="stack" style="margin-top:var(--sp-5)">
           ${raw(res.cards.map(c => cardDetail(c, all?.astro, { slot: c.slot })).join(''))}
@@ -404,7 +419,7 @@ export default {
       $('#redraw', table).addEventListener('click', () => { table.innerHTML = ''; scrollTo({ top: 0, behavior: 'smooth' }); });
       $('#ask', table).addEventListener('click', () => {
         store.setDraft('tarotResult', plain);
-        navigate(`/prompt?t=tarot&q=${encodeURIComponent($('#tq', root).value.trim())}`);
+        navigate(`/prompt?t=tarot&q=${encodeURIComponent(question)}`);
       });
       setTimeout(() => $('#detail', table).scrollIntoView({ behavior: 'smooth', block: 'start' }), 200);
     });

@@ -57,6 +57,7 @@ const DEFAULT_SETTINGS = {
   onboarded: false,          // 新手教學看過了沒
   tarotImages: true,         // 塔羅顯示偉特牌圖（關掉就用線稿卡，省流量）
   tarotChartLink: true,      // 塔羅牌面對照本命盤（大牌對行星星座、小牌對三十六旬）
+  tarotCeremony: true,       // 抽牌儀式：洗牌、攤扇、自己挑、翻開
 };
 
 const listeners = new Set();

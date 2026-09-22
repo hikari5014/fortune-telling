@@ -2,11 +2,25 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.17.2';
+export const APP_VERSION = '0.18.0';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.18.0', date: '2026-09-22', title: '抽牌儀式：星空、洗牌、攤扇、翻牌',
+    items: [
+      { kind: 'add', text: '按下抽牌後進到一支全螢幕過場：聚牌 → 洗牌 → 攤成扇形 → 你自己挑 → 自動翻開 → 進解說' },
+      { kind: 'add', text: '扇面攤開的是完整的七十八張。手指滑過去，底下那張會跳起來，放開才算數' },
+      { kind: 'add', text: '牌背用你給的「星辰」圖；背景是一層會閃爍的星空，偶爾有流星，選牌與翻牌時從那一點炸開星屑' },
+      { kind: 'change', text: '牌在洗好的那一刻就定了，你挑的是位置 —— 跟實體牌一樣，不是等你點完才決定要給你哪張' },
+      { kind: 'change', text: '這一頁永遠是暗的，不跟隨淺色主題：牌背是深藍配金，擺在白底上會很怪，而且抽牌本來就該像在夜裡做' },
+      { kind: 'change', text: '牌背補了左右邊，跟牌面調成同一個比例 —— 兩面尺寸不一樣的話，翻牌會抽動' },
+      { kind: 'change', text: '正面的圖等那張被挑走才載：七十八張一次載是兩百萬位元組，而且九成七不會被翻開' },
+      { kind: 'change', text: '動畫強度設成關閉、或系統要求減少動態時整段跳過 —— 會暈的人要的是不要動，不是動得比較快' },
+      { kind: 'add', text: '設定頁可以單獨關掉儀式，關了就直接出結果' },
+    ],
+  },
   {
     v: '0.17.2', date: '2026-09-22', title: '導覽改造的四個方案（可試玩）',
     items: [
