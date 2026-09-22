@@ -90,7 +90,7 @@ export default {
                 <input class="input" id="x-chars" value="${query.chars || ''}" placeholder="龘 齉 鑫"></div>
               <div class="field" data-for="name-pick"><label for="x-combos">筆畫組合</label>
                 <input class="input num" id="x-combos" value="${query.combos || ''}" placeholder="13+16、7+18"></div>
-              <div class="field" data-for="compat"><label for="x-other">第二個人</label>
+              <div class="field" data-for="compat hire"><label for="x-other">第二方（人或公司）</label>
                 ${raw(otherSelect(profile))}</div>
               <div class="field"><label for="x-extra">額外指示（直接接在最後）</label>
                 <textarea class="textarea" id="x-extra" style="min-height:72px"
@@ -214,13 +214,13 @@ export default {
       $('#preview', root).textContent = text;
       $('#count', root).textContent = `${text.length} 字元 · 約 ${estTokens(text)} tokens`;
       // 只顯示與這個模板有關的補充欄位
-      $$('[data-for]', root).forEach(el => { el.hidden = el.dataset.for !== active.id; });
+      $$('[data-for]', root).forEach(el => { el.hidden = !el.dataset.for.split(' ').includes(active.id); });
     };
 
     // 由網址帶入第二個人
     if (query.other) {
       const sel = $('#x-other', root);
-      if (sel) { sel.value = query.other; const p2 = store.profiles.find(x => x.id === query.other); otherAll = p2 ? computeAll(p2, settings) : null; }
+      if (sel) { sel.value = query.other; otherAll = partyChart(findParty(query.other), settings); }
     }
 
     // 模板選擇
@@ -310,8 +310,7 @@ export default {
       edited = null; hint.hidden = true; refresh();
     });
     $('#x-other', root)?.addEventListener('change', (e) => {
-      const p = store.profiles.find(x => x.id === e.target.value);
-      otherAll = p ? computeAll(p, settings) : null;
+      otherAll = partyChart(findParty(e.target.value), settings);
       refresh();
     });
 
@@ -490,12 +489,25 @@ function cvRows(map) {
     </div>`).join('');
 }
 
+/** 第二方：別人的出生資料，或公司／團隊的檔案 */
+export const findParty = (id) => store.profiles.find(x => x.id === id) || store.orgs.find(x => x.id === id) || null;
+
 function otherSelect(current) {
   const list = store.profiles.filter(p => p.id !== current?.id);
+  const orgs = store.orgs;
   return html`<select class="select" id="x-other">
     <option value="">（不附帶）</option>
     ${raw(list.map(p => html`<option value="${p.id}">${(p.surname || '') + (p.givenName || '') || p.label}</option>`).join(''))}
+    ${raw(orgs.length ? `<optgroup label="公司／團隊">${orgs.map(o => html`<option value="${o.id}">${o.label}</option>`).join('')}</optgroup>` : '')}
   </select>`;
+}
+
+/** 算第二方的盤。公司沒有性別，紫微那一套用不上，算完就拿掉。 */
+function partyChart(p, settings) {
+  if (!p) return null;
+  const isOrg = store.orgs.some(o => o.id === p.id);
+  const A = computeAll({ gender: '不設定', ...p, ...(isOrg ? { org: true } : {}) }, settings);
+  return isOrg ? { ...A, ziwei: null, limits: null, luck: null, naming: null } : A;
 }
 
 

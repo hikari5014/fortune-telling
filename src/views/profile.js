@@ -6,22 +6,13 @@ import { resolve, navigate, query } from '../router.js';
 import { toSVG } from '../qrcode.js';
 import { profileLink, linkCode, canSystemShare, systemShare, chatLinks } from '../sharelink.js';
 import { isPrivate, nameOf, birthLine } from '../privacy.js';
+import { CITIES } from '../data/cities.js';
 import { DISCLAIMER, sectionHead, pad } from './_shared.js';
 
 /* 分享碼只帶推算需要的欄位，不含紀錄、標籤或其他個人資料 */
 const PROFILE_FIELDS = ['surname', 'givenName', 'label', 'gender', 'birth', 'city', 'lat', 'lon', 'tz'];
 const slim = (p) => Object.fromEntries(PROFILE_FIELDS.filter(k => p[k] != null).map(k => [k, p[k]]));
 
-const CITIES = [
-  ['台北', 25.0330, 121.5654, 8], ['新北', 25.0169, 121.4627, 8], ['桃園', 24.9937, 121.3010, 8],
-  ['台中', 24.1477, 120.6736, 8], ['台南', 22.9999, 120.2269, 8], ['高雄', 22.6273, 120.3014, 8],
-  ['花蓮', 23.9871, 121.6015, 8], ['宜蘭', 24.7021, 121.7378, 8], ['新竹', 24.8138, 120.9675, 8],
-  ['嘉義', 23.4801, 120.4491, 8], ['香港', 22.3193, 114.1694, 8], ['澳門', 22.1987, 113.5439, 8],
-  ['北京', 39.9042, 116.4074, 8], ['上海', 31.2304, 121.4737, 8], ['新加坡', 1.3521, 103.8198, 8],
-  ['吉隆坡', 3.1390, 101.6869, 8], ['東京', 35.6762, 139.6503, 9], ['首爾', 37.5665, 126.9780, 9],
-  ['洛杉磯', 34.0522, -118.2437, -8], ['紐約', 40.7128, -74.0060, -5], ['倫敦', 51.5074, -0.1278, 0],
-  ['雪梨', -33.8688, 151.2093, 10], ['溫哥華', 49.2827, -123.1207, -8],
-];
 
 function form(p = {}) {
   const b = p.birth || {};

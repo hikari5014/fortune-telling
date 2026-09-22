@@ -42,8 +42,16 @@ export function buildBlocks(A, settings) {
   const B = {};
   if (!A) return B;
   const p = A.profile;
+  // 公司／團隊沒有姓名與性別，寫「名稱、成立日期」才看得懂
   // 保密檔案：基本資料這一段不寫生日與農曆，其餘照常
-  B.basic = (p.private ? [
+  B.basic = (p.org ? [
+    `名稱：${p.label || '（未填）'}`,
+    `成立日期：${A.base.y}-${pad(A.base.m)}-${pad(A.base.d)}`
+      + (p.birth?.hourUnknown ? '　**成立時辰不詳**（一律用中午 12:00 代入）' : ` ${pad(A.base.h)}:${pad(A.base.minute)}`),
+    A.lunar ? `農曆：${A.lunar.year} 年 ${A.lunar.monthName}${A.lunar.dayName}` : '',
+    `所在地：${p.city || settings.city}（東經 ${A.base.lon}、北緯 ${A.base.lat}，時區 UTC${A.base.tz >= 0 ? '+' : ''}${A.base.tz}）`,
+    '（這是一個組織，不是人。紫微斗數需要性別，這裡不適用，所以只給八字與星盤。）',
+  ] : p.private ? [
     `姓名：${(p.surname || '') + (p.givenName || '') || '（未填）'}`,
     `性別：${p.gender || '未填'}`,
     '國曆生日：**當事人選擇不揭露**（推算已經用實際生日算完，只是不寫在這裡）',

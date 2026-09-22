@@ -2,11 +2,25 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.15.0';
+export const APP_VERSION = '0.16.0';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.16.0', date: '2026-09-22', title: '快速新增 · 面談',
+    items: [
+      { kind: 'add', text: '首頁的「目前對象」旁多了「快速新增」：姓名、性別、生日、時辰四樣填完就能開始算' },
+      { kind: 'change', text: '生日改用日曆選、時辰改用十二時辰下拉 —— 比打「幾點幾分」快，而且命理本來就只看時辰' },
+      { kind: 'add', text: '新增「面談」頁：建一份公司或團隊的檔案（用成立日期），跟面試者比出相處順暢度' },
+      { kind: 'add', text: '把兩張盤的結構差異翻成工作上的話：節奏、溝通、磨合、情緒，並給幾題可以直接問的問題' },
+      { kind: 'add', text: '面試者可以現場快速輸入，也可以直接「存成保密檔案再算」—— 手機遞給對方自己填' },
+      { kind: 'change', text: '公司沒有性別，紫微那一套用不上，所以只比八字與星盤；提示詞裡也照實說明' },
+      { kind: 'change', text: '這一頁不做錄用評估，而且講得很明白：就業服務法第 5 條禁止以年齡、出生地、星座、血型等為由歧視求職人，八字正是從這些推出來的' },
+      { kind: 'change', text: '面談提示詞夾了一段界線給 LLM：不要回答該不該錄用、適不適任，只談怎麼合作' },
+      { kind: 'change', text: '出生地表格抽成共用資料，檔案頁與快速新增用同一份' },
+    ],
+  },
   {
     v: '0.15.0', date: '2026-09-22', title: 'QR 分享 · 保密檔案',
     items: [
