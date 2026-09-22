@@ -1,7 +1,8 @@
-import { html, raw, $, $$, sheet, haptic } from '../ui.js';
+import { html, raw, $, $$, sheet, haptic, toast } from '../ui.js';
 import { icon } from '../icons.js';
-import { store } from '../store.js';
+import { store, uid } from '../store.js';
 import { computeAll } from '../prompt/context.js';
+import { resolve } from '../router.js';
 import { synastry, ASPECTS } from '../engines/synastry.js';
 import { matchNumbers } from '../engines/numbers.js';
 import { dial, runCountUps } from '../motion.js';
@@ -17,7 +18,10 @@ export default {
     if (list.length < 2) return html`
       <div class="empty reveal">${raw(icon('link'))}
         <p>合盤需要兩份檔案。<br>目前只有 ${list.length} 份。</p>
-        <a class="btn btn--primary press" href="#/profile">${raw(icon('plus'))} 再建一份</a>
+        <div class="row" style="gap:var(--sp-2);justify-content:center">
+          <a class="btn btn--primary press" href="#/profile">${raw(icon('plus'))} 再建一份</a>
+          <button class="btn btn--ghost press" id="paste-code">${raw(icon('share'))} 貼上對方的分享碼</button>
+        </div>
       </div>${DISCLAIMER}`;
 
     const aId = query.a || profile?.id || list[0].id;
@@ -34,6 +38,9 @@ export default {
           ${raw(who('a', pa, list, 'A'))}
           <button class="iconbtn press" id="swap" aria-label="對調">${raw(icon('swap'))}</button>
           ${raw(who('b', pb, list, 'B'))}
+        </div>
+        <div class="row" style="margin-top:var(--sp-3)">
+          <button class="chip press" id="paste-code">${raw(icon('share'))} 貼上對方的分享碼</button>
         </div>
       </section>
 
@@ -146,6 +153,31 @@ export default {
     }));
   },
 };
+
+/* 直接貼別人的分享碼當第二人，不必先存成檔案 */
+async function pasteCode() {
+  const { parseProfileCode } = await import('./profile.js');
+  sheet({
+    title: '貼上對方的分享碼',
+    body: html`<div class="stack" data-noswipe>
+      <p class="hint">對方在「檔案 → 分享碼」複製給你的那一段。匯入後會變成一份新檔案，可以隨時刪。</p>
+      <div class="field"><label for="sy-code">分享碼</label>
+        <textarea class="textarea textarea--code" id="sy-code" style="min-height:100px" placeholder="XJPRO1:..."></textarea></div>
+    </div>`,
+    actions: html`<button class="btn btn--primary btn--block press" data-ok>${raw(icon('check'))} 匯入並合盤</button>`,
+    onMount(sr, close) {
+      $('[data-ok]', sr).addEventListener('click', () => {
+        const item = parseProfileCode($('#sy-code', sr).value);
+        if (!item) { toast('分享碼無法解析'); return; }
+        const p = store.saveProfile({ ...item, id: uid('pro') });
+        close();
+        toast(`已匯入：${label(p)}`);
+        location.hash = `/synastry?b=${p.id}`;
+        resolve();
+      });
+    },
+  });
+}
 
 function who(key, p, list, tag) {
   return html`

@@ -2,11 +2,22 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.9.1';
+export const APP_VERSION = '0.10.0';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.10.0', date: '2026-09-22', title: '分享碼 · 自訂首頁 · 快速搜尋',
+    items: [
+      { kind: 'add', text: '出生資料分享碼：把一份檔案變成一段純文字傳給朋友，對方貼上就能合盤，不需要帳號也不經過伺服器' },
+      { kind: 'add', text: '合盤頁可以直接貼對方的分享碼，不必先存成檔案' },
+      { kind: 'change', text: '分享碼只含姓名、性別、出生時間與出生地，不含解讀紀錄、標籤或其他資料' },
+      { kind: 'add', text: '快速搜尋：桌機按 ⌘K／Ctrl+K，手機按吸頂列的放大鏡，可搜功能頁、提示詞模板、解讀紀錄與檔案' },
+      { kind: 'add', text: '自訂首頁：可選要顯示哪些區塊，工具區要放哪幾個、照什麼順序排' },
+      { kind: 'change', text: '分享碼的編解碼搬到 ui.js，提示詞模板與出生資料共用同一份' },
+    ],
+  },
   {
     v: '0.9.1', date: '2026-09-22', title: '八字旺衰與喜用神',
     items: [

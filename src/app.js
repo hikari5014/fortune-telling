@@ -187,6 +187,15 @@ function boot() {
   });
   $('#btn-back').addEventListener('click', () => history.back());
 
+  // 快速搜尋：吸頂列的放大鏡，或桌機的 ⌘K／Ctrl+K
+  const palette = () => import('./palette.js').then(m => m.openPalette(NAV));
+  $('#btn-search').innerHTML = icon('search');
+  $('#btn-search').dataset.tip = '快速搜尋';
+  $('#btn-search').addEventListener('click', () => { haptic(8); palette(); });
+  addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); palette(); }
+  });
+
   addEventListener('scroll', () => {
     $('#topbar').classList.toggle('is-stuck', scrollY > 8);
   }, { passive: true });

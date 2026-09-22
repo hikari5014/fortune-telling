@@ -33,6 +33,8 @@
 | **紀錄** | 貼回的 LLM 解讀，全文搜尋、自訂標籤、依模型篩選、2–4 筆並排比較、匯出 Markdown |
 | **長圖** | 命盤、今日宜忌、籤詩、方位、解讀都能存成黑白長圖，可分享或下載 |
 | **設定** | 外觀、語調（白話／文言）、動態、命理參數、提示詞預設、資料匯出入 |
+| **分享碼** | 把一份出生資料變成純文字傳給朋友，對方貼上就能合盤 |
+| **快速搜尋** | ⌘K／Ctrl+K 或放大鏡，搜功能頁、模板、紀錄、檔案 |
 | **關於** | 版本號、完整更新紀錄、內建資料統計、檢查更新 |
 
 版號與更新紀錄在 App 的「關於」頁；單一來源是 `src/data/changelog.js`。
@@ -62,7 +64,8 @@ src/
   app.js                  導覽、路由掛載、過場、全域互動、版本提示
   router.js               hash 路由
   store.js                localStorage：設定、檔案、模板、紀錄、候選名、籤詩集
-  ui.js                   安全模板、吐司、底部抽屜、複製、極簡 Markdown
+  ui.js                   安全模板、吐司、底部抽屜、複製、極簡 Markdown、分享碼編解碼
+  palette.js              快速搜尋（⌘K）
   share.js                分享長圖的 canvas 排版引擎（斷行與標點禁則）
   sharecards.js           各種長圖的內容組裝
   motion.js               進場、漣漪、滑動切頁、分段色塊、數值計數
@@ -96,7 +99,7 @@ src/
     context.js            把引擎結果組裝成「資料積木」
     templates.js          20 個內建提示詞模板
     builder.js            變數渲染與提示詞組裝
-  views/                  17 個頁面
+  views/                  18 個頁面
 tools/
   gen_kangxi.py           由 Unicode Unihan 產生康熙筆畫字典
   make_icons.py           產生 App 圖示 PNG（自寫光柵化，不需影像函式庫）
