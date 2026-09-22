@@ -2,7 +2,7 @@
 import { store, applyChrome, onStore } from './store.js';
 import { icon } from './icons.js';
 import { html, raw, $, $$, toast, haptic } from './ui.js';
-import { observeReveal, initFeedback, initSwipe, runCountUps } from './motion.js';
+import { observeReveal, initFeedback, initSwipe, runCountUps, initSeg } from './motion.js';
 import { register, navigate, resolve, start, path, query } from './router.js';
 import { computeAll } from './prompt/context.js';
 import { APP_VERSION } from './data/changelog.js';
@@ -15,6 +15,7 @@ export const NAV = [
   { p: '/synastry',  t: '合盤', icon: 'link',     eyebrow: 'SYNASTRY' },
   { p: '/iching',    t: '卜卦', icon: 'dice',     eyebrow: 'I CHING' },
   { p: '/tarot',     t: '塔羅', icon: 'star',     eyebrow: 'TAROT' },
+  { p: '/qian',      t: '求籤', icon: 'folder',   eyebrow: 'ORACLE POEM' },
   { p: '/naming',    t: '姓名', icon: 'naming',   eyebrow: 'NAME STUDY' },
   { p: '/numbers',   t: '數字', icon: 'numbers',  eyebrow: 'NUMEROLOGY' },
   { p: '/prompt',    t: '提示', icon: 'prompt',   eyebrow: 'PROMPT STUDIO',  tab: 1 },
@@ -32,6 +33,7 @@ const VIEWS = {
   '/synastry': () => import('./views/synastry.js'),
   '/iching':   () => import('./views/iching.js'),
   '/tarot':    () => import('./views/tarot.js'),
+  '/qian':     () => import('./views/qian.js'),
   '/naming':   () => import('./views/naming.js'),
   '/numbers':  () => import('./views/numbers.js'),
   '/prompt':   () => import('./views/prompt.js'),
@@ -63,7 +65,7 @@ const link = (n) => html`
 function buildNav() {
   $('#tabbar').innerHTML = `<span class="tabbar__ind" aria-hidden="true"></span>`
     + NAV.filter(n => n.tab).map(link).join('')
-    + `<button class="tab" id="tab-more" aria-label="更多">${icon('folder')}<span>更多</span></button>`;
+    + `<button class="tab" id="tab-more" aria-label="更多功能">${icon('folder')}<span>更多</span></button>`;
   $('#rail').innerHTML = `<div class="rail__logo">${icon('astro')}</div>` + NAV.map(link).join('');
   $('#tab-more').addEventListener('click', openMore);
 }
@@ -99,7 +101,9 @@ function syncNav(p) {
 function syncThemeBtn() {
   const dark = document.documentElement.dataset.theme === 'dark';
   $('#btn-theme').innerHTML = icon(dark ? 'sun' : 'moon');
-  $('#btn-theme').setAttribute('aria-label', dark ? '切換為淺色' : '切換為深色');
+  const label = dark ? '切換為淺色' : '切換為深色';
+  $('#btn-theme').setAttribute('aria-label', label);
+  $('#btn-theme').dataset.tip = label;
 }
 
 /* ── 繪製 ──────────────────────────────── */
@@ -107,7 +111,7 @@ let lastPath = '/';
 async function paint(view, p) {
   const c = ctx();
   const nav = NAV.find(n => n.p === p) || NAV[0];
-  const doRender = () => {
+  const doRender = (animateFallback) => {
     const root = $('#view');
     root.innerHTML = view.render(c);
     $('#top-title').textContent = typeof view.title === 'function' ? view.title(c) : (view.title || nav.t);
@@ -116,17 +120,22 @@ async function paint(view, p) {
     view.mount?.(root, c);
     observeReveal(root);
     runCountUps(root);
+    initSeg(root);
+    // 只有在沒有 View Transition 時才跑退場動畫，否則兩段動畫疊加會抖
     root.classList.remove('is-entering');
-    void root.offsetWidth;
-    root.classList.add('is-entering');
-    scrollTo({ top: 0, behavior: 'instant' });
+    if (animateFallback) { void root.offsetWidth; root.classList.add('is-entering'); }
   };
   const back = NAV.findIndex(n => n.p === p) < NAV.findIndex(n => n.p === lastPath);
   document.documentElement.dataset.nav = back ? 'back' : 'forward';
   lastPath = p;
-  if (document.startViewTransition && document.documentElement.dataset.motion !== 'off') {
-    document.startViewTransition(() => doRender());
-  } else doRender();
+
+  // 先歸零捲動再拍快照，避免過場中途又跳一次
+  scrollTo({ top: 0, behavior: 'instant' });
+
+  const useVT = typeof document.startViewTransition === 'function'
+    && document.documentElement.dataset.motion !== 'off';
+  if (useVT) document.startViewTransition(() => doRender(false));
+  else doRender(true);
   syncNav(p);
 }
 
@@ -162,6 +171,8 @@ function boot() {
   initFeedback();
 
   $('#btn-back').innerHTML = icon('back');
+  $('#btn-back').dataset.tip = '返回';
+  $('#btn-theme').dataset.tipPos = 'right';
   $('#btn-theme').addEventListener('click', () => {
     const dark = document.documentElement.dataset.theme === 'dark';
     store.setSettings({ theme: dark ? 'light' : 'dark' });

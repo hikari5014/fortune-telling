@@ -2,11 +2,26 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.3.0';
+export const APP_VERSION = '0.4.0';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.4.0', date: '2026-09-22', title: '求籤 · 桌面過場 · 圖示互動',
+    items: [
+      { kind: 'add', text: '新增「求籤」頁：搖籤筒、擲筊請示（連得三聖筊為準）、六十甲子編號籤詩' },
+      { kind: 'data', text: '內建「玄鑑六十籤」為本 App 自撰的七言四句，非宮廟籤詩原文；可匯入自己的籤詩集' },
+      { kind: 'add', text: '新增「解籤」與「查籤詩原文」提示詞模板，後者明確要求 LLM 沒把握就留空' },
+      { kind: 'add', text: '擲筊確認可選一聖筊或連三聖筊；籤詩可切換橫書／直書' },
+      { kind: 'fix', text: '桌面切換功能區塊時整個畫面晃動：過場改為只動內容區，固定的側欄與吸頂列不再跟著位移' },
+      { kind: 'fix', text: '永遠保留捲軸寬度，切到較短的頁面時版面不再左右跳' },
+      { kind: 'fix', text: 'View Transition 與退場動畫不再疊加，並在拍快照前先歸零捲動' },
+      { kind: 'add', text: '圖示互動：滑過時線條加粗並「演一下」自己的意思（設定轉 60°、重新整理逆轉、箭頭前進…）' },
+      { kind: 'add', text: '水波紋改為按住停留、放開才淡出；按鈕不再自行裁切，提示泡泡不會被切掉' },
+      { kind: 'add', text: '分段控制的選中色塊會滑到新位置；桌面側欄加上從中間長出的指示條' },
+    ],
+  },
   {
     v: '0.3.0', date: '2026-09-22', title: '版本資訊',
     items: [

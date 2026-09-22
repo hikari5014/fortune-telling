@@ -21,7 +21,7 @@
 @media (min-width: 900px) { .topbar { padding-left: calc(88px + var(--sp-2)); } }
 
 .iconbtn {
-  display: grid; place-items: center; position: relative; overflow: hidden;
+  display: grid; place-items: center; position: relative; isolation: isolate;
   width: var(--tap); height: var(--tap); flex: none;
   border: 1px solid var(--line); border-radius: var(--r-full); color: var(--ink);
   transition: transform var(--dur-2) var(--spring), background var(--dur-2) var(--ease), border-color var(--dur-2) var(--ease);
@@ -52,7 +52,7 @@
   transition: transform var(--dur-4) var(--spring), width var(--dur-4) var(--spring), opacity var(--dur-2);
 }
 .tab {
-  position: relative; z-index: 1; display: grid; place-items: center; gap: 1px;
+  position: relative; z-index: 1; isolation: isolate; display: grid; place-items: center; gap: 1px;
   min-width: 52px; height: 50px; padding-inline: 7px; border-radius: var(--r-full);
   color: var(--ink-3); transition: color var(--dur-3) var(--ease), transform var(--dur-2) var(--spring);
 }
@@ -112,7 +112,7 @@
 
 /* 按鈕 */
 .btn {
-  position: relative; overflow: hidden;
+  position: relative; isolation: isolate;
   display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-2);
   min-height: var(--tap); padding: 0 var(--sp-5);
   border: 1px solid var(--line-2); border-radius: var(--r-full);
