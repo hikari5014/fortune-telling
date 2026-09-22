@@ -121,13 +121,9 @@ export default {
             <p class="hint" style="margin-top:6px" id="edited-hint" hidden>
               你手動改過預覽內容了，複製的會是改過的版本。<button class="chip press" id="revert">還原</button>
             </p>
-            <div class="row" style="margin-top:var(--sp-3);gap:var(--sp-2)">
-              <button class="btn btn--primary press" id="copy">${raw(icon('copy'))} 複製提示詞</button>
-              <button class="btn btn--ghost press" id="save-tpl">${raw(icon('plus'))} 存成自訂模板</button>
-              <button class="btn btn--ghost btn--sm press" id="share-btn">${raw(icon('share'))}</button>
-            </div>
             <p class="hint" style="margin-top:var(--sp-3)">
-              複製後貼到任何 LLM（ChatGPT、Claude、Gemini、本地模型皆可），把回覆貼回下方存檔。
+              複製後貼到任何 LLM（ChatGPT、Claude、Gemini、本地模型皆可），把回覆貼回下方存檔。<br>
+              「複製提示詞」那一列一直浮在畫面下方，捲到哪都按得到。
             </p>
           </section>
 
@@ -148,7 +144,14 @@ export default {
           </section>
         </div>
       </div>
-      ${DISCLAIMER}`;
+      ${DISCLAIMER}
+
+      <!-- 浮在畫面下方，捲到哪都按得到 -->
+      <div class="fabbar" role="group" aria-label="提示詞操作">
+        <button class="btn btn--primary press" id="copy">${raw(icon('copy'))} 複製提示詞</button>
+        <button class="btn btn--ghost press" id="save-tpl" data-tip="存成自訂模板">${raw(icon('plus'))} <span>存模板</span></button>
+        <button class="iconbtn press" id="share-btn" aria-label="分享提示詞" data-tip="分享">${raw(icon('share'))}</button>
+      </div>`;
   },
 
   mount(root, ctx) {

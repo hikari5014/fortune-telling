@@ -235,6 +235,42 @@
 }
 .toast.is-out { animation: toast-in var(--dur-2) var(--ease-in) reverse both; }
 
+/* 浮動操作列 ─────────────────────────────────────
+   提示詞很長，最常用的「複製」卻壓在預覽底下 ——
+   要用就得先捲到底。把它浮起來，捲到哪都按得到。
+
+   位置在分頁列正上方；桌機沒有分頁列，就貼著視窗底部。
+   有這條列的時候，Toast 與頁面底部留白都要跟著讓位，
+   用 :has() 判斷，不必在 JS 那邊記得加減 class。 */
+.fabbar {
+  position: fixed; left: 50%; z-index: 28;
+  bottom: calc(env(safe-area-inset-bottom) + 78px);
+  transform: translateX(-50%) translateZ(0);
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px; border: 1px solid var(--line); border-radius: var(--r-full);
+  background: color-mix(in srgb, var(--bg) 96%, transparent);
+  box-shadow: var(--shadow);
+  max-width: calc(100vw - 20px);
+  animation: fab-in var(--dur-4) var(--ease-out) both;
+}
+@supports (backdrop-filter: blur(1px)) {
+  /* 比分頁列再不透明一點 —— 這條列蓋在內文上，太透會跟底下的字打架 */
+  .fabbar { background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(20px) saturate(1.3); }
+}
+@keyframes fab-in { from { opacity: 0; transform: translateX(-50%) translate3d(0, 16px, 0) scale(.96); } }
+.fabbar .btn { height: 46px; white-space: nowrap; padding-inline: var(--sp-4); }
+.fabbar .iconbtn { width: 46px; height: 46px; }
+@media (max-width: 360px) { .fabbar .btn--ghost span { display: none; } .fabbar .btn--ghost { padding-inline: 13px; } }
+@media (min-width: 900px) { .fabbar { bottom: var(--sp-5); } }
+
+/* 讓位：頁面底部留白、Toast 都要避開這條列 */
+body:has(.fabbar) { padding-bottom: calc(156px + env(safe-area-inset-bottom)); }
+body:has(.fabbar) .toast-root { bottom: calc(env(safe-area-inset-bottom) + 146px); }
+@media (min-width: 900px) {
+  body:has(.fabbar) { padding-bottom: calc(var(--sp-6) + 74px); }
+  body:has(.fabbar) .toast-root { bottom: calc(var(--sp-5) + 66px); }
+}
+
 /* 空狀態 */
 .empty { display: grid; justify-items: center; gap: var(--sp-3); padding: var(--sp-7) var(--sp-4); text-align: center; border: 1px dashed var(--line); border-radius: var(--r-3); color: var(--ink-3); }
 .empty svg { width: 34px; height: 34px; opacity: .5; }
