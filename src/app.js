@@ -172,6 +172,7 @@ function boot() {
   applyChrome();
   trackKeyboard();
   checkVersionSeen();
+  import('./onboarding.js').then(m => m.maybeStartTour());
   buildNav();
   syncThemeBtn();
   initFeedback();
