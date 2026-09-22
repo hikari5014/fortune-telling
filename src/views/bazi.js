@@ -1,6 +1,5 @@
 import { html, raw, $, $$, sheet, copyText } from '../ui.js';
 import { icon } from '../icons.js';
-import { ctx } from '../app.js';
 import { analyze, toText, HIDDEN } from '../engines/bazi.js';
 import { BRANCHES, STEMS, STEM_EL, BRANCH_EL, EL_ORDER } from '../engines/calendar.js';
 import { shiShen } from '../engines/fortune.js';
@@ -11,8 +10,7 @@ const POS = ['年', '月', '日', '時'];
 
 export default {
   title: '八字', eyebrow: 'FOUR PILLARS',
-  render() {
-    const { all } = ctx();
+  render({ all }) {
     if (!all?.bazi) return html`${needProfile('八字要用出生年月日時，先建立一份出生資料。')}${DISCLAIMER}`;
     const b = all.bazi;
     const a = analyze(b);
@@ -131,8 +129,7 @@ export default {
       ${DISCLAIMER}`;
   },
 
-  mount(root) {
-    const { all } = ctx();
+  mount(root, { all, profile }) {
     if (!all?.bazi) return;
     const b = all.bazi;
     const a = analyze(b);
@@ -173,7 +170,7 @@ export default {
     }));
     $('#b-share', root).addEventListener('click', async () => {
       const { baziCard } = await import('../sharecards.js');
-      doShare(() => baziCard(b, a, all.profile), '玄鑑-八字.png');
+      doShare(() => baziCard(b, a, profile), '玄鑑-八字.png');
     });
 
     observeReveal(root);

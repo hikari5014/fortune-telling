@@ -100,6 +100,7 @@ src/
     templates.js          20 個內建提示詞模板
     builder.js            變數渲染與提示詞組裝
   views/                  18 個頁面
+tests/                    198 個測試（零相依，node:test）
 tools/
   gen_kangxi.py           由 Unicode Unihan 產生康熙筆畫字典
   make_icons.py           產生 App 圖示 PNG（自寫光柵化，不需影像函式庫）
@@ -283,6 +284,22 @@ python3 tools/gen_kangxi.py Unihan.zip src/data/kangxi.js
 # App 圖示 PNG
 python3 tools/make_icons.py
 ```
+
+### 測試
+
+```bash
+node --test --test-reporter=spec tests/*.test.js
+```
+
+零相依，用 Node 內建的 `node:test`，不需要 npm install。CI 在每次推送與 PR 時跑，
+部署前再跑一次，沒過就不上線。198 個測試涵蓋十一個引擎、提示詞組裝與全部 18 個頁面的繪製。
+
+細節見 `tests/README.md`。幾個比較有意思的：
+
+- **交叉驗證**：行星鏈路反推的太陽黃經，必須與獨立的 Meeus 公式吻合到角分以內
+- **結構性質**：八宅遊年的對稱性、八星不重不漏、東西四命分組（這是定義，不是寫死的）
+- **對照公認值**：水金最大距角、火土逆行天數
+- **模組載入**：`node --check` 攔不住重複匯出，只有真的 `import()` 會發現
 
 ### 沒有建置步驟
 

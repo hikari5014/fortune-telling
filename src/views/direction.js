@@ -1,7 +1,6 @@
 import { html, raw, $, $$, sheet, copyText, haptic } from '../ui.js';
 import { icon } from '../icons.js';
 import { store } from '../store.js';
-import { ctx } from '../app.js';
 import {
   TRIGRAMS, mingGua, eightDirections, zhaiGua, matchZhai, compassSVG, toText, STAR_ORDER,
 } from '../engines/bagua.js';
@@ -12,8 +11,7 @@ const SITS = TRIGRAMS.map(t => t.dir);
 
 export default {
   title: '方位', eyebrow: 'EIGHT MANSIONS',
-  render() {
-    const { profile, all, settings } = ctx();
+  render({ profile, all, settings }) {
     if (!profile || !all?.bazi) return html`${needProfile('八宅要用出生年與性別推本命卦，先建立一份出生資料。')}${DISCLAIMER}`;
 
     const ming = mingGua(all.bazi.yearForGZ, profile.gender || '女');
@@ -108,8 +106,7 @@ export default {
       ${DISCLAIMER}`;
   },
 
-  mount(root) {
-    const { profile, all, settings } = ctx();
+  mount(root, { profile, all, settings }) {
     if (!profile || !all?.bazi) return;
     const ming = mingGua(all.bazi.yearForGZ, profile.gender || '女');
     const dirs = eightDirections(ming.name, settings.register);
