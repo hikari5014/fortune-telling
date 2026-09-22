@@ -2,11 +2,22 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.17.1';
+export const APP_VERSION = '0.17.2';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.17.2', date: '2026-09-22', title: '導覽改造的四個方案（可試玩）',
+    items: [
+      { kind: 'add', text: '功能變多之後平鋪清單不好找，所以先做原型：lab/nav.html 有四種「分類 → 細項」的互動可以直接玩' },
+      { kind: 'add', text: '輪盤、拇指扇、滑選清單、兩段輪盤 —— 觸控與滑鼠共用同一套手勢，按住跳出、滑動高亮、放開選中' },
+      { kind: 'add', text: '四個方案都留了「輕點＝靜止選單」的保底路徑：長按加拖曳對手指不方便的人不友善，沒有這條就不能上線' },
+      { kind: 'add', text: '原型裡可以即時調長按時間、選單半徑、震動、方向線、降低動態，還會記錄平均選取時間與取消率' },
+      { kind: 'change', text: '做完發現：手機上排不出整圈輪盤 —— 圓心要咬著手指，分類列又在畫面邊上，左右沒有一個半徑的空間。所以圓環放不下時會自動退化成扇形' },
+      { kind: 'change', text: '本體的導覽還沒動，等試玩完再決定方向' },
+    ],
+  },
   {
     v: '0.17.1', date: '2026-09-22', title: '提示詞的操作列浮起來了',
     items: [

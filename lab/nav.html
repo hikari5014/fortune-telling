@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="zh-Hant" data-theme="dark" data-motion="full">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5">
+<title>玄鑑 — 導覽方案試玩</title>
+<meta name="description" content="四種分類導覽互動的可試玩原型：輪盤、拇指扇、滑選清單、兩段輪盤。">
+<meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="color-scheme" content="dark light">
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Noto+Serif+TC:wght@400;600;900&family=Space+Grotesk:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="../styles/tokens.css">
+<link rel="stylesheet" href="./nav.css">
+<script>
+  try {
+    const t = localStorage.getItem('xj.lab.theme');
+    if (t) document.documentElement.dataset.theme = t;
+    else if (matchMedia('(prefers-color-scheme: light)').matches) document.documentElement.dataset.theme = 'light';
+  } catch {}
+</script>
+</head>
+<body>
+
+<header class="bar">
+  <div>
+    <p class="bar__eyebrow">NAVIGATION LAB</p>
+    <h1 class="bar__title">導覽方案試玩</h1>
+  </div>
+  <button class="iconbtn" id="theme" aria-label="切換深淺色"></button>
+</header>
+
+<main id="app">
+  <section class="intro">
+    <p>功能變多以後，平鋪的清單就不好找了。這裡有四種「分類 → 細項」的互動可以直接玩，
+      每一種都同時支援<b>觸控</b>與<b>滑鼠</b>。</p>
+    <p class="hint">用法一樣：<b>按住</b>分類不放 → 跳出選單 → <b>不放手直接滑</b>到想要的 →
+      放開就選中。想慢慢看的話，<b>輕點一下</b>分類，選單會停在畫面上讓你點。</p>
+  </section>
+
+  <nav class="modes" id="modes" aria-label="選擇方案"></nav>
+  <section class="note card" id="note"></section>
+
+  <section class="stage">
+    <div class="stage__hint" id="stage-hint">按住下面的分類試試看</div>
+    <div class="stage__screen" id="screen">
+      <div class="fake" id="fake"></div>
+      <div class="dock" id="dock" aria-label="分類"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card__head"><h2>試玩紀錄</h2><button class="chip" id="reset">歸零</button></div>
+    <div class="stats" id="stats"></div>
+    <ol class="log" id="log"><li class="log__empty">還沒選過東西。</li></ol>
+  </section>
+
+  <section class="card">
+    <div class="card__head"><h2>參數</h2></div>
+    <label class="opt"><span>長按多久跳出選單<b id="hold-v">260 ms</b></span>
+      <input type="range" id="hold" min="120" max="600" step="20" value="260"></label>
+    <label class="opt"><span>選單半徑<b id="rad-v">118 px</b></span>
+      <input type="range" id="rad" min="80" max="170" step="2" value="118"></label>
+    <label class="opt opt--row"><span>震動回饋</span><input type="checkbox" id="haptic" checked></label>
+    <label class="opt opt--row"><span>畫出手指的方向線</span><input type="checkbox" id="ray" checked></label>
+    <label class="opt opt--row"><span>降低動態</span><input type="checkbox" id="calm"></label>
+    <p class="hint" id="haptic-note"></p>
+  </section>
+
+  <section class="card">
+    <div class="card__head"><h2>我的建議</h2></div>
+    <div id="verdict"></div>
+  </section>
+</main>
+
+<div class="menu-root" id="menu-root" hidden></div>
+<div class="toast-root" id="toast-root"></div>
+
+<script type="module" src="./nav.js"></script>
+</body>
+</html>
