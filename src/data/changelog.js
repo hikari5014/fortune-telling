@@ -2,11 +2,21 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.6.1';
+export const APP_VERSION = '0.7.0';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.7.0', date: '2026-09-22', title: '分享長圖',
+    items: [
+      { kind: 'add', text: '命盤、今日宜忌、籤詩、方位、解讀紀錄都可以存成一張黑白長圖' },
+      { kind: 'add', text: '手機支援系統分享（可直接傳 LINE），不支援時改為下載 PNG' },
+      { kind: 'add', text: '長圖跟著 App 目前的主題，深色模式會輸出深色卡片' },
+      { kind: 'change', text: '用 canvas 自己排版，沒有加任何套件；逐字量寬斷行，並套用中文的行首行末標點禁則' },
+      { kind: 'change', text: '解讀紀錄的 Markdown 標題會轉成長圖的小標，不是整塊擠成一段' },
+    ],
+  },
   {
     v: '0.6.1', date: '2026-09-22', title: '擇時',
     items: [

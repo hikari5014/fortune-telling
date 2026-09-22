@@ -7,7 +7,7 @@ import {
   hoursOf, currentHourIndex,
 } from '../engines/daily.js';
 import { observeReveal, initSeg, dial, runCountUps } from '../motion.js';
-import { DISCLAIMER, sectionHead, kv, pad } from './_shared.js';
+import { DISCLAIMER, sectionHead, kv, pad, shareBtn, doShare } from './_shared.js';
 
 const WD = ['日', '一', '二', '三', '四', '五', '六'];
 const today = () => { const n = new Date(); return [n.getFullYear(), n.getMonth() + 1, n.getDate()]; };
@@ -88,6 +88,7 @@ export default {
         <div class="row" style="margin-top:var(--sp-5)">
           <button class="btn btn--primary press" id="d-prompt">${raw(icon('prompt'))} 產生擇日提示詞</button>
           <button class="btn btn--ghost press" id="d-copy">${raw(icon('copy'))} 複製今日資料</button>
+          ${shareBtn('d-share')}
         </div>`;
     }
 
@@ -276,6 +277,7 @@ export default {
           </div>
           <div class="row" style="margin-top:var(--sp-4)">
             <button class="btn btn--primary press" data-day-prompt="${info.date}">${icon('prompt')} 產生擇日提示詞</button>
+            <button class="btn btn--ghost press" data-day-share>${icon('share')} 長圖</button>
           </div>`,
         onMount(el) {
           observeReveal(el);
@@ -285,6 +287,10 @@ export default {
             openHour(yy, mm, dd, Number(b.dataset.h));
           }));
           $$('[data-day-prompt]', el).forEach(b => b.addEventListener('click', () => toPrompt(info, r)));
+          $$('[data-day-share]', el).forEach(b => b.addEventListener('click', async () => {
+            const { dayCard } = await import('../sharecards.js');
+            doShare(() => dayCard(info, r, purpose), `玄鑑-擇日-${info.date}.png`);
+          }));
         },
       });
     }
@@ -312,6 +318,10 @@ export default {
         const r = rateDay(info, opts());
         $('#d-prompt', stage)?.addEventListener('click', () => toPrompt(info, r));
         $('#d-copy', stage)?.addEventListener('click', () => copyText(toText(info, r, purpose)));
+        $('#d-share', stage)?.addEventListener('click', async () => {
+          const { dayCard } = await import('../sharecards.js');
+          doShare(() => dayCard(info, r, purpose), `玄鑑-擇日-${info.date}.png`);
+        });
       }
       if (tab === 'month') {
         $('#d-prev', stage).addEventListener('click', () => { cm--; if (cm < 1) { cm = 12; cy--; } draw(); });

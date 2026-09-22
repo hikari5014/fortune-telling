@@ -28,3 +28,25 @@ export function promptLink(templateId, label = '產生提示詞') {
 }
 
 export const pad = (n) => String(n).padStart(2, '0');
+
+/** 分享長圖按鈕（HTML） */
+export function shareBtn(id = 'share-img', label = '存成長圖') {
+  return html`<button class="btn btn--ghost press" id="${id}">${raw(icon('share'))} ${label}</button>`;
+}
+
+/**
+ * 按下分享：畫圖 → 有 Web Share 就叫系統分享，否則下載
+ * @param {function} build 回傳文件描述的函式（按下才算，避免每次 render 都畫）
+ */
+export async function doShare(build, filename) {
+  const { toast } = await import('../ui.js');
+  try {
+    const { shareCard } = await import('../share.js');
+    toast('產生圖片中…');
+    const r = await shareCard(build(), filename);
+    if (r === 'downloaded') toast('已存成 PNG');
+    else if (r === 'shared') toast('已分享');
+  } catch (e) {
+    toast('產生圖片失敗：' + (e.message || e));
+  }
+}

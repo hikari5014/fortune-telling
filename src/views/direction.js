@@ -6,7 +6,7 @@ import {
   TRIGRAMS, mingGua, eightDirections, zhaiGua, matchZhai, compassSVG, toText, STAR_ORDER,
 } from '../engines/bagua.js';
 import { observeReveal, initSeg } from '../motion.js';
-import { DISCLAIMER, needProfile, sectionHead, kv } from './_shared.js';
+import { DISCLAIMER, needProfile, sectionHead, kv, shareBtn, doShare } from './_shared.js';
 
 const SITS = TRIGRAMS.map(t => t.dir);
 
@@ -103,6 +103,7 @@ export default {
       <div class="row" style="margin-top:var(--sp-5)">
         <button class="btn btn--primary press" id="g-prompt">${raw(icon('prompt'))} 產生方位提示詞</button>
         <button class="btn btn--ghost press" id="g-copy">${raw(icon('copy'))} 複製方位資料</button>
+        ${shareBtn('g-share')}
       </div>
       ${DISCLAIMER}`;
   },
@@ -175,6 +176,11 @@ export default {
 
     const text = () => toText(ming, dirs, zhai(), zhai() ? matchZhai(ming, zhai()) : null);
     $('#g-copy', root).addEventListener('click', () => copyText(text()));
+    $('#g-share', root).addEventListener('click', async () => {
+      const { guaCard } = await import('../sharecards.js');
+      const z = zhai();
+      doShare(() => guaCard(ming, dirs, z, z ? matchZhai(ming, z) : null), '玄鑑-方位.png');
+    });
     $('#g-prompt', root).addEventListener('click', () => {
       store.setDraft('guaInfo', text());
       location.hash = '#/prompt?t=direction';
