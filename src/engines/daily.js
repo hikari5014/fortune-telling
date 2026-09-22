@@ -178,6 +178,8 @@ export const levelOf = (s) => LEVELS.find(l => s >= l.min);
  * @param {object} o {purpose, bazi, yearBranch}
  */
 export function rateDay(info, { purpose = null, bazi = null, yearBranch = null } = {}) {
+  /* 沒指定就用這一天自己的流年支（跨立春的掃描才不會用到別年的太歲） */
+  const taisui = yearBranch ?? (info.gz.year.index % 12);
   const reasons = [];
   let score = 60;
   const add = (delta, text, tag) => { score += delta; reasons.push({ delta: Math.round(delta), text, tag }); };
@@ -194,8 +196,8 @@ export function rateDay(info, { purpose = null, bazi = null, yearBranch = null }
 
   for (const r of natalRelations(info, bazi)) add(r.score, r.text, '本命');
 
-  if (yearBranch != null && pairHas(BR_CHONG, info.dayBranch, yearBranch))
-    add(-8, `日支沖流年太歲（${BRANCHES[yearBranch]}），俗稱歲破`, '流年');
+  if (pairHas(BR_CHONG, info.dayBranch, taisui))
+    add(-8, `日支沖流年太歲（${BRANCHES[taisui]}），俗稱歲破`, '流年');
 
   for (const s of info.special) add(s.name === '四絕日' || s.name === '四離日' ? -10 : -4, s.text, s.name);
 
