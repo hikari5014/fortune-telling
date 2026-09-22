@@ -107,6 +107,20 @@ export const store = {
   set records(v) { write(K.records, v); emit('records', v); },
   addRecord(r) { this.records = [r, ...this.records].slice(0, 300); return r; },
   removeRecord(id) { this.records = this.records.filter(r => r.id !== id); },
+  updateRecord(id, patch) {
+    this.records = this.records.map(r => (r.id === id ? { ...r, ...patch } : r));
+    return this.records.find(r => r.id === id);
+  },
+  /** 所有用過的標籤，依出現次數排序 */
+  get allTags() {
+    const n = {};
+    for (const r of this.records) for (const t of (r.tags || [])) n[t] = (n[t] || 0) + 1;
+    return Object.entries(n).sort((a, b) => b[1] - a[1]).map(([t]) => t);
+  },
+  /** 所有填過的模型名 */
+  get allModels() {
+    return [...new Set(this.records.map(r => r.model).filter(Boolean))];
+  },
 
   get candidates() { return read(K.candidates, []); },
   set candidates(v) { write(K.candidates, v); emit('candidates', v); },

@@ -2,11 +2,22 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.7.0';
+export const APP_VERSION = '0.7.1';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.7.1', date: '2026-09-22', title: '紀錄強化',
+    items: [
+      { kind: 'add', text: '紀錄頁可以全文搜尋：內容、模板名、對象、模型、標籤一起搜' },
+      { kind: 'add', text: '每筆紀錄可以加自訂標籤，標籤會變成篩選條件' },
+      { kind: 'add', text: '貼回 LLM 回覆時可以填「這是哪個模型回的」，之後能依模型篩選' },
+      { kind: 'add', text: '並排比較：選 2–4 筆左右滑著看；若提示詞不同會特別提醒差異可能不是來自模型' },
+      { kind: 'change', text: '匯出 Markdown 改成只匯出目前篩選到的結果，並帶上模型與標籤' },
+      { kind: 'change', text: '紀錄抽屜補上「長圖」按鈕' },
+    ],
+  },
   {
     v: '0.7.0', date: '2026-09-22', title: '分享長圖',
     items: [
