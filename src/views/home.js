@@ -12,6 +12,7 @@ const TILES = [
   { p: '/ziwei',   t: '紫微',   icon: 'ziwei',   d: '十二宮 · 十四主星 · 四化' },
   { p: '/fortune', t: '運勢',   icon: 'clock',   d: '大限 · 流年 · 大運 · 流月' },
   { p: '/daily',   t: '擇日',   icon: 'calendar',d: '建除 · 宜忌 · 找好日子' },
+  { p: '/direction',t:'方位',  icon: 'compass', d: '本命卦 · 四吉方 · 四凶方' },
   { p: '/iching',  t: '卜卦',   icon: 'dice',    d: '銅錢 · 時間 · 數字起卦' },
   { p: '/tarot',   t: '塔羅',   icon: 'star',    d: '五種牌陣 · 正逆位' },
   { p: '/qian',    t: '求籤',   icon: 'folder',  d: '搖籤筒 · 擲筊 · 六十籤' },
