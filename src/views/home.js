@@ -2,6 +2,8 @@ import { html, raw, $, $$, sheet, toast } from '../ui.js';
 import { icon } from '../icons.js';
 import { store } from '../store.js';
 import { resolve } from '../router.js';
+import { quickAdd } from '../quickadd.js';
+import { nameOf } from '../privacy.js';
 import { todayInfo } from '../prompt/context.js';
 import { APP_VERSION } from '../data/changelog.js';
 import { ziweiLimits, fortuneOfYear, baziLuck, shiShen } from '../engines/fortune.js';
@@ -124,8 +126,9 @@ export default {
         <div class="hero__who">
           <span class="badge badge--dash">目前對象</span>
           <a class="chip is-on" href="#/profile">
-            ${raw(icon('profile'))} ${profile ? (profile.surname || '') + (profile.givenName || '') || profile.label || '未命名' : '尚未建立'}
+            ${raw(icon('profile'))} ${profile ? nameOf(profile) : '尚未建立'}
           </a>
+          <button class="chip press" id="home-add">${raw(icon('plus'))} 快速新增</button>
           ${all?.bazi ? html`<span class="chip">${all.bazi.zodiac}年 · ${all.bazi.dayMaster}日主</span>` : ''}
           ${all?.astro ? html`<span class="chip">${all.astro.sun.signName}</span>` : ''}
           ${all?.astro ? html`<span class="chip">上升 ${all.astro.ascendant.signName}</span>` : ''}
@@ -184,6 +187,8 @@ export default {
 
   mount(root, { settings }) {
     $$('#home-edit', root).forEach(b => b.addEventListener('click', () => openCustomise(settings)));
+    // 臨時要幫人看一下，不必先跑到檔案頁填十幾個欄位
+    $('#home-add', root)?.addEventListener('click', () => quickAdd({ settings, onSaved: () => resolve() }));
   },
 };
 

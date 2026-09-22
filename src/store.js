@@ -9,6 +9,7 @@ const K = {
   drafts: 'xj.drafts',
   candidates: 'xj.candidates',
   qianSets: 'xj.qiansets',
+  orgs: 'xj.orgs',
 };
 
 const DEFAULT_SETTINGS = {
@@ -98,6 +99,19 @@ export const store = {
     if (this.currentId === id) this.currentId = this.profiles[0]?.id || null;
   },
 
+  /* 公司／團隊檔案：跟出生資料同一個形狀（成立日期當「生日」），
+     但另外收著，免得跟真人混在同一張清單裡 */
+  get orgs() { return read(K.orgs, []); },
+  set orgs(v) { write(K.orgs, v); emit('orgs', v); },
+  saveOrg(o) {
+    const list = this.orgs;
+    const i = list.findIndex(x => x.id === o.id);
+    if (i >= 0) list[i] = o; else list.push(o);
+    this.orgs = list;
+    return o;
+  },
+  removeOrg(id) { this.orgs = this.orgs.filter(o => o.id !== id); },
+
   get templates() { return read(K.templates, []); },
   set templates(v) { write(K.templates, v); emit('templates', v); },
   saveTemplate(t) {
@@ -141,12 +155,14 @@ export const store = {
   get drafts() { return read(K.drafts, {}); },
   setDraft(key, value) { const d = this.drafts; d[key] = value; write(K.drafts, d); },
 
+  /** 備份匯出。保密檔案整份跳過 —— 那是它承諾過的事。 */
   exportAll() {
+    const profiles = this.profiles.filter(p => !p.private);
     return {
       app: 'xuanjian', version: 1, exportedAt: new Date().toISOString(),
-      settings: this.settings, profiles: this.profiles, currentId: this.currentId,
+      settings: this.settings, profiles, currentId: this.currentId,
       templates: this.templates, records: this.records, candidates: this.candidates,
-      qianSets: this.qianSets,
+      qianSets: this.qianSets, orgs: this.orgs,
     };
   },
   importAll(data, { merge = false } = {}) {
@@ -157,6 +173,7 @@ export const store = {
     if (data.records) write(K.records, merge ? dedupe([...this.records, ...data.records]) : data.records);
     if (data.candidates) write(K.candidates, merge ? dedupe([...this.candidates, ...data.candidates]) : data.candidates);
     if (data.qianSets) write(K.qianSets, merge ? dedupe([...this.qianSets, ...data.qianSets]) : data.qianSets);
+    if (data.orgs) write(K.orgs, merge ? dedupe([...this.orgs, ...data.orgs]) : data.orgs);
     if (data.currentId) write(K.current, data.currentId);
     applyChrome(this.settings);
     emit('all', null);

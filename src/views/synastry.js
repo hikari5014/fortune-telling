@@ -1,4 +1,5 @@
 import { html, raw, $, $$, sheet, haptic, toast } from '../ui.js';
+import { dateLine } from '../privacy.js';
 import { icon } from '../icons.js';
 import { store, uid } from '../store.js';
 import { computeAll } from '../prompt/context.js';
@@ -184,7 +185,7 @@ async function pasteCode() {
 function who(key, p, list, tag) {
   return html`
     <div class="field" style="flex:1;min-width:0">
-      <label for="sel-${key}">${tag}　${p.birth.y}-${pad(p.birth.m)}-${pad(p.birth.d)}</label>
+      <label for="sel-${key}">${tag}　${dateLine(p)}</label>
       <select class="select" id="sel-${key}">
         ${list.map(x => html`<option value="${x.id}" ${x.id === p.id ? 'selected' : ''}>${label(x)}</option>`)}
       </select>
