@@ -28,9 +28,42 @@ export function html(strings, ...values) {
 export const $ = (sel, root = document) => root.querySelector(sel);
 export const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 
+/* ── 觸覺回饋 ──────────────────────────────
+   navigator.vibrate 只有 Android 與桌面 Chrome 有；**iOS Safari 完全不支援**，
+   所以原本在 iPhone 上開了設定也不會有任何反應。
+   iOS 17.4+ 另有一條路：對 <input type="checkbox" switch> 觸發點擊時，
+   系統會播一次輕微的觸覺。這不是正式 API，只是 Safari 的行為，
+   所以設定頁會誠實顯示這台裝置到底支不支援。 */
+const IS_IOS = () => /iP(hone|ad|od)/.test(navigator.platform || '')
+  || (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform || ''))
+  || /iPhone|iPad|iPod/.test(navigator.userAgent || '');
+
+let hapticSwitch = null;
+function getSwitch() {
+  if (hapticSwitch || typeof document === 'undefined') return hapticSwitch;
+  const wrap = document.createElement('div');
+  wrap.setAttribute('aria-hidden', 'true');
+  wrap.style.cssText = 'position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;left:-9999px;top:0';
+  wrap.innerHTML = '<input type="checkbox" switch id="xj-haptic"><label for="xj-haptic"></label>';
+  document.body.appendChild(wrap);
+  hapticSwitch = wrap.querySelector('label');
+  return hapticSwitch;
+}
+
+/** 這台裝置能不能做觸覺回饋：'vibrate' | 'ios' | null */
+export function hapticSupport() {
+  if (typeof navigator === 'undefined') return null;
+  if (typeof navigator.vibrate === 'function') return 'vibrate';
+  if (IS_IOS()) return 'ios';
+  return null;
+}
+
 export function haptic(ms = 8) {
   if (!store.settings.haptics) return;
-  try { navigator.vibrate?.(ms); } catch {}
+  try {
+    if (typeof navigator.vibrate === 'function') { navigator.vibrate(ms); return; }
+    if (IS_IOS()) getSwitch()?.click();
+  } catch { /* 不支援就安靜略過 */ }
 }
 
 /* ── 吐司 ─────────────────────────────── */

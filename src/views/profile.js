@@ -40,11 +40,16 @@ function form(p = {}) {
         <div class="field"><label for="f-m">月</label><input class="input num" id="f-m" type="number" inputmode="numeric" min="1" max="12" value="${b.m ?? 1}"></div>
         <div class="field"><label for="f-d">日</label><input class="input num" id="f-d" type="number" inputmode="numeric" min="1" max="31" value="${b.d ?? 1}"></div>
       </div>
-      <div class="grid grid--2">
+      <label class="switch" style="margin-top:var(--sp-2)">
+        <span>不知道出生時辰</span>
+        <input type="checkbox" id="f-hu" ${b.hourUnknown ? 'checked' : ''}>
+      </label>
+      <div class="grid grid--2" id="f-hour-row">
         <div class="field"><label for="f-h">時（24 小時制）</label><input class="input num" id="f-h" type="number" inputmode="numeric" min="0" max="23" value="${b.h ?? 12}"></div>
         <div class="field"><label for="f-min">分</label><input class="input num" id="f-min" type="number" inputmode="numeric" min="0" max="59" value="${b.minute ?? 0}"></div>
       </div>
-      <p class="hint">不確定時辰？填 12:00，並記得紫微與上升會失準；之後可回來修正。</p>
+      <p class="hint" id="f-hour-note">照樣算得出來，只是會用中午 12:00 代入。
+        App 會在受影響的地方標出來，提示詞也會提醒 LLM 哪些結論站不住腳。</p>
       <div class="field"><label for="f-city">出生地</label>
         <select class="select" id="f-city">
           ${raw(CITIES.map(c => html`<option value="${c[0]}" ${p.city === c[0] ? 'selected' : ''}>${c[0]}</option>`).join(''))}
@@ -73,7 +78,13 @@ function readForm(root, base = {}) {
     id: base.id || uid('p'),
     surname: val('f-sur'), givenName: val('f-giv'), label: val('f-label'),
     gender,
-    birth: { y: num('f-y', 2000), m: num('f-m', 1), d: num('f-d', 1), h: num('f-h', 12), minute: num('f-min', 0) },
+    birth: {
+      y: num('f-y', 2000), m: num('f-m', 1), d: num('f-d', 1),
+      // 時辰不詳時一律用中午代入，並把這件事記下來
+      h: $('#f-hu', root)?.checked ? 12 : num('f-h', 12),
+      minute: $('#f-hu', root)?.checked ? 0 : num('f-min', 0),
+      ...($('#f-hu', root)?.checked ? { hourUnknown: true } : {}),
+    },
     city: city === '__custom' ? '自訂' : city,
     lat: num('f-lat', 25.033), lon: num('f-lon', 121.5654), tz: num('f-tz', 8),
     phone: val('f-phone'), plate: val('f-plate'),
@@ -91,6 +102,16 @@ function bindForm(root) {
     const c = CITIES.find(x => x[0] === e.target.value);
     if (c) { $('#f-lat', root).value = c[1]; $('#f-lon', root).value = c[2]; $('#f-tz', root).value = c[3]; }
   });
+  // 勾「不知道時辰」就把時分欄位收起來
+  const hu = $('#f-hu', root);
+  const syncHour = () => {
+    const on = hu.checked;
+    $('#f-hour-row', root).hidden = on;
+    $('#f-hour-note', root).hidden = !on;
+    haptic();
+  };
+  hu?.addEventListener('change', syncHour);
+  if (hu) { $('#f-hour-note', root).hidden = !hu.checked; $('#f-hour-row', root).hidden = hu.checked; }
 }
 
 function editSheet(p) {
@@ -119,18 +140,80 @@ function editSheet(p) {
   });
 }
 
-/* ── 分享碼 ───────────────────────────────────────── */
-export const PROFILE_CODE_PREFIX = 'XJPRO1:';
+/* ── 分享碼 ───────────────────────────────────────
+   實際用起來最常失敗的不是編解碼，是「貼到通訊軟體再貼回來」的路上：
+   訊息 App 會換行、加空白、插入零寬字元，中文輸入法會把冒號打成全形。
+   所以解析這一端盡量容錯，並且把碼本身壓短，減少被折行的機會。 */
+export const PROFILE_CODE_PREFIX = 'XJP2:';
 
-export function profileCode(p) {
-  return PROFILE_CODE_PREFIX + encodeCode(JSON.stringify({ app: 'xuanjian', kind: 'profile', v: 1, item: slim(p) }));
+/** 解析失敗時，盡量講清楚是哪一種失敗 */
+export function codeError(input) {
+  const t = String(input || '').trim();
+  if (!t) return '先貼上分享碼';
+  if (!/XJP2|XJPRO1/i.test(t) && !/^[A-Za-z0-9_-]{16,}$/.test(t.replace(/\s+/g, ''))) {
+    return '這段文字裡找不到分享碼，確認一下有沒有複製完整';
+  }
+  return '分享碼讀不出來，可能複製時被截斷了，請對方重新複製一次';
 }
 
-/** 解析分享碼；失敗回傳 null */
-export function parseProfileCode(code) {
+/* 緊湊格式：固定順序的陣列，比具名 JSON 短一半以上 */
+const ORDER = ['surname', 'givenName', 'label', 'gender', 'city', 'lat', 'lon', 'tz'];
+
+export function profileCode(p) {
+  const b = p.birth || {};
+  const arr = [
+    b.y, b.m, b.d, b.h ?? 12, b.minute ?? 0, b.hourUnknown ? 1 : 0,
+    ...ORDER.map(k => p[k] ?? ''),
+  ];
+  return PROFILE_CODE_PREFIX + encodeCode(JSON.stringify(arr));
+}
+
+/* 把使用者貼進來的東西洗乾淨：去掉所有空白與零寬字元，全形冒號換成半形 */
+const scrub = (s) => String(s || '')
+  .replace(/[\u200B-\u200D\uFEFF]/g, '')
+  .replace(/[：]/g, ':')
+  .replace(/\s+/g, '');
+
+/**
+ * 解析分享碼。容許夾在一整段訊息裡、被折行、缺前綴。
+ * 失敗回傳 null。
+ */
+export function parseProfileCode(input) {
+  const text = scrub(input);
+  if (!text) return null;
+
+  // 新版緊湊格式 XJP2:
+  const m2 = text.match(/XJP2:([A-Za-z0-9_-]+)/);
+  if (m2) { const r = fromCompact(m2[1]); if (r) return r; }
+
+  // 舊版 XJPRO1:（具名 JSON），仍然讀得進來
+  const m1 = text.match(/XJPRO1:([A-Za-z0-9_-]+)/);
+  if (m1) { const r = fromLegacy(m1[1]); if (r) return r; }
+
+  // 完全沒有前綴時，把整串當成 base64 兩種格式都試一次
+  const bare = text.replace(/^[A-Za-z0-9]*:/, '');
+  if (/^[A-Za-z0-9_-]{16,}$/.test(bare)) {
+    return fromCompact(bare) || fromLegacy(bare);
+  }
+  return null;
+}
+
+function fromCompact(b64) {
   try {
-    const raw = String(code || '').trim().replace(/^XJPRO1:/, '');
-    const data = JSON.parse(decodeCode(raw));
+    const a = JSON.parse(decodeCode(b64));
+    if (!Array.isArray(a) || a.length < 6) return null;
+    const [y, m, d, h, minute, hourUnknown, ...rest] = a;
+    if (![y, m, d].every(n => Number.isFinite(n))) return null;
+    const out = { birth: { y, m, d, h: h ?? 12, minute: minute ?? 0 } };
+    if (hourUnknown) out.birth.hourUnknown = true;
+    ORDER.forEach((k, i) => { if (rest[i] !== '' && rest[i] != null) out[k] = rest[i]; });
+    return out;
+  } catch { return null; }
+}
+
+function fromLegacy(b64) {
+  try {
+    const data = JSON.parse(decodeCode(b64));
     if (data.app !== 'xuanjian' || data.kind !== 'profile' || !data.item?.birth) return null;
     const b = data.item.birth;
     if (![b.y, b.m, b.d].every(n => Number.isFinite(n))) return null;
@@ -153,7 +236,8 @@ function openShare(current) {
         <div class="preview" id="pc-out" style="max-height:120px"></div>
         <button class="btn btn--primary btn--block press" id="pc-copy">${raw(icon('copy'))} 複製分享碼</button>
         <p class="hint">只含姓名、性別、出生時間與出生地 —— 推算需要的欄位。
-          不含你的解讀紀錄、標籤或任何其他資料。</p>
+          不含你的解讀紀錄、標籤或任何其他資料。<br>
+          貼回時可以連同前後的訊息一起貼，被換行或多了空白也沒關係。</p>
         <div class="field" style="margin-top:var(--sp-3)"><label for="pc-in">貼上別人的分享碼</label>
           <textarea class="textarea textarea--code" id="pc-in" style="min-height:90px" placeholder="XJPRO1:..."></textarea></div>
         <button class="btn btn--ghost btn--block press" id="pc-import">${raw(icon('check'))} 匯入成新檔案</button>
@@ -168,8 +252,9 @@ function openShare(current) {
       $('#pc-who', sr).addEventListener('change', draw);
       $('#pc-copy', sr).addEventListener('click', () => copyText(out.textContent, '分享碼已複製'));
       $('#pc-import', sr).addEventListener('click', () => {
-        const item = parseProfileCode($('#pc-in', sr).value);
-        if (!item) { toast('分享碼無法解析'); return; }
+        const raw = $('#pc-in', sr).value;
+        const item = parseProfileCode(raw);
+        if (!item) { toast(codeError(raw)); return; }
         const p = store.saveProfile({ ...item, id: uid('pro') });
         close();
         toast(`已匯入：${(p.surname || '') + (p.givenName || '') || p.label || '未命名'}`);
@@ -189,9 +274,10 @@ export default {
         ${list.length ? raw(`<div class="grid grid--auto">${list.map(p => html`
           <button class="profile press track reveal" data-id="${p.id}" aria-current="${p.id === profile?.id}">
             <b>${(p.surname || '') + (p.givenName || '') || p.label || '未命名'}</b>
-            <small>${p.birth.y}-${pad(p.birth.m)}-${pad(p.birth.d)} ${pad(p.birth.h)}:${pad(p.birth.minute)} · ${p.city || ''}</small>
+            <small>${p.birth.y}-${pad(p.birth.m)}-${pad(p.birth.d)} ${p.birth.hourUnknown ? '時辰不詳' : `${pad(p.birth.h)}:${pad(p.birth.minute)}`} · ${p.city || ''}</small>
             <div class="row" style="gap:5px;margin-top:6px">
               <span class="badge badge--dash">${p.gender}</span>
+              ${p.birth.hourUnknown ? html`<span class="badge badge--dash">時辰不詳</span>` : ''}
               ${p.label ? html`<span class="badge badge--dash">${p.label}</span>` : ''}
               ${p.id === profile?.id ? html`<span class="badge badge--solid">使用中</span>` : ''}
             </div>

@@ -1,6 +1,7 @@
 /* 把各引擎的結果組成「分享長圖」的文件描述。畫圖的部分在 share.js。 */
 import { today } from './share.js';
 import { PURPOSES, purposeName, hoursOf } from './engines/daily.js';
+import { isHourUnknown } from './engines/unknown.js';
 
 const who = (p) => (p?.surname || '') + (p?.givenName || '') || '未命名';
 const pad = (n) => String(n).padStart(2, '0');
@@ -11,7 +12,10 @@ export function natalCard(all, profile) {
   const blocks = [
     { t: 'eyebrow', text: 'NATAL CHART' },
     { t: 'title', text: `${who(profile)} 的命盤` },
-    { t: 'p', text: `${all.base.y}-${pad(all.base.m)}-${pad(all.base.d)} ${pad(all.base.h)}:${pad(all.base.minute)}　${profile.city || ''}`, dim: true },
+    { t: 'p', text: isHourUnknown(profile)
+        ? `${all.base.y}-${pad(all.base.m)}-${pad(all.base.d)}　時辰不詳　${profile.city || ''}`
+        : `${all.base.y}-${pad(all.base.m)}-${pad(all.base.d)} ${pad(all.base.h)}:${pad(all.base.minute)}　${profile.city || ''}`, dim: true },
+    ...(isHourUnknown(profile) ? [{ t: 'p', text: '※ 時辰不詳，以中午 12:00 代入。上升、中天、十二宮位與整張紫微盤都無法確定。', dim: true }] : []),
   ];
   if (a) {
     blocks.push({ t: 'big', text: `${a.sun.signName}　${a.moon.signName}　${a.ascendant.signName}`, sub: '太陽　月亮　上升', size: 72 });
@@ -159,6 +163,7 @@ export function baziCard(b, a, profile) {
       { t: 'eyebrow', text: 'FOUR PILLARS' },
       { t: 'title', text: `${who(profile)} 的八字` },
       { t: 'big', text: `${b.year.name} ${b.month.name} ${b.day.name} ${b.hour.name}`, sub: `日主 ${b.dayMaster}（${b.dayMasterEl}）　${b.zodiac}年　${b.jieqi}`, size: 68 },
+      ...(isHourUnknown(profile) ? [{ t: 'p', text: '※ 時辰不詳，時柱以中午 12:00 代入，五行力量與旺衰判定會偏。', dim: true }] : []),
       { t: 'h', text: '五行力量' },
       { t: 'kv', items: Object.entries(a.power.pct).map(([k, v]) => [k, `${v}%`]) },
       { t: 'h', text: '日主旺衰' },

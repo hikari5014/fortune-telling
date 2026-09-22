@@ -1,4 +1,4 @@
-import { html, raw, $, $$, toast, confirmSheet, download, sheet } from '../ui.js';
+import { html, raw, $, $$, toast, confirmSheet, download, sheet, haptic, hapticSupport } from '../ui.js';
 import { icon } from '../icons.js';
 import { store, applyChrome, DEFAULT_SETTINGS } from '../store.js';
 import { invalidate } from '../app.js';
@@ -20,6 +20,15 @@ const rowStack = (title, desc, control) => html`
     <div class="setrow__t">${title}</div>${desc ? html`<div class="setrow__d">${desc}</div>` : ''}
     <div style="margin-top:var(--sp-2)">${raw(control)}</div>
   </div>`;
+
+/* 誠實說明這台裝置到底支不支援，而不是給一個按了沒反應的開關 */
+function hapticNote() {
+  const kind = hapticSupport();
+  if (kind === 'vibrate') return '這台裝置支援震動 API，開啟後按鈕與手勢會有輕微回饋。';
+  if (kind === 'ios') return 'iOS Safari 沒有震動 API。這裡改用 iOS 17.4 之後的切換開關會帶觸覺的行為，'
+    + '不是正式 API —— 系統設定關掉觸覺、或版本較舊時仍然不會有反應。';
+  return '這台裝置沒有可用的觸覺回饋介面，開了也不會有作用。';
+}
 
 const seg = (id, items, value) => html`<div class="seg" id="${id}">
   ${raw(items.map(([v, label]) => html`<button class="press" data-v="${v}" aria-pressed="${v === String(value)}">${label}</button>`).join(''))}
@@ -50,7 +59,7 @@ export default {
           <div class="setgroup__head">動態</div>
           ${raw(row('動畫強度', '關閉後仍保留必要的狀態提示。', seg('set-motion', [['off', '關閉'], ['light', '輕量'], ['full', '完整']], s.motion)))}
           ${raw(row('左右滑動切頁', '在觸控裝置上左右滑動切換分頁。方向鎖定後才會跟手，螢幕邊緣讓給系統返回手勢。', sw('set-swipe', s.swipeNav)))}
-          ${raw(row('觸覺回饋', '支援震動的裝置才有作用。', sw('set-haptics', s.haptics)))}
+          ${raw(row('觸覺回饋', hapticNote(), sw('set-haptics', s.haptics)))}
           ${raw(row('指標光暈', '游標附近的漸層光暈。觸控裝置一律關閉，避免拖曳時畫面抖動。', sw('set-glow', s.pointerGlow)))}
         </section>
 
@@ -117,7 +126,16 @@ export default {
     }));
     const bindSw = (id, key) => {
       const el = $(`#${id}`, root);
-      const t = () => { const v = el.getAttribute('aria-checked') !== 'true'; el.setAttribute('aria-checked', String(v)); save({ [key]: v }); };
+      const t = () => {
+        const v = el.getAttribute('aria-checked') !== 'true';
+        el.setAttribute('aria-checked', String(v));
+        save({ [key]: v });
+        // 打開觸覺回饋時立刻震一下，讓人當場知道這台裝置到底有沒有用
+        if (key === 'haptics' && v) {
+          haptic(18);
+          toast(hapticSupport() ? '剛才有感覺到嗎？沒有的話這台裝置就是不支援。' : '這台裝置沒有可用的觸覺介面。');
+        }
+      };
       el.addEventListener('click', t);
       el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); t(); } });
     };

@@ -1,11 +1,11 @@
 /* 玄鑑 Service Worker：應用程式外殼快取 + 執行期快取 */
-const VERSION = 'xj-0.11.0';   // 與 src/data/changelog.js 的 APP_VERSION 同步
+const VERSION = 'xj-0.12.0';   // 與 src/data/changelog.js 的 APP_VERSION 同步
 const SHELL = [
   './', './index.html', './manifest.webmanifest',
   './styles/tokens.css', './styles/base.css', './styles/motion.css',
   './styles/components.css', './styles/views.css',
   './src/app.js', './src/router.js', './src/store.js', './src/ui.js', './src/palette.js', './src/share.js', './src/sharecards.js', './src/motion.js', './src/icons.js',
-  './src/engines/calendar.js', './src/engines/planets.js', './src/engines/bazi.js', './src/engines/astro.js', './src/engines/ziwei.js',
+  './src/engines/calendar.js', './src/engines/planets.js', './src/engines/bazi.js', './src/engines/unknown.js', './src/engines/astro.js', './src/engines/ziwei.js',
   './src/engines/naming.js', './src/engines/numbers.js', './src/engines/fortune.js', './src/engines/synastry.js', './src/engines/iching.js', './src/engines/tarot.js', './src/engines/qian.js', './src/engines/daily.js', './src/engines/bagua.js',
   './src/data/strokes.js', './src/data/kangxi.js', './src/data/lucky81.js', './src/data/magnetic.js', './src/data/changelog.js', './src/data/wenyan.js', './src/data/hexagrams.js', './src/data/tarot.js', './src/data/qian.js',
   './src/prompt/context.js', './src/prompt/templates.js', './src/prompt/builder.js',

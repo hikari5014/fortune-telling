@@ -2,11 +2,25 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.11.0';
+export const APP_VERSION = '0.12.0';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.12.0', date: '2026-09-22', title: '觸覺回饋 · 分享碼 · 時辰不詳',
+    items: [
+      { kind: 'fix', text: '觸覺回饋在 iPhone 上完全沒作用：iOS Safari 沒有震動 API，原本那個開關等於是假的。改用 iOS 17.4 之後的替代做法，並在設定頁誠實標出這台裝置到底支不支援' },
+      { kind: 'change', text: '打開觸覺回饋時會立刻震一下，讓你當場知道有沒有效' },
+      { kind: 'fix', text: '分享碼貼回來讀不出來：真正的原因是通訊軟體會折行、加空白、插入不可見字元。解析改成容錯，連同前後訊息一起貼也沒關係' },
+      { kind: 'change', text: '分享碼從 231 字縮短到 85 字，大幅降低被折行的機會；舊的碼仍然讀得進來' },
+      { kind: 'change', text: '分享碼讀不出來時會講清楚是哪一種失敗，不再只說「無法解析」' },
+      { kind: 'add', text: '檔案可以標「不知道出生時辰」，照樣算得出來' },
+      { kind: 'add', text: '星盤、紫微、八字頁會列出受影響的項目與原因，分等級標示無法確定／會偏移／可能有誤／影響很小' },
+      { kind: 'add', text: '提示詞自動附上警告，要求 LLM 分辨哪些結論站得住腳，並反過來提示可以怎麼回推時辰' },
+      { kind: 'data', text: '受影響清單是實測出來的：同一天掃過 24 小時，上升出現 12 種星座、紫微命宮 12 種、時柱 13 種，太陽星座則完全不受影響' },
+    ],
+  },
   {
     v: '0.11.0', date: '2026-09-22', title: '測試與 CI',
     items: [

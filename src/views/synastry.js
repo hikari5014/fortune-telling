@@ -156,19 +156,21 @@ export default {
 
 /* 直接貼別人的分享碼當第二人，不必先存成檔案 */
 async function pasteCode() {
-  const { parseProfileCode } = await import('./profile.js');
+  const { parseProfileCode, codeError } = await import('./profile.js');
   sheet({
     title: '貼上對方的分享碼',
     body: html`<div class="stack" data-noswipe>
-      <p class="hint">對方在「檔案 → 分享碼」複製給你的那一段。匯入後會變成一份新檔案，可以隨時刪。</p>
+      <p class="hint">對方在「檔案 → 分享碼」複製給你的那一段。連同前後的訊息一起貼也沒關係。<br>
+        匯入後會變成一份新檔案，可以隨時刪。</p>
       <div class="field"><label for="sy-code">分享碼</label>
         <textarea class="textarea textarea--code" id="sy-code" style="min-height:100px" placeholder="XJPRO1:..."></textarea></div>
     </div>`,
     actions: html`<button class="btn btn--primary btn--block press" data-ok>${raw(icon('check'))} 匯入並合盤</button>`,
     onMount(sr, close) {
       $('[data-ok]', sr).addEventListener('click', () => {
-        const item = parseProfileCode($('#sy-code', sr).value);
-        if (!item) { toast('分享碼無法解析'); return; }
+        const raw = $('#sy-code', sr).value;
+        const item = parseProfileCode(raw);
+        if (!item) { toast(codeError(raw)); return; }
         const p = store.saveProfile({ ...item, id: uid('pro') });
         close();
         toast(`已匯入：${label(p)}`);

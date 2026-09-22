@@ -1,11 +1,11 @@
 import { html, raw, $, $$, sheet } from '../ui.js';
 import { icon } from '../icons.js';
 import { starDesc } from '../engines/ziwei.js';
-import { focusBtn, goFocus, DISCLAIMER, needProfile, sectionHead, kv, promptLink } from './_shared.js';
+import { focusBtn, goFocus, hourWarning, DISCLAIMER, needProfile, sectionHead, kv, promptLink } from './_shared.js';
 
 export default {
   title: '紫微斗數', eyebrow: 'ZI WEI DOU SHU',
-  render({ all }) {
+  render({ all, profile }) {
     if (!all?.ziwei) return needProfile();
     const z = all.ziwei;
 
@@ -24,6 +24,7 @@ export default {
       </div>`;
 
     return html`
+      ${raw(hourWarning(profile, ['紫微']))}
       <section class="reveal">
         <div class="zw">
           ${raw(z.grid.slice(0, 4).map(cell).join(''))}

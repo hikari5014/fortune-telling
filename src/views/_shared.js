@@ -1,5 +1,6 @@
 import { html, raw } from '../ui.js';
 import { icon } from '../icons.js';
+import { isHourUnknown, affected, LEVEL_TEXT } from '../engines/unknown.js';
 
 export const DISCLAIMER = html`<p class="disclaimer">
   本頁數據由裝置本機推算（曆法與天文演算法），可能與不同流派或排盤軟體略有差異。
@@ -65,4 +66,27 @@ export async function goFocus({ label, text, template = 'freeform', question = '
   store.setDraft('focus', { label, text, at: Date.now() });
   const q = question ? `&q=${encodeURIComponent(question)}` : '';
   location.hash = `/prompt?t=${template}&focus=1${q}`;
+}
+
+/**
+ * 時辰不詳的提醒卡。areas 指定這一頁要列哪些領域（不給就列全部）。
+ * 回傳空字串表示這份檔案有確切時辰，不需要提醒。
+ */
+export function hourWarning(profile, areas = null) {
+  if (!isHourUnknown(profile)) return '';
+  const list = affected(areas);
+  if (!list.length) return '';
+  return html`
+    <div class="warn reveal" role="note">
+      <div class="warn__head">${raw(icon('info'))}<b>這份資料沒有確切時辰</b></div>
+      <p class="warn__p">以下用中午 12:00 代入，所以：</p>
+      <div class="warn__list">
+        ${list.map(x => html`
+          <div class="warn__row">
+            <span class="warn__lv warn__lv--${x.level}">${LEVEL_TEXT[x.level]}</span>
+            <span class="warn__txt"><b>${x.what}</b><small>${x.why}</small></span>
+          </div>`)}
+      </div>
+      <p class="warn__p">知道時辰之後回「檔案」頁補上，這些就會恢復可信。</p>
+    </div>`;
 }

@@ -4,13 +4,13 @@ import { analyze, toText, HIDDEN } from '../engines/bazi.js';
 import { BRANCHES, STEMS, STEM_EL, BRANCH_EL, EL_ORDER } from '../engines/calendar.js';
 import { shiShen } from '../engines/fortune.js';
 import { observeReveal, runCountUps, dial } from '../motion.js';
-import { focusBtn, goFocus, DISCLAIMER, needProfile, sectionHead, kv, shareBtn, doShare } from './_shared.js';
+import { focusBtn, goFocus, hourWarning, DISCLAIMER, needProfile, sectionHead, kv, shareBtn, doShare } from './_shared.js';
 
 const POS = ['年', '月', '日', '時'];
 
 export default {
   title: '八字', eyebrow: 'FOUR PILLARS',
-  render({ all }) {
+  render({ all, profile }) {
     if (!all?.bazi) return html`${needProfile('八字要用出生年月日時，先建立一份出生資料。')}${DISCLAIMER}`;
     const b = all.bazi;
     const a = analyze(b);
@@ -19,6 +19,7 @@ export default {
     const maxPct = Math.max(...Object.values(a.power.pct));
 
     return html`
+      ${raw(hourWarning(profile, ['八字']))}
       <section class="card reveal">
         <div class="pillars">
           ${P.map((p, i) => html`
