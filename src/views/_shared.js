@@ -50,3 +50,19 @@ export async function doShare(build, filename) {
     toast('產生圖片失敗：' + (e.message || e));
   }
 }
+
+/** 「深問這一項」按鈕（HTML 字串，可放進抽屜的 body） */
+export function focusBtn(label = '深問這一項') {
+  return `<button class="btn btn--primary press" data-focus>${icon('prompt')} ${label}</button>`;
+}
+
+/**
+ * 帶著一個具體項目跳到提示詞頁
+ * @param {object} o {label 顯示用標題, text 要餵給 LLM 的內容, template 模板 id, question 預填問題}
+ */
+export async function goFocus({ label, text, template = 'freeform', question = '' }) {
+  const { store } = await import('../store.js');
+  store.setDraft('focus', { label, text, at: Date.now() });
+  const q = question ? `&q=${encodeURIComponent(question)}` : '';
+  location.hash = `/prompt?t=${template}&focus=1${q}`;
+}

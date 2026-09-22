@@ -2,11 +2,24 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.8.0';
+export const APP_VERSION = '0.8.1';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.8.1', date: '2026-09-22', title: '提示詞：專精與自由度',
+    items: [
+      { kind: 'add', text: '各功能頁的細節抽屜加上「深問這一項」：紫微單宮、星盤單星、方位單方、姓名單格、數字單磁場' },
+      { kind: 'add', text: '帶過來的那一項會變成「聚焦項目」，插在提示詞的「輸出要求」之前，當成這次回答的主軸' },
+      { kind: 'add', text: '自訂變數：自己定義 {{名稱}} 與內容，模板裡可以直接用' },
+      { kind: 'change', text: '輸出控制（語言、語氣、深度、長度、格式）改成可以自己打字，預設值只是建議' },
+      { kind: 'add', text: '新增「額外指示」欄位，內容直接接在提示詞最後' },
+      { kind: 'add', text: '預覽可以直接編輯，複製與分享用的是改過的版本，也可以一鍵還原' },
+      { kind: 'fix', text: '抽屜裡的連結跳到別頁時，舊抽屜會留在畫面上蓋住新頁' },
+      { kind: 'fix', text: '數字頁「八星速查」的格子看起來可以點卻沒反應；含 0 或 5 的「連接」組合現在會說明為什麼不成磁場' },
+    ],
+  },
   {
     v: '0.8.0', date: '2026-09-22', title: '語調：白話／文言',
     items: [

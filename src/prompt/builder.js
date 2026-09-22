@@ -31,6 +31,7 @@ export function compose({ template, all, settings, selected = [], options = {}, 
   const reg = options.register ?? settings.register ?? 'bai';
   const regName = reg === 'wen' ? '淺近文言' : '白話文';
   const vars = {
+    ...(extra.custom || {}),      // 自訂變數；同名時內建的優先，避免改壞模板
     ...blocks,
     data: dataText || '（未附帶命盤資料）',
     name: (p.surname || '') + (p.givenName || '') || '（未填）',
@@ -50,6 +51,7 @@ export function compose({ template, all, settings, selected = [], options = {}, 
     format: options.format ?? settings.promptFormat,
     length: options.length ?? '中等（600–1200 字）',
     question: extra.question ? `\n我特別想知道：${extra.question}` : '',
+    focus: extra.focus || '（未指定特別聚焦的項目）',
     candidates: extra.candidates || '（未填）',
     goal: extra.goal || '整體運勢',
     chars: extra.chars || '',
@@ -71,6 +73,15 @@ export function compose({ template, all, settings, selected = [], options = {}, 
     ? '\n・請以**淺近文言**作答：典雅而不晦澀，句短意足；命理術語沿用本名，不必譯成白話。'
     : '\n・請以**白話文**作答：像對朋友說話，不要堆術語；非用不可的術語請先用一句話解釋。';
   body = body.trimEnd() + regLine;
+
+  // 從功能頁點過來時帶著的「聚焦項目」：模板沒用到 {{focus}} 也不讓它消失，
+  // 插在「輸出要求」之前，才不會被埋在指示後面
+  const f = (extra.focus || '').trim();
+  if (f && !/\{\{\s*focus\s*\}\}/.test(template.body)) {
+    const chunk = `\n\n這一次我特別想聚焦在下面這一項，請以它為主軸回答：\n${f}\n`;
+    const at = body.lastIndexOf('────────────\n輸出要求');
+    body = at >= 0 ? body.slice(0, at) + chunk.trimStart() + '\n' + body.slice(at) : body + chunk;
+  }
 
   const pre = String(options.prefix ?? settings.promptPrefix ?? '').trim();
   const suf = String(options.suffix ?? settings.promptSuffix ?? '').trim();

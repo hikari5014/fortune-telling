@@ -1,7 +1,7 @@
 import { html, raw, $, $$, sheet } from '../ui.js';
 import { icon } from '../icons.js';
 import { wheelSVG, SIGNS, houseMeaning } from '../engines/astro.js';
-import { DISCLAIMER, needProfile, sectionHead, kv, promptLink, pad, shareBtn, doShare } from './_shared.js';
+import { focusBtn, goFocus, DISCLAIMER, needProfile, sectionHead, kv, promptLink, pad, shareBtn, doShare } from './_shared.js';
 
 const ELEMENT_TEXT = { 火: '行動、直覺、熱度', 土: '務實、穩定、累積', 風: '思考、交流、彈性', 水: '情感、直覺、連結' };
 
@@ -105,9 +105,22 @@ export default {
             ${raw(kv('守護星', s.ruler))}
             ${raw(kv('落入宮位', `第 ${b.house} 宮 — ${houseMeaning(b.house, settings.register)}`))}
             ${raw(kv('元素特質', ELEMENT_TEXT[s.el]))}
-            <p class="hint">想要完整解讀？到「提示詞」選「星盤日月升」，複製提示詞貼給你慣用的 LLM。</p>
-            <a class="btn btn--primary press" href="#/prompt?t=astro-big3">${raw(icon('prompt'))} 產生提示詞</a>
+            <div class="row" style="gap:var(--sp-2)">
+              ${raw(focusBtn(`深問${b.zh}`))}
+              <a class="btn btn--ghost press" href="#/prompt?t=astro-big3">${raw(icon('prompt'))} 日月升總覽</a>
+            </div>
           </div>`,
+        onMount(sr) {
+          $('[data-focus]', sr).addEventListener('click', () => goFocus({
+            template: 'astro-big3',
+            label: `星盤 ${b.zh}在${b.signName}`,
+            text: [
+              `星體：${b.zh}　星座：${b.signName}　精確位置：${b.text}`,
+              `元素：${s.el}象　模式：${s.mode}宮　守護星：${s.ruler}`,
+              `落入第 ${b.house} 宮 —— ${houseMeaning(b.house, settings.register)}`,
+            ].join('\n'),
+          }));
+        },
       });
     }));
   },

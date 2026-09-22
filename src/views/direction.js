@@ -6,7 +6,7 @@ import {
   TRIGRAMS, mingGua, eightDirections, zhaiGua, matchZhai, compassSVG, toText, STAR_ORDER,
 } from '../engines/bagua.js';
 import { observeReveal, initSeg } from '../motion.js';
-import { DISCLAIMER, needProfile, sectionHead, kv, shareBtn, doShare } from './_shared.js';
+import { focusBtn, goFocus, DISCLAIMER, needProfile, sectionHead, kv, shareBtn, doShare } from './_shared.js';
 
 const SITS = TRIGRAMS.map(t => t.dir);
 
@@ -142,8 +142,24 @@ export default {
             <p class="hint" style="margin-top:6px">${d.star}在數字上是同一顆星，手機、車牌帶到這些組合，效果與這個方位同一個方向。</p>
           </div>
           <div class="row" style="margin-top:var(--sp-5)">
+            ${focusBtn(`深問${d.dir}方`)}
             <a class="btn btn--ghost press" href="#/numbers" data-close>${icon('numbers')} 去數字頁</a>
           </div>`,
+        onMount(sr) {
+          $('[data-focus]', sr).addEventListener('click', () => goFocus({
+            template: 'direction',
+            label: `方位 ${d.dir}（${d.gua}卦・${d.star}）`,
+            text: [
+              `本命卦：${ming.name}（${ming.group}命）`,
+              `方位：${d.dir}　卦：${d.gua}（${d.sym}，${d.el}，洛書 ${d.luoshu}，方位角 ${d.deg}°）`,
+              `遊年星：${d.star}〔${d.kind}〕`,
+              `在方位上的解法：${d.placeText}`,
+              `適合擺放：${d.use}`,
+              `這顆星本身：${d.text}`,
+              `同星的數字組合：${d.numbers.join('、')}`,
+            ].join('\n'),
+          }));
+        },
       });
     };
 

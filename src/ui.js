@@ -99,9 +99,12 @@ export function sheet({ title, body, actions = '', onMount } = {}) {
   scrim.classList.add('is-open');
 
   let closed = false;
+  // 抽屜裡的連結跳到別頁時要跟著關，否則會留在畫面上蓋住新頁
+  function onHash() { close(); }
   const close = () => {
     if (closed) return;
     closed = true;
+    removeEventListener('hashchange', onHash);
     unlockScroll();
     panel.style.transition = '';          // 把控制權交還給 CSS
     panel.style.transform = '';
@@ -112,6 +115,7 @@ export function sheet({ title, body, actions = '', onMount } = {}) {
     setTimeout(() => { if (panel.isConnected) root.innerHTML = ''; }, 360);
   };
   $$('[data-close]', root).forEach(b => b.addEventListener('click', close));
+  addEventListener('hashchange', onHash);
   document.addEventListener('keydown', function onEsc(e) {
     if (e.key === 'Escape') { close(); document.removeEventListener('keydown', onEsc); }
   });

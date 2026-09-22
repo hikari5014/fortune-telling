@@ -1,7 +1,7 @@
 import { html, raw, $, $$, sheet } from '../ui.js';
 import { icon } from '../icons.js';
 import { starDesc } from '../engines/ziwei.js';
-import { DISCLAIMER, needProfile, sectionHead, kv, promptLink } from './_shared.js';
+import { focusBtn, goFocus, DISCLAIMER, needProfile, sectionHead, kv, promptLink } from './_shared.js';
 
 export default {
   title: '紫微斗數', eyebrow: 'ZI WEI DOU SHU',
@@ -97,8 +97,25 @@ export default {
               </div>`).join('')}</div>`) : ''}
             <div class="section__head" style="margin-top:var(--sp-3)"><h2 style="font-size:var(--step-0)">三方四正</h2></div>
             ${raw(tri.map((t, i) => kv(['本宮', '三合', '三合', '對宮'][i] + '　' + t.name, `${t.branchName} ${t.main.join('、') || '空宮'}`)).join(''))}
-            <a class="btn btn--primary press" href="#/prompt?t=ziwei-deep">${raw(icon('prompt'))} 產生逐宮解讀提示詞</a>
+            <div class="row" style="gap:var(--sp-2)">
+              ${raw(focusBtn(`深問${p.name}`))}
+              <a class="btn btn--ghost press" href="#/prompt?t=ziwei-deep">${raw(icon('prompt'))} 全盤逐宮</a>
+            </div>
           </div>`,
+        onMount(sr) {
+          $('[data-focus]', sr).addEventListener('click', () => goFocus({
+            template: 'ziwei-deep',
+            label: `紫微 ${p.name}（${p.branchName}宮・${p.gz}）`,
+            text: [
+              `宮位：${p.name}　地支：${p.branchName}　宮干支：${p.gz}`,
+              `宮職：${p.desc}`,
+              `主星：${p.main.length ? p.main.join('、') : `空宮，借對宮 ${z.palaces[(branch + 6) % 12].main.join('、') || '亦空'}`}`,
+              `吉星：${p.lucky.join('、') || '無'}　煞星：${p.sha.join('、') || '無'}　四化：${p.hua.join('、') || '無'}`,
+              '三方四正：',
+              ...tri.map((t, i) => `・${['本宮', '三合', '三合', '對宮'][i]}　${t.name}（${t.branchName}）：${t.main.join('、') || '空宮'}`),
+            ].join('\n'),
+          }));
+        },
       });
     };
     $$('[data-b]', root).forEach(el => {

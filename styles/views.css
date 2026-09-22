@@ -521,3 +521,10 @@
 .cmp__head b { font-size: var(--step-0); letter-spacing: .06em; }
 .cmp__head small { font-size: var(--step--2); color: var(--ink-3); font-family: var(--font-num); }
 .cmp__body { padding: var(--sp-4); max-height: 52vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+
+/* ── 提示詞：聚焦項目與自訂變數 ─────────────────── */
+.focus__text { font-family: var(--font-num); font-size: var(--step--1); line-height: 1.7; color: var(--ink-2); white-space: pre-wrap; word-break: break-word; margin-top: 4px; max-height: 190px; overflow-y: auto; }
+.cvrow { display: grid; grid-template-columns: 34% 1fr auto; gap: 6px; align-items: center; }
+.cvrow .input { min-height: 40px; padding: 8px var(--sp-3); }
+.preview[contenteditable="true"] { cursor: text; }
+.preview[contenteditable="true"]:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }

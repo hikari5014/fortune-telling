@@ -5,7 +5,7 @@ import { invalidate } from '../app.js';
 import { resolve } from '../router.js';
 import { analyzeName, recommend, analyzeChars } from '../engines/naming.js';
 import { dial } from '../motion.js';
-import { DISCLAIMER, needProfile, sectionHead, kv } from './_shared.js';
+import { focusBtn, goFocus, DISCLAIMER, needProfile, sectionHead, kv } from './_shared.js';
 
 const luckCls = (l) => l === '大吉' || l === '吉' ? 'luck--good' : l === '半吉' ? 'luck--half' : 'luck--bad';
 
@@ -173,7 +173,22 @@ export default {
           ${raw(kv('靈動涵義', x.text))}
           ${raw(kv('五行', x.el))}
           <p class="hint">${MEAN[x.key]}</p>
+          ${raw(focusBtn(`深問${x.key}`))}
         </div>`,
+        onMount(sr) {
+          $('[data-focus]', sr).addEventListener('click', () => goFocus({
+            template: 'name-check',
+            label: `姓名 ${x.key} ${x.n}（${x.el}）`,
+            text: [
+              `姓名：${n.fullName}　總筆畫 ${n.totalStrokes}`,
+              `${x.key}：${x.n} 劃，五行屬${x.el}，81 靈動為「${x.luck}」`,
+              `靈動涵義：${x.text}`,
+              `這一格看的是：${MEAN[x.key]}`,
+              `五格全貌：${['天格', '人格', '地格', '外格', '總格'].map(k => `${k} ${n.wuge[k]?.n ?? '—'}（${n.wuge[k]?.luck ?? ''}）`).join('　')}`,
+              `三才：${n.sancai.config}（${n.sancai.luck}）—— ${n.sancai.detail}`,
+            ].join('\n'),
+          }));
+        },
       });
     }));
 

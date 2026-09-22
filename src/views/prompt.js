@@ -27,6 +27,15 @@ export default {
     return html`
       <div class="pb">
         <div class="stack" data-noswipe>
+          <section id="focus-sec" ${query.focus && store.drafts.focus ? '' : 'hidden'}>
+            ${raw(sectionHead('聚焦項目', `<button class="chip press" id="focus-clear">${icon('close')} 取消聚焦</button>`))}
+            <div class="card card--flat" style="padding:var(--sp-3) var(--sp-4)">
+              <p class="card__label" id="focus-label">${store.drafts.focus?.label || ''}</p>
+              <pre class="focus__text" id="focus-text">${store.drafts.focus?.text || ''}</pre>
+            </div>
+            <p class="hint" style="margin-top:var(--sp-2)">從功能頁帶過來的那一項。它會被插在提示詞的「輸出要求」之前，當成這次回答的主軸。</p>
+          </section>
+
           <section>
             ${raw(sectionHead('模板', `<button class="chip press" id="new-tpl">${icon('plus')} 自訂</button><button class="chip press" id="tpl-io">${icon('share')} 匯出入</button>`))}
             <div class="row" style="gap:5px;margin-bottom:var(--sp-3)" id="cat-row">
@@ -83,7 +92,16 @@ export default {
                 <input class="input num" id="x-combos" value="${query.combos || ''}" placeholder="13+16、7+18"></div>
               <div class="field" data-for="compat"><label for="x-other">第二個人</label>
                 ${raw(otherSelect(profile))}</div>
+              <div class="field"><label for="x-extra">額外指示（直接接在最後）</label>
+                <textarea class="textarea" id="x-extra" style="min-height:72px"
+                  placeholder="例如：請用三個小標；請避免宿命論的說法；請最後附一段可以直接傳給家人的白話摘要">${store.drafts.promptExtra || ''}</textarea></div>
             </div>
+          </section>
+
+          <section>
+            ${raw(sectionHead('自訂變數', `<button class="chip press" id="cv-add">${icon('plus')} 新增</button>`))}
+            <div class="stack" id="cv-list" style="gap:6px">${raw(cvRows(store.drafts.customVars || {}))}</div>
+            <p class="hint" style="margin-top:var(--sp-2)">自己定義的變數可以在模板裡用 <code>{{名稱}}</code> 插入，跟內建變數一樣。</p>
           </section>
 
           <section>
@@ -98,7 +116,11 @@ export default {
         <div class="pb__preview stack">
           <section>
             ${raw(sectionHead('預覽', `<span class="counter" id="count"></span>`))}
-            <div class="preview" id="preview" data-noswipe></div>
+            <div class="preview" id="preview" data-noswipe contenteditable="true" spellcheck="false"
+                 role="textbox" aria-multiline="true" aria-label="提示詞預覽，可直接編輯"></div>
+            <p class="hint" style="margin-top:6px" id="edited-hint" hidden>
+              你手動改過預覽內容了，複製的會是改過的版本。<button class="chip press" id="revert">還原</button>
+            </p>
             <div class="row" style="margin-top:var(--sp-3);gap:var(--sp-2)">
               <button class="btn btn--primary press" id="copy">${raw(icon('copy'))} 複製提示詞</button>
               <button class="btn btn--ghost press" id="save-tpl">${raw(icon('plus'))} 存成自訂模板</button>
@@ -143,7 +165,22 @@ export default {
       format: $('#opt-format', root).value,
       disclaimer: $('#opt-disc', root).getAttribute('aria-checked') === 'true',
     });
+    /* 聚焦項目：由功能頁寫進 drafts，網址帶 focus=1 才生效 */
+    let focusItem = query.focus ? (store.drafts.focus || null) : null;
+
+    /* 自訂變數：從畫面上讀回來，空名稱忽略 */
+    const customVars = () => {
+      const o = {};
+      $$('.cvrow', root).forEach(r => {
+        const k = r.querySelector('.cvrow__k').value.trim();
+        if (k) o[k] = r.querySelector('.cvrow__v').value;
+      });
+      return o;
+    };
+
     const extras = () => ({
+      custom: customVars(),
+      focus: focusItem ? `【${focusItem.label}】\n${focusItem.text}` : '',
       question: $('#x-question', root).value.trim(),
       candidates: $('#x-cand', root).value.trim(),
       goal: $('#x-goal', root).value.trim(),
@@ -158,12 +195,21 @@ export default {
                 : active.id === 'qian' ? (store.drafts.qianResult || '') : '',
     });
 
-    const build = () => compose({
-      template: { ...active, body: bodyOverride ?? active.body },
-      all, settings, selected: [...selected], options: opts(), extra: extras(),
-    });
+    const build = () => {
+      const out = compose({
+        template: { ...active, body: bodyOverride ?? active.body },
+        all, settings, selected: [...selected], options: opts(), extra: extras(),
+      });
+      const note = $('#x-extra', root).value.trim();
+      return note ? `${out}\n\n${note}` : out;
+    };
+
+    /* 預覽被手動改過之後，複製與分享都用改過的版本 */
+    let edited = null;
+    const finalText = () => edited ?? build();
 
     const refresh = () => {
+      if (edited != null) { $('#count', root).textContent = `${edited.length} 字元 · 約 ${estTokens(edited)} tokens（已手改）`; return; }
       const text = build();
       $('#preview', root).textContent = text;
       $('#count', root).textContent = `${text.length} 字元 · 約 ${estTokens(text)} tokens`;
@@ -185,7 +231,9 @@ export default {
       selected = new Set((active.blocks || []).filter(k => buildBlocks(all, settings)[k]));
       $$('[data-block]', root).forEach(b => b.setAttribute('aria-pressed', String(selected.has(b.dataset.block))));
       $$('.tmpl', root).forEach(b => b.setAttribute('aria-pressed', String(b.dataset.id === active.id)));
-      history.replaceState(null, '', `#/prompt?t=${active.id}`);
+      edited = null;
+      $('#edited-hint', root).hidden = true;
+      history.replaceState(null, '', `#/prompt?t=${active.id}${focusItem ? '&focus=1' : ''}`);
       refresh();
     };
     $$('.tmpl', root).forEach(b => b.addEventListener('click', () => pick(b.dataset.id)));
@@ -205,8 +253,11 @@ export default {
     }));
 
     // 輸出控制
-    ['opt-lang', 'opt-tone', 'opt-depth', 'opt-length', 'opt-format'].forEach(id =>
-      $(`#${id}`, root).addEventListener('change', refresh));
+    ['opt-lang', 'opt-tone', 'opt-depth', 'opt-length', 'opt-format'].forEach(id => {
+      const el = $(`#${id}`, root);
+      el.addEventListener('input', refresh);
+      el.addEventListener('change', refresh);
+    });
     const sw = $('#opt-disc', root);
     const toggleSw = () => { sw.setAttribute('aria-checked', String(sw.getAttribute('aria-checked') !== 'true')); refresh(); };
     sw.addEventListener('click', toggleSw);
@@ -215,6 +266,49 @@ export default {
     // 補充欄位
     ['x-question', 'x-cand', 'x-goal', 'x-chars', 'x-combos'].forEach(id =>
       $(`#${id}`, root).addEventListener('input', refresh));
+    $('#x-extra', root).addEventListener('input', (e) => {
+      store.setDraft('promptExtra', e.target.value);
+      refresh();
+    });
+
+    // 聚焦項目
+    $('#focus-clear', root).addEventListener('click', () => {
+      focusItem = null;
+      $('#focus-sec', root).hidden = true;
+      history.replaceState(null, '', `#/prompt?t=${active.id}`);
+      refresh();
+    });
+
+    // 自訂變數
+    const cvList = $('#cv-list', root);
+    const saveCV = () => { store.setDraft('customVars', customVars()); refresh(); };
+    const bindCV = () => {
+      $$('.cvrow input', cvList).forEach(el => { el.oninput = saveCV; });
+      $$('[data-cv-del]', cvList).forEach(b => { b.onclick = () => { b.closest('.cvrow').remove(); saveCV(); }; });
+    };
+    bindCV();
+    $('#cv-add', root).addEventListener('click', () => {
+      if (!$('.cvrow', cvList)) cvList.innerHTML = '';
+      cvList.insertAdjacentHTML('beforeend', `<div class="cvrow">
+        <input class="input cvrow__k" placeholder="名稱" aria-label="變數名稱">
+        <input class="input cvrow__v" placeholder="內容" aria-label="變數內容">
+        <button class="iconbtn press" data-cv-del aria-label="刪除">${icon('trash')}</button></div>`);
+      bindCV();
+      cvList.lastElementChild.querySelector('.cvrow__k').focus();
+    });
+
+    // 預覽可直接編輯
+    const pv = $('#preview', root);
+    const hint = $('#edited-hint', root);
+    pv.addEventListener('input', () => {
+      edited = pv.textContent;
+      hint.hidden = false;
+      $('#count', root).textContent = `${edited.length} 字元 · 約 ${estTokens(edited)} tokens（已手改）`;
+    });
+    $('#revert', root).addEventListener('click', (e) => {
+      e.stopPropagation();
+      edited = null; hint.hidden = true; refresh();
+    });
     $('#x-other', root)?.addEventListener('change', (e) => {
       const p = store.profiles.find(x => x.id === e.target.value);
       otherAll = p ? computeAll(p, settings) : null;
@@ -240,9 +334,9 @@ export default {
     }));
 
     // 動作
-    $('#copy', root).addEventListener('click', () => copyText(build(), '提示詞已複製，去貼給 LLM 吧'));
+    $('#copy', root).addEventListener('click', () => copyText(finalText(), '提示詞已複製，去貼給 LLM 吧'));
     $('#share-btn', root).addEventListener('click', async () => {
-      const text = build();
+      const text = finalText();
       if (navigator.share) { try { await navigator.share({ title: active.name, text }); return; } catch {} }
       download(`prompt-${active.id}.txt`, text, 'text/plain');
     });
@@ -377,12 +471,25 @@ export default {
   },
 };
 
+/* 輸出控制一律可以自己打字，預設值只是建議，不是選項的全部 */
 function sel(id, label, list, value) {
   return html`<div class="field"><label for="${id}">${label}</label>
-    <select class="select" id="${id}">
-      ${raw(list.map(x => html`<option ${x === value ? 'selected' : ''}>${x}</option>`).join(''))}
-      </select></div>`;
+    <input class="input" id="${id}" list="${id}-list" value="${value || ''}" autocomplete="off">
+    <datalist id="${id}-list">${raw(list.map(x => html`<option value="${x}"></option>`).join(''))}</datalist>
+    </div>`;
 }
+/* 自訂變數的列 */
+function cvRows(map) {
+  const ent = Object.entries(map);
+  if (!ent.length) return `<p class="hint">還沒有自訂變數。</p>`;
+  return ent.map(([k, v]) => html`
+    <div class="cvrow" data-k="${k}">
+      <input class="input cvrow__k" value="${k}" aria-label="變數名稱">
+      <input class="input cvrow__v" value="${v}" aria-label="變數內容">
+      <button class="iconbtn press" data-cv-del aria-label="刪除">${raw(icon('trash'))}</button>
+    </div>`).join('');
+}
+
 function otherSelect(current) {
   const list = store.profiles.filter(p => p.id !== current?.id);
   return html`<select class="select" id="x-other">
