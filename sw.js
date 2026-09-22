@@ -1,5 +1,5 @@
 /* 玄鑑 Service Worker：應用程式外殼快取 + 執行期快取 */
-const VERSION = 'xj-v6';
+const VERSION = 'xj-0.3.0';   // 與 src/data/changelog.js 的 APP_VERSION 同步
 const SHELL = [
   './', './index.html', './manifest.webmanifest',
   './styles/tokens.css', './styles/base.css', './styles/motion.css',
@@ -7,11 +7,11 @@ const SHELL = [
   './src/app.js', './src/router.js', './src/store.js', './src/ui.js', './src/motion.js', './src/icons.js',
   './src/engines/calendar.js', './src/engines/astro.js', './src/engines/ziwei.js',
   './src/engines/naming.js', './src/engines/numbers.js', './src/engines/fortune.js', './src/engines/synastry.js', './src/engines/iching.js', './src/engines/tarot.js',
-  './src/data/strokes.js', './src/data/kangxi.js', './src/data/lucky81.js', './src/data/magnetic.js', './src/data/hexagrams.js', './src/data/tarot.js',
+  './src/data/strokes.js', './src/data/kangxi.js', './src/data/lucky81.js', './src/data/magnetic.js', './src/data/changelog.js', './src/data/hexagrams.js', './src/data/tarot.js',
   './src/prompt/context.js', './src/prompt/templates.js', './src/prompt/builder.js',
   './src/views/_shared.js', './src/views/home.js', './src/views/profile.js', './src/views/astro.js',
   './src/views/ziwei.js', './src/views/naming.js', './src/views/numbers.js', './src/views/prompt.js',
-  './src/views/records.js', './src/views/settings.js', './src/views/fortune.js', './src/views/synastry.js', './src/views/iching.js', './src/views/tarot.js',
+  './src/views/records.js', './src/views/settings.js', './src/views/about.js', './src/views/fortune.js', './src/views/synastry.js', './src/views/iching.js', './src/views/tarot.js',
   './assets/icons/icon.svg', './assets/icons/icon-192.png', './assets/icons/icon-512.png',
 ];
 
@@ -22,6 +22,10 @@ self.addEventListener('activate', (e) => {
   e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== VERSION).map(k => caches.delete(k))))
     .then(() => self.clients.claim()));
 });
+self.addEventListener('message', (e) => {
+  if (e.data?.type === 'SKIP_WAITING') self.skipWaiting();
+});
+
 self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET') return;

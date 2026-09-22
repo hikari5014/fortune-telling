@@ -24,6 +24,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # 避免 App 版號與離線快取版號不同步就上線
+      - name: Check version consistency
+        run: python3 tools/check_version.py
+
       # 這是純靜態網站（原生 ES Modules），不需要建置步驟
       # 前提：repo 的 Settings → Pages → Source 已設為「GitHub Actions」
       # （預設的 GITHUB_TOKEN 沒有權限自動建立 Pages 站台，這一步需手動設定一次）

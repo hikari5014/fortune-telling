@@ -4,9 +4,9 @@ import { store, applyChrome, DEFAULT_SETTINGS } from '../store.js';
 import { invalidate } from '../app.js';
 import { resolve } from '../router.js';
 import { dictSize } from '../data/strokes.js';
+import { APP_VERSION, APP_STAGE, CHANGELOG } from '../data/changelog.js';
 import { DISCLAIMER } from './_shared.js';
 
-const APP_VERSION = '0.1.0 · demo';
 
 const row = (title, desc, control) => html`
   <div class="setrow">
@@ -92,8 +92,10 @@ export default {
 
         <section class="setgroup reveal">
           <div class="setgroup__head">關於</div>
-          ${raw(row('版本', APP_VERSION, `<span class="badge badge--dash">PWA</span>`))}
-          ${raw(row('運作方式', '所有推算都在本機完成，不連網、不上傳。解讀交給你選的外部 LLM。', ''))}
+          ${raw(row('版本', `v${APP_VERSION} · ${APP_STAGE}　${CHANGELOG[0].date} 發布`,
+            `<a class="btn btn--ghost btn--sm press" href="#/about">${icon('info')} 更新紀錄</a>`))}
+          ${raw(row('運作方式', '所有推算都在本機完成，不連網、不上傳。解讀交給你選的外部 LLM。',
+            `<a class="btn btn--ghost btn--sm press" href="#/about" aria-label="前往關於頁">${icon('chev')}</a>`))}
         </section>
       </div>
       ${DISCLAIMER}`;

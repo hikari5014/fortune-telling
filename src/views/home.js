@@ -2,6 +2,7 @@ import { html, raw, $, $$ } from '../ui.js';
 import { icon } from '../icons.js';
 import { store } from '../store.js';
 import { todayInfo } from '../prompt/context.js';
+import { APP_VERSION } from '../data/changelog.js';
 import { ziweiLimits, fortuneOfYear, baziLuck, shiShen } from '../engines/fortune.js';
 import { DISCLAIMER, sectionHead, pad } from './_shared.js';
 
@@ -117,6 +118,9 @@ export default {
         </div>
       </section>
 
+      <p style="margin-top:var(--sp-5);text-align:center">
+        <a class="chip press" href="#/about">玄鑑 v${APP_VERSION}　更新紀錄</a>
+      </p>
       ${DISCLAIMER}`;
   },
 };
