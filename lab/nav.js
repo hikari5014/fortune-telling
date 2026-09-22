@@ -16,10 +16,9 @@
 import { icon } from '../src/icons.js';
 
 /* ── 分類 ─────────────────────────────────────────── */
-/* 五個分類排成扇形，正中間下面放首頁。
+/* 四個分類排成扇形，正中央下面放首頁。
    工具放最左邊 —— 那是最少用、也最不想誤觸的一類。
-   「關係」是人際與名數合併來的：合盤、面談是你跟人的關係，
-   姓名、數字是你跟自己名號的關係。這個歸類有點勉強，名字待定。 */
+   擇日與方位併進占卜；合盤、面談、姓名、數字併成人際。 */
 const CATS = [
   { key: 'tool', name: '工具', icon: 'settings', items: [
     { t: '提示', icon: 'prompt' }, { t: '紀錄', icon: 'records' }, { t: '檔案', icon: 'profile' },
@@ -28,10 +27,9 @@ const CATS = [
     { t: '星盤', icon: 'astro' }, { t: '紫微', icon: 'ziwei' },
     { t: '八字', icon: 'pillars' }, { t: '運勢', icon: 'clock' }] },
   { key: 'divine', name: '占卜', icon: 'dice', items: [
-    { t: '卜卦', icon: 'dice' }, { t: '塔羅', icon: 'star' }, { t: '求籤', icon: 'folder' }] },
-  { key: 'time', name: '時空', icon: 'calendar', items: [
+    { t: '卜卦', icon: 'dice' }, { t: '塔羅', icon: 'star' }, { t: '求籤', icon: 'folder' },
     { t: '擇日', icon: 'calendar' }, { t: '方位', icon: 'compass' }] },
-  { key: 'bond', name: '關係', icon: 'link', items: [
+  { key: 'bond', name: '人際', icon: 'link', items: [
     { t: '合盤', icon: 'link' }, { t: '面談', icon: 'edit' },
     { t: '姓名', icon: 'naming' }, { t: '數字', icon: 'numbers' }] },
 ];
@@ -510,9 +508,12 @@ function buildDock() {
   });
   dock.append(arc);
 
+  // 首頁做成圓的：它不是分類，是一顆「回到原點」的鍵，形狀不一樣才分得出來
   const home = document.createElement('button');
   home.className = 'cat cat--home';
-  home.innerHTML = `${icon('home')}<span>首頁</span>`;
+  home.setAttribute('aria-label', '首頁');
+  home.dataset.tip = '首頁';
+  home.innerHTML = icon('home');
   home.addEventListener('click', () => { buzz(10); toast('回到首頁'); });
   dock.append(home);
 }
@@ -599,16 +600,15 @@ function bind() {
       所以轉螢幕、換字級都自己會跟上。</p>
     <p><b>首頁卡在扇形正中央下面的凹處。</b>那是拇指最好按的位置，留給最常按的東西。</p>
     <p><b>工具移到最左邊。</b>設定、關於這些最少用、也最不想誤觸的，放在最遠的角落。</p>
-    <p><b>人際與名數合併成「關係」。</b>合盤、面談是你跟人的關係，姓名、數字是你跟自己名號的關係 ——
-      老實說這個歸類有點勉強，名字你可以改，我先取一個能用的。</p>
+    <p><b>剩下四個分類。</b>擇日與方位併進占卜；合盤、面談、姓名、數字併成人際。
+      四個是偶數，扇形的頂端是平的，首頁剛好卡在那個凹口。</p>
     <p><b>長按拿掉了，改成點一下叫出停住的選單。</b>理由有兩個：長按每次都要先等三百毫秒，
       天天用的東西不該每次都等；而且長按加拖曳對手指不方便的人很不友善。
       停住之後仍然可以「按著滑過去再放開」，兩種都通。</p>
     <p><b>兩段輪盤拿掉了。</b>它整個設計就建立在「長按住再往外拖」上，沒有長按就沒有它。</p>
     <h3>還沒決定的</h3>
-    <p>一、「關係」這個名字。<br>
-      二、扇形的弧度與傾斜角（下面可以即時調，找到喜歡的告訴我數字）。<br>
-      三、要不要把這一版套進 App 本體 —— 本體的導覽目前還沒動。</p>`;
+    <p>一、扇形的弧度與傾斜角（下面可以即時調，找到喜歡的告訴我數字）。<br>
+      二、要不要把這一版套進 App 本體 —— 本體的導覽目前還沒動。</p>`;
 }
 
 /* 測試只要幾何那一段，不要整個畫面跑起來 */

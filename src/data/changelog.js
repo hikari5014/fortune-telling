@@ -2,11 +2,20 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.18.1';
+export const APP_VERSION = '0.18.2';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.18.2', date: '2026-09-22', title: '導覽原型：併成四類、首頁改圓形',
+    items: [
+      { kind: 'change', text: '擇日與方位併進占卜，分類從五個減到四個' },
+      { kind: 'change', text: '「關係」改名「人際」' },
+      { kind: 'change', text: '首頁鍵從圓角方塊改成正圓 —— 它不是分類而是一顆「回到原點」的鍵，形狀不一樣才一眼分得出來' },
+      { kind: 'change', text: '四個是偶數，扇形頂端變成平的，圓形的首頁剛好卡在那個凹口' },
+    ],
+  },
   {
     v: '0.18.1', date: '2026-09-22', title: '導覽原型定案：扇形分類 · 滑選清單',
     items: [

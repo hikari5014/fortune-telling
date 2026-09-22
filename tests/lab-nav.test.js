@@ -18,14 +18,16 @@ for (const x of [24, 60, 120, 195, 270, 330, 366]) for (const y of [700, 760, 80
 
 const COUNTS = [...new Set(CATS.map(c => c.items.length))].sort();
 
-test('分類：工具在最左、人際與名數合併、每一類都有東西', () => {
-  assert.equal(CATS.length, 5);
+test('分類：工具在最左、合併後每一類都齊', () => {
+  assert.equal(CATS.length, 4);
   assert.equal(CATS[0].key, 'tool', '工具要在最左邊');
   const all = CATS.flatMap(c => c.items.map(i => i.t));
   assert.equal(new Set(all).size, all.length, '同一個功能不該出現在兩類');
-  for (const must of ['合盤', '面談', '姓名', '數字']) {
-    assert.ok(CATS.find(c => c.key === 'bond').items.some(i => i.t === must), `「關係」少了 ${must}`);
-  }
+  const has = (key, list) => list.forEach(t =>
+    assert.ok(CATS.find(c => c.key === key).items.some(i => i.t === t), `${key} 少了 ${t}`));
+  has('bond', ['合盤', '面談', '姓名', '數字']);
+  has('divine', ['卜卦', '塔羅', '求籤', '擇日', '方位']);
+  assert.ok(!CATS.some(c => c.key === 'time'), '時空應該已經併進占卜');
   for (const c of CATS) {
     assert.ok(c.items.length >= 2, `${c.name} 只有 ${c.items.length} 項，不值得單獨一類`);
     assert.ok(c.items.length <= 6, `${c.name} 有 ${c.items.length} 項，一次要挑太多`);
@@ -33,19 +35,29 @@ test('分類：工具在最左、人際與名數合併、每一類都有東西',
   }
 });
 
-test('扇形是對稱的：中間最高、兩端一樣低', () => {
-  const mid = (CATS.length - 1) / 2;
-  const dy = CATS.map((_, i) => ARC.rise * ((i - mid) / mid) ** 2);
-  const rot = CATS.map((_, i) => ARC.tilt * ((i - mid) / mid));
-  assert.equal(dy[mid], 0, '正中間應該是最高點');
-  assert.equal(rot[mid], 0, '正中間不該傾斜');
-  for (let i = 0; i < CATS.length; i++) {
-    const j = CATS.length - 1 - i;
-    assert.ok(Math.abs(dy[i] - dy[j]) < 1e-9, '左右不對稱');
-    assert.ok(Math.abs(rot[i] + rot[j]) < 1e-9, '左右傾斜不對稱');
-    if (i < mid) assert.ok(dy[i] > dy[i + 1], '越靠中間應該越高');
+test('扇形是對稱的：中間最高、兩端一樣低（單數雙數都要成立）', () => {
+  const shape = (n) => {
+    const mid = (n - 1) / 2;
+    return {
+      dy: [...Array(n).keys()].map(i => ARC.rise * ((i - mid) / mid) ** 2),
+      rot: [...Array(n).keys()].map(i => ARC.tilt * ((i - mid) / mid)),
+    };
+  };
+  for (const n of [3, 4, 5, 6, CATS.length]) {
+    const { dy, rot } = shape(n);
+    for (let i = 0; i < n; i++) {
+      const j = n - 1 - i;
+      assert.ok(Math.abs(dy[i] - dy[j]) < 1e-9, `n=${n} 左右不對稱`);
+      assert.ok(Math.abs(rot[i] + rot[j]) < 1e-9, `n=${n} 左右傾斜不對稱`);
+      if (i + 1 < n / 2) assert.ok(dy[i] > dy[i + 1], `n=${n} 越靠中間應該越高`);
+    }
+    assert.ok(Math.abs(Math.max(...dy) - ARC.rise) < 1e-9, `n=${n} 兩端的落差要等於設定值`);
+    // 雙數時頂端那兩顆本來就略低於理論最高點，只要明顯比兩端高就算數
+    assert.ok(Math.min(...dy) <= ARC.rise * 0.2, `n=${n} 中間沒有比兩端高多少`);
+    // 雙數的時候頂端是平的，首頁剛好卡在那個凹口
+    if (n % 2 === 0) assert.ok(Math.abs(dy[n / 2 - 1] - dy[n / 2]) < 1e-9, `n=${n} 頂端兩顆應該一樣高`);
+    else assert.equal(dy[(n - 1) / 2], 0, `n=${n} 正中間那顆應該在最高點`);
   }
-  assert.equal(Math.max(...dy), ARC.rise, '兩端的落差要等於設定值');
 });
 
 test('原型的檔案都在，而且 HTML 指到對的地方', () => {
