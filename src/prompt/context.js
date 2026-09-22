@@ -45,7 +45,9 @@ export function buildBlocks(A, settings) {
   B.basic = [
     `姓名：${(p.surname || '') + (p.givenName || '') || '（未填）'}`,
     `性別：${p.gender || '未填'}`,
-    `國曆生日：${A.base.y}-${pad(A.base.m)}-${pad(A.base.d)} ${pad(A.base.h)}:${pad(A.base.minute)}`,
+    p.birth?.hourUnknown
+      ? `國曆生日：${A.base.y}-${pad(A.base.m)}-${pad(A.base.d)}　**出生時辰不詳**（以下一律用中午 12:00 代入）`
+      : `國曆生日：${A.base.y}-${pad(A.base.m)}-${pad(A.base.d)} ${pad(A.base.h)}:${pad(A.base.minute)}`,
     A.lunar ? `農曆：${A.lunar.year} 年 ${A.lunar.monthName}${A.lunar.dayName}` : '',
     `出生地：${p.city || settings.city}（東經 ${A.base.lon}、北緯 ${A.base.lat}，時區 UTC${A.base.tz >= 0 ? '+' : ''}${A.base.tz}）`,
   ].filter(Boolean).join('\n');

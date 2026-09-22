@@ -1,5 +1,6 @@
 /* 提示詞組裝與渲染 */
 import { buildBlocks, todayInfo, BLOCK_META } from './context.js';
+import { caveatText } from '../engines/unknown.js';
 
 /** 把 {{var}} 取代掉；未知變數原樣保留 */
 export function render(tpl, vars) {
@@ -52,6 +53,7 @@ export function compose({ template, all, settings, selected = [], options = {}, 
     length: options.length ?? '中等（600–1200 字）',
     question: extra.question ? `\n我特別想知道：${extra.question}` : '',
     focus: extra.focus || '（未指定特別聚焦的項目）',
+    caveats: caveatText(all?.profile) || '（出生資料完整，沒有已知的缺漏）',
     candidates: extra.candidates || '（未填）',
     goal: extra.goal || '整體運勢',
     chars: extra.chars || '',
@@ -74,14 +76,21 @@ export function compose({ template, all, settings, selected = [], options = {}, 
     : '\n・請以**白話文**作答：像對朋友說話，不要堆術語；非用不可的術語請先用一句話解釋。';
   body = body.trimEnd() + regLine;
 
-  // 從功能頁點過來時帶著的「聚焦項目」：模板沒用到 {{focus}} 也不讓它消失，
-  // 插在「輸出要求」之前，才不會被埋在指示後面
-  const f = (extra.focus || '').trim();
-  if (f && !/\{\{\s*focus\s*\}\}/.test(template.body)) {
-    const chunk = `\n\n這一次我特別想聚焦在下面這一項，請以它為主軸回答：\n${f}\n`;
+  /* 插在「輸出要求」之前而不是附在最後 —— 附在指示後面會被埋掉 */
+  const insertBefore = (chunk) => {
     const at = body.lastIndexOf('────────────\n輸出要求');
     body = at >= 0 ? body.slice(0, at) + chunk.trimStart() + '\n' + body.slice(at) : body + chunk;
+  };
+
+  // 從功能頁點過來時帶著的「聚焦項目」：模板沒用到 {{focus}} 也不讓它消失
+  const f = (extra.focus || '').trim();
+  if (f && !/\{\{\s*focus\s*\}\}/.test(template.body)) {
+    insertBefore(`\n\n這一次我特別想聚焦在下面這一項，請以它為主軸回答：\n${f}\n`);
   }
+
+  // 出生時辰不詳：一律附上警告，不讓 LLM 把上升或紫微命宮當成確定的事實
+  const cav = caveatText(all?.profile);
+  if (cav && !/\{\{\s*caveats\s*\}\}/.test(template.body)) insertBefore(`\n\n${cav}\n`);
 
   const pre = String(options.prefix ?? settings.promptPrefix ?? '').trim();
   const suf = String(options.suffix ?? settings.promptSuffix ?? '').trim();

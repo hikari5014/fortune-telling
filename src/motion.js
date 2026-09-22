@@ -216,10 +216,46 @@ export function countUp(el, to, { from = 0, dur = 900, decimals = 0, suffix = ''
 }
 
 /* 環形進度 */
-export function dial(percent, label) {
+/* 分數色階：0 紅 → 100 綠。
+   停點刻意讓紅色分量單調遞減、綠色分量單調遞增，
+   中段才不會出現「綠先多後少」的糊掉感。
+
+   顏色永遠只是輔助 —— 同一個分數同時由三個管道表達：
+   圓環填滿的長度、圈中央的數字、以及顏色。
+   紅綠色盲看不出色相差異時，前兩個照樣讀得到。
+   深色模式另一組較亮的停點，由 CSS 依主題挑，不需要 JS 重算。 */
+const SCALE_LIGHT = [[0, 190, 40, 34], [25, 188, 96, 30], [50, 170, 130, 30], [75, 108, 142, 48], [100, 30, 150, 78]];
+const SCALE_DARK = [[0, 255, 110, 96], [25, 252, 150, 78], [50, 235, 195, 80], [75, 150, 215, 110], [100, 80, 230, 135]];
+
+function rampAt(stops, pct) {
+  const v = Math.max(0, Math.min(100, pct));
+  let a = stops[0], b = stops[stops.length - 1];
+  for (let i = 1; i < stops.length; i++) {
+    if (v <= stops[i][0]) { a = stops[i - 1]; b = stops[i]; break; }
+  }
+  const span = b[0] - a[0] || 1;
+  const t = (v - a[0]) / span;
+  const ch = (i) => Math.round(a[i] + (b[i] - a[i]) * t);
+  return `rgb(${ch(1)} ${ch(2)} ${ch(3)})`;
+}
+
+/** 分數對應的顏色（給長圖之類非 CSS 的地方用） */
+export const scoreColor = (pct, dark = false) => rampAt(dark ? SCALE_DARK : SCALE_LIGHT, pct);
+
+/**
+ * 分數環
+ * @param {number} percent 0–100
+ * @param {string} label 無障礙標籤
+ * @param {object} o {scale 是否用色階（僅適用「越高越好」的分數）}
+ */
+export function dial(percent, label, { scale = false } = {}) {
   const r = 54, c = 2 * Math.PI * r;
-  const off = c * (1 - Math.max(0, Math.min(100, percent)) / 100);
-  return `<div class="dial">
+  const pct = Math.max(0, Math.min(100, percent));
+  const off = c * (1 - pct / 100);
+  // 色階由設定決定；關閉時不輸出變數，CSS 會退回單色
+  const on = scale && store.settings.scoreColor !== false;
+  const vars = on ? ` style="--dial-c:${rampAt(SCALE_LIGHT, pct)};--dial-cd:${rampAt(SCALE_DARK, pct)}"` : '';
+  return `<div class="dial"${vars}>
     <svg viewBox="0 0 128 128" aria-label="${label || ''} ${Math.round(percent)} 分">
       <circle class="dial__track" cx="64" cy="64" r="${r}"/>
       <circle class="dial__value" cx="64" cy="64" r="${r}"

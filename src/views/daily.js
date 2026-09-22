@@ -77,7 +77,7 @@ export default {
               <p class="hint">${info.gz.year.name}年 ${info.gz.month.name}月　${info.lunar ? `農曆 ${info.lunar.monthName}${info.lunar.dayName}` : ''}</p>
             </div>
             <div class="dayscore">
-              ${raw(dial(r.score, `${r.level}・${purposeName(purpose)}`))}
+              ${raw(dial(r.score, `${r.level}・${purposeName(purpose)}`, { scale: true }))}
               <span class="luck ${r.cls}">${purposeName(purpose)}　${r.level}</span>
             </div>
           </div>

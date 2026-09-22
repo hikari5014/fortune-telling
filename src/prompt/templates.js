@@ -14,7 +14,7 @@ export const VARS = [
   { v: 'dayinfo', d: '擇日：選定日子的資料' }, { v: 'guainfo', d: '方位：本命卦與八方位' },
   { v: 'data', d: '所有勾選的資料區塊' },
   { v: 'divination', d: '卜卦／塔羅結果' }, { v: 'other', d: '第二個人的資料' }, { v: 'synastry', d: '合盤分析結果' },
-  { v: 'question', d: '我的問題' }, { v: 'focus', d: '從功能頁帶過來的聚焦項目' }, { v: 'lang', d: '輸出語言' }, { v: 'tone', d: '語氣' }, { v: 'register', d: '語調（白話/文言）' },
+  { v: 'question', d: '我的問題' }, { v: 'focus', d: '從功能頁帶過來的聚焦項目' }, { v: 'caveats', d: '資料缺漏警告（例如時辰不詳）' }, { v: 'lang', d: '輸出語言' }, { v: 'tone', d: '語氣' }, { v: 'register', d: '語調（白話/文言）' },
   { v: 'depth', d: '深度' }, { v: 'format', d: '輸出格式' }, { v: 'length', d: '長度' },
 ];
 

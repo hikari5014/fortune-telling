@@ -200,3 +200,49 @@ svg[data-icon="folder"]   { --ix: translateY(-2px); }
 }
 .seg__ind[hidden] { display: none; }
 .seg:has(.seg__ind) button[aria-pressed="true"] { background: transparent; }
+
+/* ── 命盤特效 ─────────────────────────────────────────
+   全部掛在 .wheel--fx / .zw--fx 之下，設定關閉時連 class 都不會加，
+   等於零成本。另外尊重 prefers-reduced-motion 與全域的動畫強度設定。 */
+.wheel .w-veil { color: var(--ink); }
+.wheel .w-glow { fill: none; stroke: var(--ink); stroke-width: 6; opacity: .07; }
+.wheel .w-asp { stroke: var(--ink); stroke-width: 1; opacity: var(--o, .3); }
+.wheel .w-asp.is-hard { stroke-dasharray: 3 4; }
+.wheel .w-planet { transform-box: fill-box; transform-origin: center; }
+
+.wheel--fx .w-ring { animation: w-ring-in 900ms var(--ease-out) both; }
+.wheel--fx .w-sign { animation: w-fade-in 600ms var(--ease-out) both; animation-delay: calc(360ms + var(--i, 0) * 34ms); }
+.wheel--fx .w-asp { animation: w-asp-in 900ms var(--ease-out) both; animation-delay: calc(700ms + var(--i, 0) * 45ms); }
+.wheel--fx .w-planet { animation: w-planet-in 620ms var(--spring) both; animation-delay: calc(820ms + var(--i, 0) * 62ms); }
+.wheel--fx .w-glow { animation: w-glow-pulse 5.5s ease-in-out infinite; animation-delay: calc(var(--i, 0) * 420ms); }
+.wheel--fx .w-ticks[data-spin] { animation: w-spin 240s linear infinite; }
+
+@keyframes w-ring-in { from { opacity: 0; transform: scale(.94); transform-origin: 200px 200px; } }
+@keyframes w-fade-in { from { opacity: 0; } }
+@keyframes w-asp-in { from { opacity: 0; stroke-dasharray: 0 999; } }
+@keyframes w-planet-in { from { opacity: 0; transform: scale(.4); } }
+@keyframes w-glow-pulse { 0%, 100% { opacity: .05; } 50% { opacity: .16; } }
+@keyframes w-spin { to { transform: rotate(360deg); } }
+
+/* 紫微：宮格依序浮現、命宮三方四正發亮 */
+.zw--fx .zw__cell { animation: zw-cell-in 520ms var(--ease-out) both; animation-delay: calc(var(--i, 0) * 38ms); }
+.zw--fx .zw__cell.is-life { animation-delay: 0ms; }
+.zw--fx .zw__cell.is-tri::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  box-shadow: inset 0 0 0 1px var(--ink-3);
+  animation: zw-tri-in 700ms var(--ease-out) both; animation-delay: 640ms;
+}
+.zw--fx .zw__center { animation: zw-center-in 800ms var(--ease-out) both; animation-delay: 420ms; }
+.zw--fx .s-main { animation: zw-star-in 500ms var(--ease-out) both; animation-delay: calc(560ms + var(--i, 0) * 26ms); }
+
+@keyframes zw-cell-in { from { opacity: 0; transform: translate3d(0, 10px, 0); } }
+@keyframes zw-tri-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes zw-center-in { from { opacity: 0; letter-spacing: .5em; } }
+@keyframes zw-star-in { from { opacity: 0; filter: blur(2px); } }
+
+/* 動畫關閉或系統要求減少動態時，一律只留靜態結果 */
+:root[data-motion="off"] .wheel--fx *,
+:root[data-motion="off"] .zw--fx * { animation: none !important; }
+@media (prefers-reduced-motion: reduce) {
+  .wheel--fx *, .zw--fx * { animation: none !important; }
+}

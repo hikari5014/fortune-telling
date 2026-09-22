@@ -49,6 +49,8 @@ const DEFAULT_SETTINGS = {
   register: 'bai',           // 語調：bai 白話文 / wen 文言文
   homeCards: {},             // 首頁各區塊開關（空物件＝全部顯示）
   homeTiles: [],             // 首頁工具區要放哪幾個、順序（空陣列＝全部）
+  scoreColor: true,          // 分數環用色階（0 紅 → 100 綠）；關閉則維持純黑白
+  chartEffects: 'full',      // 命盤特效：off 關閉 / subtle 輕量 / full 完整
 };
 
 const listeners = new Set();

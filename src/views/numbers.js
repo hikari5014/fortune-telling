@@ -16,7 +16,7 @@ function resultBlock(r) {
           <p class="num" style="font-size:var(--step-2);margin-top:4px;word-break:break-all">${r.input || '—'}</p>
           <p class="hint">吉 ${r.good} · 凶 ${r.bad} · 連接 ${r.neutral} · 總和 <span class="num">${r.sum}</span>（${r.luck81.n} ${r.luck81.luck}）</p>
         </div>
-        ${raw(dial(r.score, '號碼評分'))}
+        ${raw(dial(r.score, '號碼評分', { scale: true }))}
       </div>
       <div class="digits" style="margin-top:var(--sp-3)">
         ${raw([...r.digits].map(d => html`<span class="digit ${r.hot.includes(d) ? 'is-hot' : ''}">${d}</span>`).join(''))}
@@ -218,7 +218,7 @@ export default {
             <div><p class="card__label">匹配度</p>
               <p class="hint" style="margin-top:6px">A ${r.a.score} 分 · B ${r.b.score} 分${r.bridge ? ` · 銜接 ${r.bridge.pair}「${r.bridge.name}」` : ''}</p>
               <p style="margin-top:var(--sp-2);color:var(--ink-2);font-size:var(--step--1)">${r.text}</p></div>
-            ${raw(dial(r.score, '匹配度'))}
+            ${raw(dial(r.score, '匹配度', { scale: true }))}
           </div>
         </div>`;
       runCountUps(mOut);

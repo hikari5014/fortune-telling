@@ -161,52 +161,93 @@ export function natalAspects(bodies) {
   return out.sort((x, y) => x.orb - y.orb);
 }
 
-/** 生成命盤 SVG（黑白線稿） */
-export function wheelSVG(chart) {
+/** 生成命盤 SVG（黑白線稿）
+ * @param {object} chart natalChart 的結果
+ * @param {object} o {fx 特效等級 'off'|'subtle'|'full'}
+ */
+export function wheelSVG(chart, { fx = 'full' } = {}) {
   const R = 190, cx = 200, cy = 200;
+  const anim = fx !== 'off';
+  const rich = fx === 'full';
   const pt = (lonDeg, r) => {
     const a = (180 + (lonDeg - chart.asc)) * D2R;      // 上升置於左側（0°）
     return [cx + r * Math.cos(a), cy - r * Math.sin(a)];
   };
-  let s = `<svg class="wheel" viewBox="0 0 400 400" role="img" aria-label="本命盤">`;
+  const f = (n) => n.toFixed(1);
+  let s = `<svg class="wheel${anim ? ' wheel--fx' : ''}" viewBox="0 0 400 400" role="img" aria-label="本命盤">`;
+
+  // 底層的細微星塵，只在完整特效下出現
+  if (rich) {
+    s += `<defs><radialGradient id="w-veil" cx="50%" cy="50%" r="50%">
+      <stop offset="60%" stop-color="currentColor" stop-opacity="0"/>
+      <stop offset="100%" stop-color="currentColor" stop-opacity=".07"/></radialGradient></defs>`;
+    s += `<circle class="w-veil" cx="${cx}" cy="${cy}" r="${R}" fill="url(#w-veil)"/>`;
+  }
+
   s += `<circle class="w-ring w-ring--bold" cx="${cx}" cy="${cy}" r="${R}"/>`;
   s += `<circle class="w-ring" cx="${cx}" cy="${cy}" r="${R - 26}"/>`;
   s += `<circle class="w-ring" cx="${cx}" cy="${cy}" r="${R - 78}"/>`;
+
+  // 極慢自轉的刻度環：一圈兩分鐘，慢到不會讓人分心，但盤是「活的」
+  s += `<g class="w-ticks"${rich ? ' data-spin="1"' : ''} style="transform-origin:${cx}px ${cy}px">`;
   for (let i = 0; i < 360; i += 5) {
     const [x1, y1] = pt(i, R), [x2, y2] = pt(i, i % 30 === 0 ? R - 26 : R - (i % 15 === 0 ? 12 : 7));
-    s += `<line class="w-tick" x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke-width="${i % 30 === 0 ? 1.2 : .6}"/>`;
+    s += `<line class="w-tick" x1="${f(x1)}" y1="${f(y1)}" x2="${f(x2)}" y2="${f(y2)}" stroke-width="${i % 30 === 0 ? 1.2 : .6}"/>`;
   }
+  s += `</g>`;
+
   SIGNS.forEach((sg, i) => {
     const [x, y] = pt(i * 30 + 15, R - 13);
-    s += `<text class="w-sign" x="${x.toFixed(1)}" y="${(y + 3).toFixed(1)}" text-anchor="middle">${sg.zh[0]}${sg.zh[1]}</text>`;
+    s += `<text class="w-sign" x="${f(x)}" y="${f(y + 3)}" text-anchor="middle" style="--i:${i}">${sg.zh[0]}${sg.zh[1]}</text>`;
   });
   for (let i = 0; i < 12; i++) {
     const [x1, y1] = pt(chart.houses[i], R - 78), [x2, y2] = pt(chart.houses[i], R - 26);
-    s += `<line class="w-tick" x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke-dasharray="3 3"/>`;
+    s += `<line class="w-tick" x1="${f(x1)}" y1="${f(y1)}" x2="${f(x2)}" y2="${f(y2)}" stroke-dasharray="3 3"/>`;
     const [hx, hy] = pt(chart.houses[i] + 15, R - 70);
-    s += `<text class="w-sign" x="${hx.toFixed(1)}" y="${(hy + 3).toFixed(1)}" text-anchor="middle">${i + 1}</text>`;
+    s += `<text class="w-sign" x="${f(hx)}" y="${f(hy + 3)}" text-anchor="middle">${i + 1}</text>`;
   }
+
+  // 相位連線：在內圈把有相位的星體連起來。和諧相位實線、緊張相位虛線，
+  // 容許度越小畫得越實 —— 好看，而且是真的資訊
+  if (rich && chart.aspects?.length) {
+    s += `<g class="w-aspects">`;
+    const byKey = Object.fromEntries(chart.bodies.map(b => [b.key, b]));
+    chart.aspects.filter(a => a.aKey !== 'asc' && a.bKey !== 'asc' && a.aKey !== 'mc' && a.bKey !== 'mc')
+      .forEach((a, i) => {
+        const A = byKey[a.aKey], B = byKey[a.bKey];
+        if (!A || !B) return;
+        const [x1, y1] = pt(A.lon, R - 80), [x2, y2] = pt(B.lon, R - 80);
+        const strength = (0.18 + 0.52 * a.strength).toFixed(2);
+        s += `<line class="w-asp ${a.score > 0 ? 'is-easy' : 'is-hard'}" style="--i:${i};--o:${strength}"
+          x1="${f(x1)}" y1="${f(y1)}" x2="${f(x2)}" y2="${f(y2)}"/>`;
+      });
+    s += `</g>`;
+  }
+
   // 上升–下降、天頂–天底 軸線
-  const axes = [[chart.asc, chart.asc + 180], [chart.mc, chart.mc + 180]];
-  axes.forEach(([a, b]) => {
+  [[chart.asc, chart.asc + 180], [chart.mc, chart.mc + 180]].forEach(([a, b]) => {
     const [x1, y1] = pt(a, R - 26), [x2, y2] = pt(b, R - 26);
-    s += `<line class="w-axis w-anim" x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke-dasharray="600" />`;
+    s += `<line class="w-axis${anim ? ' w-anim' : ''}" x1="${f(x1)}" y1="${f(y1)}" x2="${f(x2)}" y2="${f(y2)}" stroke-dasharray="600"/>`;
   });
-  // 星體：角度太近的往內縮一圈，避免疊在一起看不清
+
+  // 星體：角距太近的往內縮一圈，避免疊在一起看不清
   const SHOW = ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune', 'pluto', 'asc', 'mc'];
   const drawn = [];
   chart.bodies.filter(b => SHOW.includes(b.key))
     .slice().sort((a, b) => a.lon - b.lon)
-    .forEach(b => {
-      // 角距小於 10° 就往內縮一圈；最多縮兩圈，再多就接受重疊
+    .forEach((b, idx) => {
       const gap = (d) => Math.abs(((d.lon - b.lon + 540) % 360) - 180);
       let ring = 0;
       while (ring < 2 && drawn.some(d => d.ring === ring && gap(d) < 10)) ring++;
       drawn.push({ lon: b.lon, ring });
       const [x, y] = pt(b.lon, R - 50 - ring * 24);
-      s += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="12" fill="none" class="w-ring"/>`;
-      s += `<text class="w-body" x="${x.toFixed(1)}" y="${(y + 4.5).toFixed(1)}" text-anchor="middle">${b.sym || b.zh[0]}</text>`;
-      if (b.retro) s += `<text class="w-retro" x="${(x + 11).toFixed(1)}" y="${(y - 7).toFixed(1)}" text-anchor="middle">R</text>`;
+      s += `<g class="w-planet" style="--i:${idx}">`;
+      // 光暈用一圈低透明度的描邊做，不用 SVG filter —— 濾鏡在手機上很貴
+      if (rich) s += `<circle class="w-glow" cx="${f(x)}" cy="${f(y)}" r="17"/>`;
+      s += `<circle cx="${f(x)}" cy="${f(y)}" r="12" fill="none" class="w-ring"/>`;
+      s += `<text class="w-body" x="${f(x)}" y="${f(y + 4.5)}" text-anchor="middle">${b.sym || b.zh[0]}</text>`;
+      if (b.retro) s += `<text class="w-retro" x="${f(x + 11)}" y="${f(y - 7)}" text-anchor="middle">R</text>`;
+      s += `</g>`;
     });
   s += `</svg>`;
   return s;

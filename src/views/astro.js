@@ -1,7 +1,7 @@
 import { html, raw, $, $$, sheet } from '../ui.js';
 import { icon } from '../icons.js';
 import { wheelSVG, SIGNS, houseMeaning } from '../engines/astro.js';
-import { focusBtn, goFocus, DISCLAIMER, needProfile, sectionHead, kv, promptLink, pad, shareBtn, doShare } from './_shared.js';
+import { focusBtn, goFocus, hourWarning, DISCLAIMER, needProfile, sectionHead, kv, promptLink, pad, shareBtn, doShare } from './_shared.js';
 
 const ELEMENT_TEXT = { 火: '行動、直覺、熱度', 土: '務實、穩定、累積', 風: '思考、交流、彈性', 水: '情感、直覺、連結' };
 
@@ -13,10 +13,12 @@ export default {
     const big3 = c.bodies.slice(0, 4);
 
     return html`
+      ${raw(hourWarning(profile, ['星盤']))}
       <section class="card reveal track" style="padding:var(--sp-4)">
-        ${raw(wheelSVG(c))}
+        ${raw(wheelSVG(c, { fx: settings.chartEffects ?? 'full' }))}
         <p class="hint" style="text-align:center;margin-top:var(--sp-3)">
           等宮制 · 上升置於左側 · ${profile.city || settings.city}
+          ${(settings.chartEffects ?? 'full') === 'full' ? html` · 內圈細線為相位（實線和諧、虛線緊張）` : ''}
           ${settings.trueSolarTime ? html` · 真太陽時校正 ${c.solarCorrection.toFixed(1)} 分` : ''}
         </p>
       </section>
