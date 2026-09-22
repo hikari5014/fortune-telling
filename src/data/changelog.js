@@ -2,11 +2,17 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.5.0';
+export const APP_VERSION = '0.5.1';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.5.1', date: '2026-09-22', title: '擇日修正',
+    items: [
+      { kind: 'fix', text: '歲破改用「那一天自己的流年支」判斷；往後掃描跨過立春時，不會再拿去年的太歲去比' },
+    ],
+  },
   {
     v: '0.5.0', date: '2026-09-22', title: '擇日',
     items: [

@@ -1,11 +1,10 @@
-import { html, raw, $, $$, sheet, toast, copyText, haptic } from '../ui.js';
+import { html, raw, $, $$, sheet, copyText, haptic } from '../ui.js';
 import { icon } from '../icons.js';
 import { store } from '../store.js';
 import { ctx } from '../app.js';
 import {
-  PURPOSES, purposeName, dayInfo, rateDay, monthGrid, findDays, toText, addDays,
+  PURPOSES, purposeName, dayInfo, rateDay, monthGrid, findDays, toText,
 } from '../engines/daily.js';
-import { BRANCHES } from '../engines/calendar.js';
 import { observeReveal, initSeg, dial, runCountUps } from '../motion.js';
 import { DISCLAIMER, sectionHead, kv, pad } from './_shared.js';
 
@@ -46,8 +45,7 @@ export default {
     let purpose = store.settings.dayPurpose || 'open';
     let tab = store.drafts.dayTab || 'today';
     let [cy, cm] = today();
-    const yearBranch = (() => { try { return dayInfo(...today(), { tz }).gz.year.index % 12; } catch { return null; } })();
-    const opts = () => ({ purpose, bazi, yearBranch, tz });
+    const opts = () => ({ purpose, bazi, tz });
 
     $('#dpurp', root).addEventListener('change', (e) => {
       purpose = e.target.value;
