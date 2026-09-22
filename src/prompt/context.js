@@ -1,6 +1,6 @@
 /* 把各引擎的結果組裝成「資料積木」與變數，供提示詞注入 */
 import { fourPillars, toLunar, HOUR_NAMES, lunarMonthName } from '../engines/calendar.js';
-import { natalChart, SIGNS, HOUSE_MEANING } from '../engines/astro.js';
+import { natalChart, SIGNS, houseMeaning } from '../engines/astro.js';
 import { ziweiChart } from '../engines/ziwei.js';
 import { analyzeName } from '../engines/naming.js';
 import { baziLuck, ziweiLimits, fortuneOfYear, monthsOfYear, shiShen } from '../engines/fortune.js';
@@ -20,7 +20,7 @@ export function computeAll(profile, settings) {
   try { out.bazi = fourPillars({ ...base, lateZiRule: settings.lateZiRule }); } catch (e) { out.bazi = null; }
   try { out.astro = natalChart({ ...base, trueSolarTime: settings.trueSolarTime }); } catch (e) { out.astro = null; }
   try { out.ziwei = ziweiChart({ ...base, gender: profile.gender }); } catch (e) { out.ziwei = null; }
-  try { out.life = lifePath(y, m, d); } catch (e) { out.life = null; }
+  try { out.life = lifePath(y, m, d, settings.register); } catch (e) { out.life = null; }
   try {
     out.luck = baziLuck({ ...base, gender: profile.gender, lateZiRule: settings.lateZiRule });
     out.limits = out.ziwei ? ziweiLimits(out.ziwei) : null;
@@ -29,8 +29,8 @@ export function computeAll(profile, settings) {
     out.naming = analyzeName(profile.surname || '', profile.givenName || '',
       { overrides: profile.strokeOverrides || {}, waiRule: settings.wageWaiRule, numeralRule: settings.numeralRule !== false });
   }
-  if (profile.phone) out.phone = analyzeNumber(profile.phone);
-  if (profile.plate) out.plate = analyzePlate(profile.plate);
+  if (profile.phone) out.phone = analyzeNumber(profile.phone, { reg: settings.register });
+  if (profile.plate) out.plate = analyzePlate(profile.plate, { reg: settings.register });
   return out;
 }
 
@@ -73,7 +73,7 @@ export function buildBlocks(A, settings) {
       `元素分布（日月升）：${Object.entries(c.elements).filter(([, v]) => v).map(([k, v]) => k + v).join('、')}`,
     ].join('\n');
     B.astro_table = ['宮位\t起始星座\t宮位主題',
-      ...c.houses.map((h, i) => `第${i + 1}宮\t${SIGNS[Math.floor(h / 30)].zh}\t${HOUSE_MEANING[i]}`)].join('\n');
+      ...c.houses.map((h, i) => `第${i + 1}宮\t${SIGNS[Math.floor(h / 30)].zh}\t${houseMeaning(i + 1, settings.register)}`)].join('\n');
   }
 
   if (A.ziwei) {

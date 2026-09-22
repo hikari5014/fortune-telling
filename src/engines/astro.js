@@ -1,5 +1,6 @@
 /* 西洋占星：太陽 / 月亮星座、上升、中天、宮位起點 */
 import { jdFromUTC, sunLongitude, moonLongitude, obliquity, norm360, trueSolarOffsetMinutes } from './calendar.js';
+import { HOUSE_WEN } from '../data/wenyan.js';
 
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const sin = (d) => Math.sin(d * D2R), cos = (d) => Math.cos(d * D2R), tan = (d) => Math.tan(d * D2R);
@@ -18,6 +19,10 @@ export const SIGNS = [
   { zh: '水瓶座', en: 'Aquarius',    el: '風', mode: '固定', ruler: '天王星' },
   { zh: '雙魚座', en: 'Pisces',      el: '水', mode: '變動', ruler: '海王星' },
 ];
+/** 第 i 宮（1–12）的主題 */
+export const houseMeaning = (i, reg = 'bai') =>
+  (reg === 'wen' ? HOUSE_WEN[i - 1] : HOUSE_MEANING[i - 1]) || '';
+
 export const HOUSE_MEANING = [
   '自我與外顯', '金錢與資源', '溝通與學習', '家庭與根源', '創造與戀愛', '工作與健康',
   '伴侶與合作', '共有與轉化', '信念與遠方', '事業與名聲', '社群與理想', '潛意識與休息',

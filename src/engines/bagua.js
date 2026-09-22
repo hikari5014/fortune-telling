@@ -5,6 +5,7 @@
      中爻→絕命　上中爻→五鬼　上下爻→六煞　下爻→禍害
    以坎命與乾命的標準八宅表逐格驗過，八個方位全部吻合。 */
 import { STARS } from '../data/magnetic.js';
+import { BAGUA_STAR_WEN, MAGNETIC_WEN, pick } from '../data/wenyan.js';
 
 /* lines = [初爻, 中爻, 上爻]，1 為陽、0 為陰。deg 為羅盤方位角（0=北，順時針）。 */
 export const TRIGRAMS = [
@@ -77,7 +78,7 @@ export function mingGua(year, gender = '女') {
 }
 
 /** 本命卦 → 八個方位各自的遊年星 */
-export function eightDirections(mingGuaName) {
+export function eightDirections(mingGuaName, reg = 'bai') {
   const me = guaOf(mingGuaName);
   return TRIGRAMS.map(t => {
     const star = younian(me, t);
@@ -85,10 +86,10 @@ export function eightDirections(mingGuaName) {
     return {
       gua: t.n, sym: t.sym, dir: t.dir, deg: t.deg, el: t.el, luoshu: t.luoshu,
       star, kind: meta.kind, score: meta.score,
-      text: meta.text,                          // 這顆星本身的意思（與數字磁場同一套說法）
+      text: pick(MAGNETIC_WEN, star, meta.text, reg),   // 這顆星本身（與數字磁場同一套說法）
       rank: STAR_USE[star].rank,
-      use: STAR_USE[star].use,                  // 這個方位適合擺什麼
-      placeText: STAR_USE[star].text,           // 放在方位上怎麼解
+      use: pick(BAGUA_STAR_WEN[star], 'use', STAR_USE[star].use, reg),   // 這個方位適合擺什麼
+      placeText: pick(BAGUA_STAR_WEN[star], 'text', STAR_USE[star].text, reg),
       numbers: meta.keys.slice(0, 4),           // 同一顆星的數字組合，與數字頁共用
     };
   }).sort((a, b) => b.rank - a.rank);

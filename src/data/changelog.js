@@ -2,11 +2,34 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.7.1';
+export const APP_VERSION = '0.8.1';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.8.1', date: '2026-09-22', title: '提示詞：專精與自由度',
+    items: [
+      { kind: 'add', text: '各功能頁的細節抽屜加上「深問這一項」：紫微單宮、星盤單星、方位單方、姓名單格、數字單磁場' },
+      { kind: 'add', text: '帶過來的那一項會變成「聚焦項目」，插在提示詞的「輸出要求」之前，當成這次回答的主軸' },
+      { kind: 'add', text: '自訂變數：自己定義 {{名稱}} 與內容，模板裡可以直接用' },
+      { kind: 'change', text: '輸出控制（語言、語氣、深度、長度、格式）改成可以自己打字，預設值只是建議' },
+      { kind: 'add', text: '新增「額外指示」欄位，內容直接接在提示詞最後' },
+      { kind: 'add', text: '預覽可以直接編輯，複製與分享用的是改過的版本，也可以一鍵還原' },
+      { kind: 'fix', text: '抽屜裡的連結跳到別頁時，舊抽屜會留在畫面上蓋住新頁' },
+      { kind: 'fix', text: '數字頁「八星速查」的格子看起來可以點卻沒反應；含 0 或 5 的「連接」組合現在會說明為什麼不成磁場' },
+    ],
+  },
+  {
+    v: '0.8.0', date: '2026-09-22', title: '語調：白話／文言',
+    items: [
+      { kind: 'add', text: '設定頁新增「語調」：白話文或文言文，App 自己寫的解釋文字整套換掉' },
+      { kind: 'data', text: '文言版涵蓋建除十二神、黃黑道十二神、八宅八星、數字八星磁場、生命靈數、西洋十二宮，共 76 條' },
+      { kind: 'add', text: '提示詞跟著語調走，會明確要求 LLM 用白話或淺近文言作答；自訂模板可用 {{register}}' },
+      { kind: 'change', text: '文言版不涵蓋塔羅牌義與易經卦爻 —— 前者本來就是關鍵字，後者應引用原文而非由本 App 改寫' },
+      { kind: 'change', text: '語調由引擎的參數決定而非直接讀設定，引擎維持純函式' },
+    ],
+  },
   {
     v: '0.7.1', date: '2026-09-22', title: '紀錄強化',
     items: [

@@ -1,6 +1,7 @@
 /* 數字命理：磁場分析、號碼評分、生命靈數、匹配、幸運數推薦 */
 import { pairStar, STARS } from '../data/magnetic.js';
 import { luck81 } from '../data/lucky81.js';
+import { MAGNETIC_WEN, LIFE_PATH_WEN, pick } from '../data/wenyan.js';
 
 export const onlyDigits = (s) => String(s || '').replace(/\D/g, '');
 
@@ -9,7 +10,7 @@ export const onlyDigits = (s) => String(s || '').replace(/\D/g, '');
  * @param {string} input 任意字串（手機、車牌、門牌…）
  * @param {object} o {mode:'slide'|'block'}
  */
-export function analyzeNumber(input, { mode = 'slide' } = {}) {
+export function analyzeNumber(input, { mode = 'slide', reg = 'bai' } = {}) {
   const digits = onlyDigits(input);
   const pairs = [];
   if (mode === 'block') {
@@ -17,7 +18,10 @@ export function analyzeNumber(input, { mode = 'slide' } = {}) {
   } else {
     for (let i = 0; i + 1 < digits.length; i++) pairs.push(digits.slice(i, i + 2));
   }
-  const items = pairs.map(p => ({ pair: p, ...pairStar(p) }));
+  const items = pairs.map(p => {
+    const st = pairStar(p);
+    return { pair: p, ...st, text: pick(MAGNETIC_WEN, st.name, st.text, reg) };
+  });
   const valid = items.filter(i => i.kind !== '中');
   const rawAvg = valid.length ? valid.reduce((a, b) => a + b.score, 0) / valid.length : 0;
   const good = valid.filter(i => i.kind === '吉').length;
@@ -60,7 +64,7 @@ function summarize(score, dominant, l81) {
 }
 
 /** 生命靈數 */
-export function lifePath(y, m, d) {
+export function lifePath(y, m, d, reg = 'bai') {
   const digits = `${y}${String(m).padStart(2, '0')}${String(d).padStart(2, '0')}`;
   const reduce = (n) => { while (n > 9 && n !== 11 && n !== 22 && n !== 33) n = String(n).split('').reduce((a, c) => a + +c, 0); return n; };
   const total = [...digits].reduce((a, c) => a + +c, 0);
@@ -69,7 +73,9 @@ export function lifePath(y, m, d) {
   return {
     total, main, birth,
     isMaster: [11, 22, 33].includes(main),
-    text: LIFE_PATH[main] || LIFE_PATH[reduce(String(main).split('').reduce((a, c) => a + +c, 0))],
+    text: pick(LIFE_PATH_WEN, main, LIFE_PATH[main], reg)
+       || pick(LIFE_PATH_WEN, reduce(String(main).split('').reduce((a, c) => a + +c, 0)),
+               LIFE_PATH[reduce(String(main).split('').reduce((a, c) => a + +c, 0))], reg),
   };
 }
 export const LIFE_PATH = {

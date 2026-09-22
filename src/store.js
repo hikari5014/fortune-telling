@@ -46,6 +46,7 @@ const DEFAULT_SETTINGS = {
   dayPurpose: 'open',        // 擇日預設事項
   compassNorthUp: true,      // 方位盤上北（手機指南針畫法）；false 為傳統上南
   zhaiSit: '',               // 住宅坐向（八卦方位名，空字串為未設定）
+  register: 'bai',           // 語調：bai 白話文 / wen 文言文
 };
 
 const listeners = new Set();

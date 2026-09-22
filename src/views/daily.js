@@ -42,11 +42,12 @@ export default {
     const stage = $('#dstage', root);
     const { settings, all } = ctx();
     const tz = settings.tzOffset;
+    const reg = settings.register;
     const bazi = all?.bazi || null;
     let purpose = store.settings.dayPurpose || 'open';
     let tab = store.drafts.dayTab || 'today';
     let [cy, cm] = today();
-    const opts = () => ({ purpose, bazi, tz });
+    const opts = () => ({ purpose, bazi, tz, reg });
 
     $('#dpurp', root).addEventListener('change', (e) => {
       purpose = e.target.value;
@@ -65,7 +66,7 @@ export default {
     /* ── 今日 ─────────────────────────────────────── */
     function paneToday() {
       const [y, m, d] = today();
-      const info = dayInfo(y, m, d, { tz });
+      const info = dayInfo(y, m, d, { tz, reg });
       const r = rateDay(info, opts());
       return html`
         <div class="card reveal">
@@ -130,7 +131,7 @@ export default {
     };
 
     function openHour(y, m, d, idx) {
-      const info = dayInfo(y, m, d, { tz });
+      const info = dayInfo(y, m, d, { tz, reg });
       const h = hoursOf(info)[idx];
       haptic(6);
       sheet({
@@ -259,7 +260,7 @@ export default {
 
     /* ── 單日細節抽屜 ─────────────────────────────── */
     function openDay(y, m, d) {
-      const info = dayInfo(y, m, d, { tz });
+      const info = dayInfo(y, m, d, { tz, reg });
       const r = rateDay(info, opts());
       sheet({
         title: `${info.date}　${info.gz.day.name}日`,
@@ -314,7 +315,7 @@ export default {
       }));
       if (tab === 'today') {
         const [y, m, d] = today();
-        const info = dayInfo(y, m, d, { tz });
+        const info = dayInfo(y, m, d, { tz, reg });
         const r = rateDay(info, opts());
         $('#d-prompt', stage)?.addEventListener('click', () => toPrompt(info, r));
         $('#d-copy', stage)?.addEventListener('click', () => copyText(toText(info, r, purpose)));

@@ -3,7 +3,7 @@ import { icon } from '../icons.js';
 import { store } from '../store.js';
 import { analyzeNumber, analyzePlate, matchNumbers, luckyPicks, lifePath, STARS } from '../engines/numbers.js';
 import { dial, runCountUps, observeReveal } from '../motion.js';
-import { DISCLAIMER, sectionHead, kv } from './_shared.js';
+import { focusBtn, goFocus, DISCLAIMER, sectionHead, kv } from './_shared.js';
 
 const kindCls = (k) => k === '吉' ? 'luck--good' : k === '凶' ? 'luck--bad' : 'luck--half';
 
@@ -39,7 +39,7 @@ function resultBlock(r) {
 export default {
   title: '數字', eyebrow: 'NUMEROLOGY',
   render({ all, profile, settings }) {
-    const lp = all?.life || (profile ? lifePath(profile.birth.y, profile.birth.m, profile.birth.d) : null);
+    const lp = all?.life || (profile ? lifePath(profile.birth.y, profile.birth.m, profile.birth.d, settings.register) : null);
     const drafts = store.drafts;
 
     return html`
@@ -112,7 +112,7 @@ export default {
         ${raw(sectionHead('八星速查'))}
         <div class="grid grid--auto">
           ${raw(Object.entries(STARS).map(([k, v]) => html`
-            <div class="card press track reveal" style="padding:var(--sp-3) var(--sp-4)">
+            <div class="card press track reveal" data-star="${k}" role="button" tabindex="0" style="padding:var(--sp-3) var(--sp-4)">
               <div class="row row--between">
                 <p class="card__label">${k}</p>
                 <span class="luck ${kindCls(v.kind)}">${v.kind}</span>
@@ -132,24 +132,62 @@ export default {
       ${DISCLAIMER}`;
   },
 
-  mount(root, { profile }) {
+  mount(root, { profile, settings }) {
+    /* 八星抽屜：分析結果與「八星速查」共用 */
+    const openStar = (name) => {
+      const s2 = STARS[name];
+      // 含 0 或 5 的組合不成磁場，但格子看起來可以點，還是給個說明
+      if (!s2) {
+        sheet({
+          title: name,
+          body: html`<p class="hint" style="font-size:var(--step-0);color:var(--ink-2);line-height:1.8">
+            0 與 5 不構成八星磁場，傳統上把它們當成「連接數」——
+            本身不帶吉凶，作用是把前後兩組磁場接起來並放大。
+            所以評分時會略過含 0、5 的組合。</p>`,
+        });
+        return;
+      }
+      sheet({
+        title: name,
+        body: html`<div class="stack">
+          ${raw(kv('性質', s2.kind))}${raw(kv('組合', `<span class="num">${s2.keys.join('、')}</span>`))}
+          <p style="color:var(--ink-2)">${s2.text}</p>
+          ${raw(focusBtn(`深問${name}`))}</div>`,
+        onMount(sr) {
+          $('[data-focus]', sr).addEventListener('click', () => goFocus({
+            template: 'number-pick',
+            label: `數字磁場 ${name}`,
+            text: [
+              `磁場：${name}〔${s2.kind}〕`,
+              `數字組合：${s2.keys.join('、')}`,
+              `意義：${s2.text}`,
+              `我正在看的號碼：${$('#num-in', root)?.value.trim() || '（未輸入）'}`,
+            ].join('\n'),
+          }));
+        },
+      });
+    };
+    const bindStars = (scope) => $$('[data-star]', scope).forEach(el => {
+      if (el.dataset.starBound) return;
+      el.dataset.starBound = '1';
+      el.addEventListener('click', () => openStar(el.dataset.star));
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openStar(el.dataset.star); }
+      });
+    });
+    bindStars(root);
+
     let kind = 'phone', mode = 'slide';
     const out = $('#num-out', root);
 
     const run = () => {
       const v = $('#num-in', root).value.trim();
       store.setDraft('numInput', v);
-      const r = kind === 'plate' ? analyzePlate(v, { mode }) : analyzeNumber(v, { mode });
+      const r = kind === 'plate' ? analyzePlate(v, { mode, reg: settings.register }) : analyzeNumber(v, { mode, reg: settings.register });
       out.innerHTML = resultBlock(r) + (r.letterHint ? html`<p class="hint" style="margin-top:var(--sp-2)">${r.letterHint}</p>` : '');
       runCountUps(out);
       requestAnimationFrame(() => $$('.pair__bar i', out).forEach(b => { const w = b.style.width; b.style.width = '0'; requestAnimationFrame(() => b.style.width = w); }));
-      $$('[data-star]', out).forEach(el => el.addEventListener('click', () => {
-        const s = STARS[el.dataset.star];
-        if (!s) return;
-        sheet({ title: el.dataset.star, body: html`<div class="stack">
-          ${raw(kv('性質', s.kind))}${raw(kv('組合', `<span class="num">${s.keys.join('、')}</span>`))}
-          <p style="color:var(--ink-2)">${s.text}</p></div>` });
-      }));
+      bindStars(out);
       haptic(8);
     };
     $('#num-go', root).addEventListener('click', run);
@@ -188,7 +226,7 @@ export default {
     });
 
     const lkOut = $('#lk-out', root);
-    const lp = profile ? lifePath(profile.birth.y, profile.birth.m, profile.birth.d) : { main: 1 };
+    const lp = profile ? lifePath(profile.birth.y, profile.birth.m, profile.birth.d, settings.register) : { main: 1 };
     const drawLucky = (focus) => {
       lkOut.innerHTML = luckyPicks(lp.main, focus, 10)
         .map(x => html`<span class="digit is-hot" style="width:auto;padding:0 12px" title="${x.star}">${x.pair}</span>`).join('');
