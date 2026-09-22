@@ -90,7 +90,7 @@ export default {
       </section>
 
       <section class="section">
-        ${raw(sectionHead('四柱八字'))}
+        ${raw(sectionHead('四柱八字', `<a class="chip press" href="#/bazi">${icon('pillars')} 旺衰喜用</a>`))}
         ${b ? html`
         <div class="pillars reveal">
           ${raw([['年', b.year], ['月', b.month], ['日', b.day], ['時', b.hour]].map(([k, v]) => html`

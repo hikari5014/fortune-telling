@@ -2,11 +2,23 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.9.0';
+export const APP_VERSION = '0.9.1';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.9.1', date: '2026-09-22', title: '八字旺衰與喜用神',
+    items: [
+      { kind: 'add', text: '新增「八字」頁：四柱十神、五行力量分布、日主旺衰、喜用忌神、調候' },
+      { kind: 'add', text: '旺衰評分分成得令、得地、得助、洩剋四類，每一項都列出來，不藏分數' },
+      { kind: 'data', text: '收錄地支藏干（本氣、中氣、餘氣），點任一柱可看該支藏了哪些干、對日主各是什麼十神' },
+      { kind: 'add', text: '五行力量：天干各算 1，地支藏干依本中餘氣加權，月支再乘 1.5' },
+      { kind: 'add', text: '調候由月支與火水多寡判寒暖燥濕' },
+      { kind: 'change', text: '明講採用「扶抑為主」這一派；從格、化格與《窮通寶鑑》調候用神各家分歧大，不內建，交給提示詞問外部 LLM' },
+      { kind: 'add', text: '八字可「深問這一項」、存成長圖；提示詞新增「八字旺衰」資料積木' },
+    ],
+  },
   {
     v: '0.9.0', date: '2026-09-22', title: '七政｜星盤加上行星',
     items: [

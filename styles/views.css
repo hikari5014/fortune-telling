@@ -545,3 +545,11 @@
 .planet__n small, .planet__s small { font-size: var(--step--2); color: var(--ink-3); }
 @media (hover: hover) { .planet:hover { border-color: var(--ink-3); } }
 .wheel .w-retro { fill: var(--ink-3); font-family: var(--font-num); font-size: 9px; }
+
+/* ── 五行力量條 ───────────────────────────────────── */
+.elbars { display: grid; gap: 8px; }
+.elbar { display: grid; grid-template-columns: 28px 1fr 54px; align-items: center; gap: var(--sp-3); }
+.elbar__k { font-family: var(--font-display); font-size: var(--step-0); }
+.elbar__t { height: 8px; border-radius: 99px; background: var(--line); overflow: hidden; }
+.elbar__t i { display: block; height: 100%; background: var(--ink); border-radius: 99px; width: 0; transition: width var(--dur-5) var(--ease-out); }
+.elbar__v { font-size: var(--step--1); color: var(--ink-2); text-align: right; }

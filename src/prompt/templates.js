@@ -132,7 +132,7 @@ ${OUT}`,
   {
     id: 'bazi-deep', name: '八字格局分析', category: '八字', icon: 'clock',
     desc: '日主強弱、十神、喜用神方向。',
-    blocks: ['basic', 'bazi', 'bazi_table'],
+    blocks: ['basic', 'bazi', 'bazi_strength', 'bazi_table'],
     body: `你是子平八字的論命者。
 
 {{data}}

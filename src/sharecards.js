@@ -151,3 +151,31 @@ export function recordCard(rec) {
     note: '內容由外部 LLM 產生，僅供文化娛樂與自我探索參考',
   };
 }
+
+/* ── 八字旺衰 ─────────────────────────────────────── */
+export function baziCard(b, a, profile) {
+  return {
+    blocks: [
+      { t: 'eyebrow', text: 'FOUR PILLARS' },
+      { t: 'title', text: `${who(profile)} 的八字` },
+      { t: 'big', text: `${b.year.name} ${b.month.name} ${b.day.name} ${b.hour.name}`, sub: `日主 ${b.dayMaster}（${b.dayMasterEl}）　${b.zodiac}年　${b.jieqi}`, size: 68 },
+      { t: 'h', text: '五行力量' },
+      { t: 'kv', items: Object.entries(a.power.pct).map(([k, v]) => [k, `${v}%`]) },
+      { t: 'h', text: '日主旺衰' },
+      { t: 'kv', items: [
+        ['判定', `${a.use.balance}（${a.strength.band}）`],
+        ['評分', `${a.strength.score >= 0 ? '+' : ''}${a.strength.score}　指標 ${a.strength.index}/100`],
+        ['月令', `${a.strength.seasonState}`],
+        ['調候', a.use.climate.key],
+      ] },
+      { t: 'h', text: '喜用與忌神' },
+      ...(a.use.like.length ? [
+        { t: 'tags', label: '喜', items: a.use.like.map(x => `${x.group}（${x.el}）`), solid: true },
+        { t: 'tags', label: '忌', items: a.use.avoid.map(x => `${x.group}（${x.el}）`) },
+      ] : [{ t: 'p', text: '中和之局，無明顯扶抑喜用。' }]),
+      { t: 'p', text: a.use.reason },
+      { t: 'p', text: `流派：${a.use.school}`, dim: true },
+    ],
+    date: today(), footer: '玄鑑 · 八字',
+  };
+}

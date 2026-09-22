@@ -10,6 +10,7 @@ import { DISCLAIMER, sectionHead, pad } from './_shared.js';
 const TILES = [
   { p: '/astro',   t: '星盤',   icon: 'astro',   d: '太陽 · 月亮 · 上升 · 中天' },
   { p: '/ziwei',   t: '紫微',   icon: 'ziwei',   d: '十二宮 · 十四主星 · 四化' },
+  { p: '/bazi',    t: '八字',   icon: 'pillars', d: '五行力量 · 旺衰 · 喜用神' },
   { p: '/fortune', t: '運勢',   icon: 'clock',   d: '大限 · 流年 · 大運 · 流月' },
   { p: '/daily',   t: '擇日',   icon: 'calendar',d: '建除 · 宜忌 · 找好日子' },
   { p: '/direction',t:'方位',  icon: 'compass', d: '本命卦 · 四吉方 · 四凶方' },
