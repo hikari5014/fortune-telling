@@ -2,11 +2,21 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.4.0';
+export const APP_VERSION = '0.4.1';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.4.1', date: '2026-09-22', title: '抽屜動畫',
+    items: [
+      { kind: 'fix', text: '「更多」等底部抽屜原本是從螢幕右下角斜著滑進來：置中方式與開場動畫搶用同一個 transform，X 和 Y 被同時補間' },
+      { kind: 'fix', text: '關閉時的滑出動畫其實沒有播放，抽屜是直接消失的' },
+      { kind: 'fix', text: '開啟抽屜時鎖背景捲動不再改動版面，iOS 的網址列不會突然展開造成畫面跳動' },
+      { kind: 'add', text: '抽屜內容逐項淡入，遮罩同步淡入' },
+      { kind: 'fix', text: '連續開啟兩個抽屜時，舊抽屜的清除計時器不會把新的一起清掉' },
+    ],
+  },
   {
     v: '0.4.0', date: '2026-09-22', title: '求籤 · 桌面過場 · 圖示互動',
     items: [

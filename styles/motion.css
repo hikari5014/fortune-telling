@@ -66,15 +66,21 @@
 .skeleton { background: linear-gradient(100deg, var(--surface-2) 30%, var(--line) 50%, var(--surface-2) 70%); background-size: 220% 100%; animation: shimmer 1.4s linear infinite; border-radius: var(--r-2); }
 @keyframes shimmer { to { background-position: -120% 0; } }
 
-/* 8. 底部抽屜 */
-@keyframes sheet-in { from { transform: translate3d(0, 100%, 0); } }
-@keyframes scrim-in { from { opacity: 0; } }
+/* 8. 提示條（抽屜改用 class 驅動的 transition，見 components.css） */
 @keyframes toast-in { from { opacity: 0; transform: translate3d(0, 20px, 0) scale(.96); } }
 
-/* 9. 滑動切頁的即時位移 */
+/* 9. 逐項進場（抽屜內容、清單）：每項延遲 40ms，最多 150ms */
+.stagger > * { animation: stagger-in var(--dur-3) var(--ease-out) both; animation-delay: var(--stagger-base, 0ms); }
+.stagger > :nth-child(2) { animation-delay: calc(var(--stagger-base, 0ms) + 40ms); }
+.stagger > :nth-child(3) { animation-delay: calc(var(--stagger-base, 0ms) + 80ms); }
+.stagger > :nth-child(4) { animation-delay: calc(var(--stagger-base, 0ms) + 110ms); }
+.stagger > :nth-child(n+5) { animation-delay: calc(var(--stagger-base, 0ms) + 140ms); }
+@keyframes stagger-in { from { opacity: 0; transform: translate3d(0, 8px, 0); } }
+
+/* 10. 滑動切頁的即時位移 */
 .view[data-dragging="1"] { transition: none; }
 
-/* 10. 動畫強度 */
+/* 11. 動畫強度 */
 :root[data-motion="light"] { --dur-3: 180ms; --dur-4: 240ms; --dur-5: 320ms; }
 :root[data-motion="light"] .reveal { transform: translate3d(0, 8px, 0); }
 :root[data-motion="light"] .ripple { display: none; }

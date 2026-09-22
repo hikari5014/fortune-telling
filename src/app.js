@@ -74,7 +74,7 @@ function openMore() {
   haptic(8);
   import('./ui.js').then(({ sheet }) => sheet({
     title: '全部功能',
-    body: `<div class="grid grid--3">` + NAV.map(n => `
+    body: `<div class="grid grid--3 stagger" style="--stagger-base:90ms">` + NAV.map(n => `
       <a class="tile press track" href="#${n.p}" data-close>
         ${icon(n.icon)}<h3>${n.t}</h3><p>${n.eyebrow}</p>
       </a>`).join('') + `</div>`,
