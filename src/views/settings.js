@@ -91,6 +91,20 @@ export default {
         </section>
 
         <section class="setgroup reveal">
+          <div class="setgroup__head">塔羅</div>
+          ${raw(row('牌面圖像',
+            '偉特牌（1909）的公有領域掃描，已轉成灰階配合黑白調性，深色主題下會反相。'
+            + '78 張約 2.3 MB，第一次看到哪張才下載哪張，之後離線也看得到，換版本不會重抓。'
+            + '關掉就用線稿卡，一點流量都不花。',
+            sw('set-tarotimg', s.tarotImages !== false)))}
+          ${raw(row('牌面對照本命盤',
+            '大牌對應一顆行星或一個星座，小牌二到十對應黃道三十六旬（黃金黎明系統）。'
+            + '開啟後會去你的本命盤上看那個位置有什麼 —— 這是塔羅頁少數真的在「算」的東西。'
+            + '需要先有一份出生資料。',
+            sw('set-tarotlink', s.tarotChartLink !== false)))}
+        </section>
+
+        <section class="setgroup reveal">
           <div class="setgroup__head">提示詞預設</div>
           ${raw(row('語言', '', select('set-plang', ['繁體中文', '简体中文', 'English', '日本語'], s.promptLang)))}
           ${raw(row('語氣', '', select('set-ptone', ['溫和但直接', '犀利不客氣', '學術嚴謹', '像朋友聊天', '簡潔條列', '鼓勵取向'], s.promptTone)))}
@@ -165,7 +179,7 @@ export default {
     bindSeg('set-motion', 'motion');
     bindSeg('set-zi', 'lateZiRule');
     bindSeg('set-wai', 'wageWaiRule');
-    ['set-swipe|swipeNav', 'set-haptics|haptics', 'set-glow|pointerGlow', 'set-scorecolor|scoreColor', 'set-tst|trueSolarTime', 'set-pdisc|promptDisclaimer', 'set-numeral|numeralRule']
+    ['set-swipe|swipeNav', 'set-haptics|haptics', 'set-glow|pointerGlow', 'set-scorecolor|scoreColor', 'set-tst|trueSolarTime', 'set-pdisc|promptDisclaimer', 'set-numeral|numeralRule', 'set-tarotimg|tarotImages', 'set-tarotlink|tarotChartLink']
       .forEach(x => { const [id, key] = x.split('|'); bindSw(id, key); });
     bindVal('set-tz', 'tzOffset', Number);
     bindVal('set-city', 'city');

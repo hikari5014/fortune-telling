@@ -258,6 +258,34 @@
 .tcard__sym { font-family: var(--font-num); font-size: var(--step-3); transition: transform var(--dur-4) var(--ease); }
 .tcard__slot { font-size: 10px; letter-spacing: .14em; color: var(--ink-3); }
 
+/* 偉特牌圖 —— 1909 年的掃描件，已轉成灰階，剛好合這個 App 的黑白調性。
+   深色主題下把圖反相，不然一張白紙在黑底上會刺眼；
+   反相後線稿變白、底變黑，讀起來仍然清楚。 */
+.tcard--img { padding: 0; align-content: stretch; }
+.tcard--img .tpic { width: 100%; height: 100%; object-fit: cover; display: block; background: #fff; }
+.tcard--img.is-rev .tpic { transform: rotate(180deg); }
+.tcard--img .tcard__slot {
+  position: absolute; inset: auto 0 0 0; padding: 3px 0; z-index: 1;
+  background: var(--invert-bg); color: var(--invert-ink); letter-spacing: .1em;
+}
+:root[data-theme="dark"] .tpic { filter: invert(1); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tpic { filter: invert(1); } }
+
+/* 詳解裡的那張小圖 */
+.cardrow { display: grid; grid-template-columns: 64px 1fr; gap: var(--sp-4); align-items: start; }
+.cardrow .tpic { width: 64px; border-radius: var(--r-1); border: 1px solid var(--line); }
+.cardrow--noimg { grid-template-columns: 1fr; }
+
+/* 本命牌／年度牌那兩張大圖 */
+.bigcards { display: grid; gap: var(--sp-4); grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); }
+.bigcard { display: grid; gap: var(--sp-2); justify-items: center; text-align: center; align-content: start; }
+.bigcard .tpic { width: 100%; max-width: 156px; border-radius: var(--r-2); border: 1px solid var(--line); }
+
+/* 牌義那幾行是整句話，靠右對齊會讀成階梯狀，所以改成上下排 */
+.cardnote { display: grid; gap: 2px; padding: 11px 0; border-bottom: 1px dashed var(--line); }
+.cardnote__k { font-size: var(--step--2); letter-spacing: .12em; color: var(--ink-3); }
+.cardnote__v { font-size: var(--step--1); line-height: 1.85; color: var(--ink-2); }
+
 /* 起卦結果不要被吸頂列遮住 */
 #result, #table, #detail { scroll-margin-top: 104px; }
 

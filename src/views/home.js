@@ -3,6 +3,7 @@ import { icon } from '../icons.js';
 import { store } from '../store.js';
 import { resolve } from '../router.js';
 import { quickAdd } from '../quickadd.js';
+import { dailyCard, todayKey } from '../engines/tarot.js';
 import { nameOf } from '../privacy.js';
 import { todayInfo } from '../prompt/context.js';
 import { APP_VERSION } from '../data/changelog.js';
@@ -14,6 +15,7 @@ import { DISCLAIMER, sectionHead, pad } from './_shared.js';
 export const HOME_CARDS = [
   { key: 'today',  name: '今日宜忌' },
   { key: 'luck',   name: '今年運限' },
+  { key: 'tarot',  name: '今日一張（塔羅）' },
   { key: 'tools',  name: '工具入口' },
   { key: 'recent', name: '最近解讀' },
   { key: 'about',  name: '這個 App 怎麼運作' },
@@ -70,6 +72,30 @@ function todayCard(all, settings, t) {
         </div>
         <div class="tags" style="margin-top:6px">
           <span class="tags__k">忌</span>${j.bad.length ? j.bad.slice(0, 5).map(k => html`<span class="tag">${purposeName(k)}</span>`) : html`<span class="tag">—</span>`}
+        </div>
+      </a>
+    </section>`;
+}
+
+/* 今日一張：同一個人同一天固定同一張，所以首頁直接顯示，不用「抽」的動作 */
+function tarotCard(profile, settings) {
+  const c = dailyCard(profile?.id || '');
+  const img = settings.tarotImages !== false;
+  return html`
+    <section class="section">
+      ${raw(sectionHead('今日一張', `<a class="chip" href="#/tarot?tab=daily">塔羅</a>`))}
+      <a class="card reveal track" href="#/tarot?tab=daily" style="display:block">
+        <div class="cardrow ${img ? '' : 'cardrow--noimg'}">
+          ${img ? html`<img class="tpic" src="assets/tarot/${c.img}.webp" alt="${c.full}"
+            loading="lazy" decoding="async" style="${c.reversed ? 'transform:rotate(180deg)' : ''}">` : ''}
+          <div>
+            <p class="card__label">${todayKey()}</p>
+            <p style="font-family:var(--font-display);font-size:var(--step-1);margin-top:6px">${c.full}</p>
+            <span class="badge ${c.reversed ? 'badge--dash' : 'badge--solid'}" style="margin-top:6px;display:inline-block">
+              ${c.reversed ? '逆位' : '正位'}</span>
+            <p style="margin-top:var(--sp-3);color:var(--ink-2);font-size:var(--step--1);line-height:1.8">
+              ${c.reversed ? c.rev : c.up}</p>
+          </div>
         </div>
       </a>
     </section>`;
@@ -137,6 +163,7 @@ export default {
 
       ${shown(settings, 'today') ? raw(todayCard(all, settings, t)) : ''}
       ${shown(settings, 'luck') ? raw(luckCard(all, settings, t)) : ''}
+      ${shown(settings, 'tarot') ? raw(tarotCard(profile, settings)) : ''}
 
       ${shown(settings, 'tools') ? html`<section class="section">
         ${raw(sectionHead('工具', `<button class="chip press" id="home-edit">${icon('settings')} 自訂首頁</button>`))}

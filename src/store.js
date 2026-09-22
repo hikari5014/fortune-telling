@@ -10,6 +10,8 @@ const K = {
   candidates: 'xj.candidates',
   qianSets: 'xj.qiansets',
   orgs: 'xj.orgs',
+  spreads: 'xj.spreads',
+  daily: 'xj.daily',
 };
 
 const DEFAULT_SETTINGS = {
@@ -53,6 +55,8 @@ const DEFAULT_SETTINGS = {
   scoreColor: true,          // 分數環用色階（0 紅 → 100 綠）；關閉則維持純黑白
   chartEffects: 'full',      // 命盤特效：off 關閉 / subtle 輕量 / full 完整
   onboarded: false,          // 新手教學看過了沒
+  tarotImages: true,         // 塔羅顯示偉特牌圖（關掉就用線稿卡，省流量）
+  tarotChartLink: true,      // 塔羅牌面對照本命盤（大牌對行星星座、小牌對三十六旬）
 };
 
 const listeners = new Set();
@@ -112,6 +116,30 @@ export const store = {
   },
   removeOrg(id) { this.orgs = this.orgs.filter(o => o.id !== id); },
 
+  /* 自訂牌陣：{ id, name, slots: [...], desc } */
+  get spreads() { return read(K.spreads, []); },
+  set spreads(v) { write(K.spreads, v); emit('spreads', v); },
+  saveSpread(sp) {
+    const list = this.spreads;
+    const i = list.findIndex(x => x.id === sp.id);
+    if (i >= 0) list[i] = sp; else list.push(sp);
+    this.spreads = list;
+    return sp;
+  },
+  removeSpread(id) { this.spreads = this.spreads.filter(s => s.id !== id); },
+
+  /* 今日一張的紀錄：{ day, who, id, reversed, note } —— 一天一筆，可以回頭看 */
+  get dailyLog() { return read(K.daily, []); },
+  set dailyLog(v) { write(K.daily, v); emit('daily', v); },
+  logDaily(entry) {
+    const list = this.dailyLog.filter(x => !(x.day === entry.day && x.who === entry.who));
+    this.dailyLog = [entry, ...list].slice(0, 400);
+    return entry;
+  },
+  dailyNote(day, who, note) {
+    this.dailyLog = this.dailyLog.map(x => (x.day === day && x.who === who ? { ...x, note } : x));
+  },
+
   get templates() { return read(K.templates, []); },
   set templates(v) { write(K.templates, v); emit('templates', v); },
   saveTemplate(t) {
@@ -162,7 +190,7 @@ export const store = {
       app: 'xuanjian', version: 1, exportedAt: new Date().toISOString(),
       settings: this.settings, profiles, currentId: this.currentId,
       templates: this.templates, records: this.records, candidates: this.candidates,
-      qianSets: this.qianSets, orgs: this.orgs,
+      qianSets: this.qianSets, orgs: this.orgs, spreads: this.spreads, dailyLog: this.dailyLog,
     };
   },
   importAll(data, { merge = false } = {}) {
@@ -174,6 +202,8 @@ export const store = {
     if (data.candidates) write(K.candidates, merge ? dedupe([...this.candidates, ...data.candidates]) : data.candidates);
     if (data.qianSets) write(K.qianSets, merge ? dedupe([...this.qianSets, ...data.qianSets]) : data.qianSets);
     if (data.orgs) write(K.orgs, merge ? dedupe([...this.orgs, ...data.orgs]) : data.orgs);
+    if (data.spreads) write(K.spreads, merge ? dedupe([...this.spreads, ...data.spreads]) : data.spreads);
+    if (data.dailyLog) write(K.daily, merge ? [...data.dailyLog, ...this.dailyLog].slice(0, 400) : data.dailyLog);
     if (data.currentId) write(K.current, data.currentId);
     applyChrome(this.settings);
     emit('all', null);
