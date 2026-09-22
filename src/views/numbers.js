@@ -39,7 +39,7 @@ function resultBlock(r) {
 export default {
   title: '數字', eyebrow: 'NUMEROLOGY',
   render({ all, profile, settings }) {
-    const lp = all?.life || (profile ? lifePath(profile.birth.y, profile.birth.m, profile.birth.d) : null);
+    const lp = all?.life || (profile ? lifePath(profile.birth.y, profile.birth.m, profile.birth.d, settings.register) : null);
     const drafts = store.drafts;
 
     return html`
@@ -132,14 +132,14 @@ export default {
       ${DISCLAIMER}`;
   },
 
-  mount(root, { profile }) {
+  mount(root, { profile, settings }) {
     let kind = 'phone', mode = 'slide';
     const out = $('#num-out', root);
 
     const run = () => {
       const v = $('#num-in', root).value.trim();
       store.setDraft('numInput', v);
-      const r = kind === 'plate' ? analyzePlate(v, { mode }) : analyzeNumber(v, { mode });
+      const r = kind === 'plate' ? analyzePlate(v, { mode, reg: settings.register }) : analyzeNumber(v, { mode, reg: settings.register });
       out.innerHTML = resultBlock(r) + (r.letterHint ? html`<p class="hint" style="margin-top:var(--sp-2)">${r.letterHint}</p>` : '');
       runCountUps(out);
       requestAnimationFrame(() => $$('.pair__bar i', out).forEach(b => { const w = b.style.width; b.style.width = '0'; requestAnimationFrame(() => b.style.width = w); }));
@@ -188,7 +188,7 @@ export default {
     });
 
     const lkOut = $('#lk-out', root);
-    const lp = profile ? lifePath(profile.birth.y, profile.birth.m, profile.birth.d) : { main: 1 };
+    const lp = profile ? lifePath(profile.birth.y, profile.birth.m, profile.birth.d, settings.register) : { main: 1 };
     const drawLucky = (focus) => {
       lkOut.innerHTML = luckyPicks(lp.main, focus, 10)
         .map(x => html`<span class="digit is-hot" style="width:auto;padding:0 12px" title="${x.star}">${x.pair}</span>`).join('');

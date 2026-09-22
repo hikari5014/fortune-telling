@@ -6,6 +6,7 @@ import {
   STEM_HE, STEM_CHONG, BR_LIUHE, BR_SANHE, BR_CHONG, BR_XING, BR_XING2, BR_SELF, BR_HAI,
   pairHas, inSanhe, TERMS,
 } from './calendar.js';
+import { JIANCHU_WEN, TONE_WEN, SHEN12_WEN, pick } from '../data/wenyan.js';
 
 /* ── 事項 ─────────────────────────────────────────── */
 export const PURPOSES = [
@@ -49,10 +50,16 @@ export const JIANCHU_INFO = {
 };
 
 /** 建除：日支與月建（月支）相同者為「建」，之後依序而下 */
-export function jianchuOf(monthBranch, dayBranch) {
+export function jianchuOf(monthBranch, dayBranch, reg = 'bai') {
   const i = ((dayBranch - monthBranch) % 12 + 12) % 12;
   const name = JIANCHU[i];
-  return { index: i, name, tone: TONE[name], toneText: TONE_TEXT[TONE[name]], ...JIANCHU_INFO[name] };
+  const tone = TONE[name];
+  return {
+    index: i, name, tone,
+    toneText: pick(TONE_WEN, tone, TONE_TEXT[tone], reg),
+    ...JIANCHU_INFO[name],
+    text: pick(JIANCHU_WEN, name, JIANCHU_INFO[name].text, reg),
+  };
 }
 
 /* ── 彭祖百忌 ─────────────────────────────────────── */
@@ -96,7 +103,7 @@ export function termOfDay(y, m, d, tz = 8) {
  * @param {number} y 國曆年 @param {number} m 月 @param {number} d 日
  * @param {object} o {tz}
  */
-export function dayInfo(y, m, d, { tz = 8 } = {}) {
+export function dayInfo(y, m, d, { tz = 8, reg = 'bai' } = {}) {
   const gz = fourPillars({ y, m, d, h: 12, tz });
   const dayBranch = gz.day.index % 12;
   const dayStem = gz.day.index % 10;
@@ -119,7 +126,8 @@ export function dayInfo(y, m, d, { tz = 8 } = {}) {
     weekday: new Date(y, m - 1, d).getDay(),
     gz, lunar, term, special,
     dayStem, dayBranch, monthBranch,
-    jianchu: jianchuOf(monthBranch, dayBranch),
+    jianchu: jianchuOf(monthBranch, dayBranch, reg),
+    reg,
     chong: { branch: chongBranch, zodiac: ZODIAC[chongBranch], text: `沖${ZODIAC[chongBranch]}（${BRANCHES[chongBranch]}）` },
     sha: SHA_DIR[dayBranch],
     pengzu: [PENGZU_STEM[dayStem], PENGZU_BRANCH[dayBranch]],
@@ -285,14 +293,15 @@ const GUIREN = [
 ];
 
 /** 某一天的十二時辰 */
-export function hoursOf(info) {
+export function hoursOf(info, reg = info?.reg || 'bai') {
   const db = info.dayBranch, ds = info.dayStem;
   const qingLong = (db * 2 + 8) % 12;             // 青龍落在哪個時支
   const lu = LU[ds];
   const gui = GUIREN[ds];
 
   return HOUR_RANGE.map((range, b) => {
-    const shen = SHEN12[((b - qingLong) % 12 + 12) % 12];
+    const shen0 = SHEN12[((b - qingLong) % 12 + 12) % 12];
+    const shen = { ...shen0, text: pick(SHEN12_WEN, shen0.n, shen0.text, reg) };
     const reasons = [];
     let score = 60;
     const add = (d, text, tag) => { score += d; reasons.push({ delta: d, text, tag }); };

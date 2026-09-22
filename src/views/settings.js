@@ -39,6 +39,11 @@ export default {
           ${raw(rowStack('字級', `目前 ${Math.round(s.fontScale * 100)}%`,
             `<input type="range" id="set-font" min="0.85" max="1.3" step="0.05" value="${s.fontScale}" style="width:100%">`))}
           ${raw(row('介面密度', '影響區塊之間的留白。', seg('set-density', [['compact', '緊湊'], ['normal', '標準'], ['roomy', '寬鬆']], s.density)))}
+          ${raw(row('語調',
+            'App 自己寫的解釋文字要用哪一種口吻，提示詞也會跟著要求 LLM 用同一種。'
+            + '文言版涵蓋建除十二神、黃黑道十二神、八宅八星、數字磁場、生命靈數與西洋十二宮；'
+            + '塔羅牌義與易經卦爻不改寫（前者本來就是關鍵字，後者應引用原文）。',
+            seg('set-register', [['bai', '白話文'], ['wen', '文言文']], s.register)))}
         </section>
 
         <section class="setgroup reveal">
@@ -121,6 +126,7 @@ export default {
 
     bindSeg('set-theme', 'theme');
     bindSeg('set-density', 'density');
+    bindSeg('set-register', 'register');
     bindSeg('set-motion', 'motion');
     bindSeg('set-zi', 'lateZiRule');
     bindSeg('set-wai', 'wageWaiRule');

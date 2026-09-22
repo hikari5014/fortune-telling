@@ -54,7 +54,7 @@ export function ctx() {
   const settings = store.settings;
   const profile = store.current;
   const key = JSON.stringify([profile, settings.tzOffset, settings.lat, settings.lon,
-    settings.trueSolarTime, settings.lateZiRule, settings.wageWaiRule]);
+    settings.trueSolarTime, settings.lateZiRule, settings.wageWaiRule, settings.register]);
   if (cache.key !== key) cache = { key, value: profile ? computeAll(profile, settings) : null };
   return { settings, profile, all: cache.value, navigate, query: query() };
 }

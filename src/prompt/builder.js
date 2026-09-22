@@ -27,6 +27,9 @@ export function compose({ template, all, settings, selected = [], options = {}, 
 
   const t = todayInfo(settings);
   const p = all?.profile || {};
+  // 語調：白話／文言。跟著設定頁的「語調」走，也可由 options 覆寫。
+  const reg = options.register ?? settings.register ?? 'bai';
+  const regName = reg === 'wen' ? '淺近文言' : '白話文';
   const vars = {
     ...blocks,
     data: dataText || '（未附帶命盤資料）',
@@ -41,6 +44,7 @@ export function compose({ template, all, settings, selected = [], options = {}, 
     today: t.date,
     today_gz: t.gz ? `${t.gz.year.name}年 ${t.gz.month.name}月 ${t.gz.day.name}日` : '',
     lang: options.lang ?? settings.promptLang,
+    register: regName,
     tone: options.tone ?? settings.promptTone,
     depth: options.depth ?? settings.promptDepth,
     format: options.format ?? settings.promptFormat,
@@ -63,6 +67,11 @@ export function compose({ template, all, settings, selected = [], options = {}, 
   if (q && !/\{\{\s*question\s*\}\}/.test(template.body)) {
     body += `\n\n我特別想知道：${q}`;
   }
+  const regLine = reg === 'wen'
+    ? '\n・請以**淺近文言**作答：典雅而不晦澀，句短意足；命理術語沿用本名，不必譯成白話。'
+    : '\n・請以**白話文**作答：像對朋友說話，不要堆術語；非用不可的術語請先用一句話解釋。';
+  body = body.trimEnd() + regLine;
+
   const pre = String(options.prefix ?? settings.promptPrefix ?? '').trim();
   const suf = String(options.suffix ?? settings.promptSuffix ?? '').trim();
   const disc = (options.disclaimer ?? settings.promptDisclaimer)

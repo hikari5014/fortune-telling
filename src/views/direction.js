@@ -13,11 +13,11 @@ const SITS = TRIGRAMS.map(t => t.dir);
 export default {
   title: '方位', eyebrow: 'EIGHT MANSIONS',
   render() {
-    const { profile, all } = ctx();
+    const { profile, all, settings } = ctx();
     if (!profile || !all?.bazi) return html`${needProfile('八宅要用出生年與性別推本命卦，先建立一份出生資料。')}${DISCLAIMER}`;
 
     const ming = mingGua(all.bazi.yearForGZ, profile.gender || '女');
-    const dirs = eightDirections(ming.name);
+    const dirs = eightDirections(ming.name, settings.register);
     const northUp = store.settings.compassNorthUp !== false;
     const sit = store.settings.zhaiSit || '';
     const zhai = sit ? zhaiGua(sit) : null;
@@ -109,10 +109,10 @@ export default {
   },
 
   mount(root) {
-    const { profile, all } = ctx();
+    const { profile, all, settings } = ctx();
     if (!profile || !all?.bazi) return;
     const ming = mingGua(all.bazi.yearForGZ, profile.gender || '女');
-    const dirs = eightDirections(ming.name);
+    const dirs = eightDirections(ming.name, settings.register);
     const sitOf = () => store.settings.zhaiSit || '';
     const zhai = () => (sitOf() ? zhaiGua(sitOf()) : null);
 

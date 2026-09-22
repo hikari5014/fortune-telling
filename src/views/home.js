@@ -26,7 +26,7 @@ const TILES = [
 function todayCard(all, settings, t) {
   let info, r;
   try {
-    info = dayInfo(t.y, t.m, t.d, { tz: settings.tzOffset });
+    info = dayInfo(t.y, t.m, t.d, { tz: settings.tzOffset, reg: settings.register });
     r = rateDay(info, { purpose: settings.dayPurpose || 'open', bazi: all?.bazi || null });
   } catch { return ''; }
   const j = info.jianchu;

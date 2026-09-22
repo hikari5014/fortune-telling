@@ -2,11 +2,21 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.7.1';
+export const APP_VERSION = '0.8.0';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.8.0', date: '2026-09-22', title: '語調：白話／文言',
+    items: [
+      { kind: 'add', text: '設定頁新增「語調」：白話文或文言文，App 自己寫的解釋文字整套換掉' },
+      { kind: 'data', text: '文言版涵蓋建除十二神、黃黑道十二神、八宅八星、數字八星磁場、生命靈數、西洋十二宮，共 76 條' },
+      { kind: 'add', text: '提示詞跟著語調走，會明確要求 LLM 用白話或淺近文言作答；自訂模板可用 {{register}}' },
+      { kind: 'change', text: '文言版不涵蓋塔羅牌義與易經卦爻 —— 前者本來就是關鍵字，後者應引用原文而非由本 App 改寫' },
+      { kind: 'change', text: '語調由引擎的參數決定而非直接讀設定，引擎維持純函式' },
+    ],
+  },
   {
     v: '0.7.1', date: '2026-09-22', title: '紀錄強化',
     items: [
