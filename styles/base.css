@@ -1,5 +1,10 @@
 *, *::before, *::after { box-sizing: border-box; }
 [hidden] { display: none !important; }
+
+/* 抽屜開啟時鎖住背景：桌面用 overflow，觸控裝置靠 JS 擋 touchmove（見 ui.js） */
+@media (hover: hover) and (pointer: fine) {
+  html.is-locked, html.is-locked body { overflow: hidden; }
+}
 * { margin: 0; -webkit-tap-highlight-color: transparent; }
 
 /* iOS：互動元件不要出現長按選取、放大鏡與雙擊縮放 */

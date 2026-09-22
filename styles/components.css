@@ -192,19 +192,31 @@
 .badge--dash { border-style: dashed; color: var(--ink-3); }
 
 /* 底部抽屜 */
-.sheet-scrim { position: fixed; inset: 0; z-index: 40; background: color-mix(in srgb, var(--bg) 82%, transparent); animation: scrim-in var(--dur-3) var(--ease) both; }
+.sheet-scrim {
+  position: fixed; inset: 0; z-index: 40;
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  opacity: 0; transition: opacity var(--dur-2) var(--ease);
+}
+.sheet-scrim.is-open { opacity: 1; }
 @media (hover: hover) and (pointer: fine) {
   .sheet-scrim { background: color-mix(in srgb, var(--bg) 62%, transparent); backdrop-filter: blur(6px); }
 }
 .sheet {
-  position: fixed; left: 50%; bottom: 0; z-index: 41; width: min(620px, 100%);
-  transform: translateX(-50%);
+  /* 用 margin-inline 置中，不要用 left:50% + translateX(-50%)：
+     那會讓開場動畫的 transform 同時補間 X 與 Y，抽屜變成從右下角斜著滑進來。
+     transform 保留給動畫獨佔。 */
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 41;
+  width: min(620px, 100%); margin-inline: auto;
   max-height: calc(88svh - var(--kb, 0px)); display: flex; flex-direction: column;
   background: var(--bg); border: 1px solid var(--line); border-bottom: 0;
   border-radius: var(--r-4) var(--r-4) 0 0; box-shadow: var(--shadow);
-  animation: sheet-in var(--dur-4) var(--ease-out) both;
   padding-bottom: calc(env(safe-area-inset-bottom) + var(--kb, 0px));
+  transform: translate3d(0, 100%, 0);
+  transition: transform var(--dur-3) var(--ease-out);
+  will-change: transform;
 }
+.sheet.is-open { transform: translate3d(0, 0, 0); }
+.sheet.is-closing { transition-timing-function: var(--ease-in); }
 .sheet__drag { flex: none; touch-action: none; cursor: grab; }
 .sheet__drag:active { cursor: grabbing; }
 .sheet__grip { width: 42px; height: 4px; border-radius: 99px; background: var(--line-2); margin: 10px auto 4px; }

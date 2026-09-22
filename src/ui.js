@@ -48,35 +48,34 @@ export function toast(msg, ms = 2000) {
 }
 
 /* ── 背景捲動鎖（iOS 需要 position: fixed 才鎖得住）─────── */
-let locked = false, lockedY = 0, lockedHash = '';
+let locked = false;
+
+/* 鎖背景捲動。
+   不用 body { position: fixed } —— 那會讓文件突然不能捲，iOS Safari 的網址列
+   隨即展開、視窗高度改變，抽屜彈出的瞬間整個畫面會跳一下。
+   改成：觸控裝置擋掉抽屜以外的 touchmove（文件的捲動狀態完全不變），
+   桌面才用 overflow: hidden（捲軸寬度已由 scrollbar-gutter 保留，不會位移）。 */
+function blockTouch(e) {
+  if (e.target.closest?.('.sheet__body')) return;   // 抽屜內容自己可以捲
+  if (e.cancelable) e.preventDefault();
+}
 function lockScroll() {
-  if (locked) return;                      // 抽屜互相替換時不重複上鎖
+  if (locked) return;
   locked = true;
-  lockedY = window.scrollY;
-  lockedHash = location.hash;
-  const b = document.body;
-  b.style.position = 'fixed';
-  b.style.top = `-${lockedY}px`;
-  b.style.left = '0';
-  b.style.right = '0';
-  b.style.width = '100%';
+  document.addEventListener('touchmove', blockTouch, { passive: false });
+  document.documentElement.classList.add('is-locked');
 }
 function unlockScroll() {
   if (!locked) return;
   locked = false;
-  const b = document.body;
-  b.style.position = '';
-  b.style.top = '';
-  b.style.left = '';
-  b.style.right = '';
-  b.style.width = '';
-  // 若期間換了頁，回到頂端而不是舊頁的捲動位置
-  window.scrollTo({ top: location.hash === lockedHash ? lockedY : 0, behavior: 'instant' });
+  document.removeEventListener('touchmove', blockTouch, { passive: false });
+  document.documentElement.classList.remove('is-locked');
 }
 
 /* ── 底部抽屜 ─────────────────────────── */
 export function sheet({ title, body, actions = '', onMount } = {}) {
   const root = $('#sheet-root');
+  lockScroll();
   root.innerHTML = html`
     <div class="sheet-scrim" data-close></div>
     <section class="sheet" role="dialog" aria-modal="true" aria-label="${title || '對話框'}">
@@ -92,16 +91,25 @@ export function sheet({ title, body, actions = '', onMount } = {}) {
     </section>`;
 
   const panel = $('.sheet', root);
-  lockScroll();
+  const scrim = $('.sheet-scrim', root);
+  // 先強制算一次版面，讓瀏覽器記下「還在畫面外」的初始狀態，
+  // 否則插入與加 class 在同一幀完成，transition 不會被觸發（會直接跳到定位）
+  void panel.offsetHeight;
+  panel.classList.add('is-open');
+  scrim.classList.add('is-open');
+
   let closed = false;
   const close = () => {
     if (closed) return;
     closed = true;
     unlockScroll();
-    panel.style.transition = 'transform var(--dur-3) var(--ease-in), opacity var(--dur-3)';
-    panel.style.transform = 'translateX(-50%) translate3d(0,100%,0)';
-    $('.sheet-scrim', root).style.opacity = '0';
-    setTimeout(() => { root.innerHTML = ''; }, 260);
+    panel.style.transition = '';          // 把控制權交還給 CSS
+    panel.style.transform = '';
+    panel.classList.add('is-closing');
+    panel.classList.remove('is-open');
+    scrim.classList.remove('is-open');
+    // 若這段期間又開了新的抽屜，root 內容已被換掉，不能一起清掉
+    setTimeout(() => { if (panel.isConnected) root.innerHTML = ''; }, 360);
   };
   $$('[data-close]', root).forEach(b => b.addEventListener('click', close));
   document.addEventListener('keydown', function onEsc(e) {
@@ -111,7 +119,7 @@ export function sheet({ title, body, actions = '', onMount } = {}) {
   // 下拉關閉：非被動監聽 + preventDefault，避免同時捲動底層造成晃動
   let y0 = null, dy = 0, raf = 0;
   const handles = $$('.sheet__drag', root);
-  const paint = () => { raf = 0; panel.style.transform = `translateX(-50%) translate3d(0,${dy}px,0)`; };
+  const paint = () => { raf = 0; panel.style.transform = `translate3d(0,${dy}px,0)`; };
   const start = (e) => {
     if (e.touches && e.touches.length !== 1) return;
     y0 = e.touches ? e.touches[0].clientY : e.clientY;
@@ -131,9 +139,9 @@ export function sheet({ title, body, actions = '', onMount } = {}) {
     const travelled = dy;
     y0 = null;
     if (raf) { cancelAnimationFrame(raf); raf = 0; }
-    panel.style.willChange = '';
-    panel.style.transition = 'transform var(--dur-3) var(--ease-out)';
-    if (travelled > 110) close(); else panel.style.transform = 'translateX(-50%)';
+    panel.style.transition = '';          // 回到 CSS 的 transition
+    if (travelled > 110) close();
+    else panel.style.transform = '';      // 回彈到定位
   };
   handles.forEach(el => {
     el.addEventListener('touchstart', start, { passive: true });
