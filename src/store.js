@@ -28,7 +28,6 @@ const DEFAULT_SETTINGS = {
   lon: 121.5654,
   trueSolarTime: false,       // 真太陽時校正
   lateZiRule: 'next',         // next=晚子時算隔天 | same=不換日
-  namingSchool: 'kangxi',     // kangxi | modern
   wageWaiRule: 'classic',     // classic | simple（外格算法）
   numeralRule: true,          // 一～十依數值計筆畫
   // 提示詞預設
@@ -44,6 +43,7 @@ const DEFAULT_SETTINGS = {
   qianSetId: 'xuanjian60',
   qianNeed: 1,               // 擲筊確認需要幾個聖筊（1 或 3）
   qianVertical: false,       // 籤詩直書（部分字型缺垂直度量，預設關閉）
+  dayPurpose: 'open',        // 擇日預設事項
 };
 
 const listeners = new Set();

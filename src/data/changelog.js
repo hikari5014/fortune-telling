@@ -2,11 +2,26 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.4.1';
+export const APP_VERSION = '0.5.0';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.5.0', date: '2026-09-22', title: '擇日',
+    items: [
+      { kind: 'add', text: '新增「擇日」頁：今日宜忌、整月分數月曆、往後找好日子三種看法' },
+      { kind: 'add', text: '建除十二神（建除滿平定執破危成收開閉）由月支與日支推出，附該日的宜忌事項' },
+      { kind: 'add', text: '十二種事項可選（嫁娶、開市、簽約、搬家、出行、動土、安床、就醫…），分數隨事項重算' },
+      { kind: 'add', text: '評分把每一項加減分的理由都列出來，基準 60 分起算，不藏分數' },
+      { kind: 'data', text: '收錄彭祖百忌十干十二支共 22 條，條文對應到事項時才扣分，其餘只顯示' },
+      { kind: 'add', text: '日支與本命年支、日支的沖合刑害會計入分數（例如「今日沖你的生肖」）' },
+      { kind: 'add', text: '自動標出交節當日、四離日、四絕日與歲破' },
+      { kind: 'add', text: '新增「擇日評估」提示詞模板，請外部 LLM 用通書的角度覆核並補神煞' },
+      { kind: 'add', text: '首頁加上「今日宜忌」卡片' },
+      { kind: 'change', text: '干支刑沖合害表移到 calendar.js，合盤與擇日共用同一份' },
+    ],
+  },
   {
     v: '0.4.1', date: '2026-09-22', title: '抽屜動畫',
     items: [

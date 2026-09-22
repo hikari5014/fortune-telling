@@ -359,3 +359,17 @@ export function elRelation(a, b) {
   if ((i + 2) % 5 === j) return '剋';
   return '被剋';
 }
+
+/* ── 地支干支關係表（合盤、擇日共用） ───────────────── */
+export const STEM_HE    = [[0,5],[1,6],[2,7],[3,8],[4,9]];             // 甲己 乙庚 丙辛 丁壬 戊癸
+export const STEM_CHONG = [[0,6],[1,7],[2,8],[3,9]];                   // 甲庚 乙辛 丙壬 丁癸
+export const BR_LIUHE   = [[0,1],[2,11],[3,10],[4,9],[5,8],[6,7]];     // 子丑 寅亥 卯戌 辰酉 巳申 午未
+export const BR_CHONG   = [[0,6],[1,7],[2,8],[3,9],[4,10],[5,11]];     // 子午 丑未 寅申 卯酉 辰戌 巳亥
+export const BR_SANHE   = [[8,0,4],[11,3,7],[2,6,10],[5,9,1]];         // 申子辰 亥卯未 寅午戌 巳酉丑
+export const BR_XING    = [[2,5,8],[1,10,7]];                          // 寅巳申、丑戌未
+export const BR_XING2   = [[0,3]];                                     // 子卯
+export const BR_SELF    = [4,6,9,11];                                  // 辰午酉亥自刑
+export const BR_HAI     = [[0,7],[1,6],[2,5],[3,4],[8,11],[9,10]];     // 子未 丑午 寅巳 卯辰 申亥 酉戌
+
+export const pairHas = (list, a, b) => list.some(p => (p[0] === a && p[1] === b) || (p[0] === b && p[1] === a));
+export const inSanhe = (a, b) => BR_SANHE.some(g => g.includes(a) && g.includes(b) && a !== b);

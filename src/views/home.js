@@ -4,12 +4,14 @@ import { store } from '../store.js';
 import { todayInfo } from '../prompt/context.js';
 import { APP_VERSION } from '../data/changelog.js';
 import { ziweiLimits, fortuneOfYear, baziLuck, shiShen } from '../engines/fortune.js';
+import { dayInfo, rateDay, purposeName } from '../engines/daily.js';
 import { DISCLAIMER, sectionHead, pad } from './_shared.js';
 
 const TILES = [
   { p: '/astro',   t: '星盤',   icon: 'astro',   d: '太陽 · 月亮 · 上升 · 中天' },
   { p: '/ziwei',   t: '紫微',   icon: 'ziwei',   d: '十二宮 · 十四主星 · 四化' },
   { p: '/fortune', t: '運勢',   icon: 'clock',   d: '大限 · 流年 · 大運 · 流月' },
+  { p: '/daily',   t: '擇日',   icon: 'calendar',d: '建除 · 宜忌 · 找好日子' },
   { p: '/iching',  t: '卜卦',   icon: 'dice',    d: '銅錢 · 時間 · 數字起卦' },
   { p: '/tarot',   t: '塔羅',   icon: 'star',    d: '五種牌陣 · 正逆位' },
   { p: '/qian',    t: '求籤',   icon: 'folder',  d: '搖籤筒 · 擲筊 · 六十籤' },
@@ -19,6 +21,37 @@ const TILES = [
   { p: '/prompt',  t: '提示詞', icon: 'prompt',  d: '產生 → 貼到 LLM → 貼回' },
   { p: '/records', t: '紀錄',   icon: 'records', d: '收藏所有解讀結果' },
 ];
+
+function todayCard(all, settings, t) {
+  let info, r;
+  try {
+    info = dayInfo(t.y, t.m, t.d, { tz: settings.tzOffset });
+    r = rateDay(info, { purpose: settings.dayPurpose || 'open', bazi: all?.bazi || null });
+  } catch { return ''; }
+  const j = info.jianchu;
+  return html`
+    <section class="section">
+      ${raw(sectionHead('今日宜忌', `<a class="chip" href="#/daily">擇日</a>`))}
+      <a class="card press track reveal" href="#/daily" style="display:block">
+        <div class="row row--between" style="align-items:flex-start;gap:var(--sp-4)">
+          <div style="min-width:0">
+            <p class="card__label">${info.date}　${info.gz.day.name}日</p>
+            <p style="font-family:var(--font-display);font-size:var(--step-2);margin-top:4px;letter-spacing:.08em">
+              ${j.name}日　${j.toneText}
+            </p>
+            <p class="hint" style="margin-top:4px">${info.chong.text}　煞${info.sha}${info.lunar ? `　農曆 ${info.lunar.monthName}${info.lunar.dayName}` : ''}</p>
+          </div>
+          <span class="luck ${r.cls}" style="flex:none">${purposeName(settings.dayPurpose || 'open')} ${r.score}</span>
+        </div>
+        <div class="tags" style="margin-top:var(--sp-3)">
+          <span class="tags__k">宜</span>${j.good.length ? j.good.slice(0, 5).map(k => html`<span class="tag tag--on">${purposeName(k)}</span>`) : html`<span class="tag">—</span>`}
+        </div>
+        <div class="tags" style="margin-top:6px">
+          <span class="tags__k">忌</span>${j.bad.length ? j.bad.slice(0, 5).map(k => html`<span class="tag">${purposeName(k)}</span>`) : html`<span class="tag">—</span>`}
+        </div>
+      </a>
+    </section>`;
+}
 
 function luckCard(all, settings, t) {
   if (!all?.ziwei || !all?.bazi) return '';
@@ -79,6 +112,7 @@ export default {
         </div>
       </section>
 
+      ${raw(todayCard(all, settings, t))}
       ${raw(luckCard(all, settings, t))}
 
       <section class="section">
