@@ -1,15 +1,27 @@
-import { html, raw, $, $$ } from '../ui.js';
+import { html, raw, $, $$, sheet, toast } from '../ui.js';
 import { icon } from '../icons.js';
 import { store } from '../store.js';
+import { resolve } from '../router.js';
 import { todayInfo } from '../prompt/context.js';
 import { APP_VERSION } from '../data/changelog.js';
 import { ziweiLimits, fortuneOfYear, baziLuck, shiShen } from '../engines/fortune.js';
 import { dayInfo, rateDay, purposeName } from '../engines/daily.js';
 import { DISCLAIMER, sectionHead, pad } from './_shared.js';
 
+/* 首頁可自訂：哪些卡片要出現、工具區要放哪幾個 */
+export const HOME_CARDS = [
+  { key: 'today',  name: '今日宜忌' },
+  { key: 'luck',   name: '今年運限' },
+  { key: 'tools',  name: '工具入口' },
+  { key: 'recent', name: '最近解讀' },
+  { key: 'about',  name: '這個 App 怎麼運作' },
+];
+const shown = (s, key) => (s.homeCards?.[key] ?? true);
+
 const TILES = [
   { p: '/astro',   t: '星盤',   icon: 'astro',   d: '太陽 · 月亮 · 上升 · 中天' },
   { p: '/ziwei',   t: '紫微',   icon: 'ziwei',   d: '十二宮 · 十四主星 · 四化' },
+  { p: '/bazi',    t: '八字',   icon: 'pillars', d: '五行力量 · 旺衰 · 喜用神' },
   { p: '/fortune', t: '運勢',   icon: 'clock',   d: '大限 · 流年 · 大運 · 流月' },
   { p: '/daily',   t: '擇日',   icon: 'calendar',d: '建除 · 宜忌 · 找好日子' },
   { p: '/direction',t:'方位',  icon: 'compass', d: '本命卦 · 四吉方 · 四凶方' },
@@ -22,6 +34,13 @@ const TILES = [
   { p: '/prompt',  t: '提示詞', icon: 'prompt',  d: '產生 → 貼到 LLM → 貼回' },
   { p: '/records', t: '紀錄',   icon: 'records', d: '收藏所有解讀結果' },
 ];
+
+/* 依設定挑出要顯示的工具磚；沒設定過就全部顯示 */
+function tiles(settings) {
+  const pick = settings.homeTiles;
+  if (!Array.isArray(pick) || !pick.length) return TILES;
+  return pick.map(p => TILES.find(t => t.p === p)).filter(Boolean);
+}
 
 function todayCard(all, settings, t) {
   let info, r;
@@ -113,13 +132,13 @@ export default {
         </div>
       </section>
 
-      ${raw(todayCard(all, settings, t))}
-      ${raw(luckCard(all, settings, t))}
+      ${shown(settings, 'today') ? raw(todayCard(all, settings, t)) : ''}
+      ${shown(settings, 'luck') ? raw(luckCard(all, settings, t)) : ''}
 
-      <section class="section">
-        ${raw(sectionHead('工具'))}
+      ${shown(settings, 'tools') ? html`<section class="section">
+        ${raw(sectionHead('工具', `<button class="chip press" id="home-edit">${icon('settings')} 自訂首頁</button>`))}
         <div class="grid grid--3">
-          ${raw(TILES.map((x, i) => html`
+          ${raw(tiles(settings).map((x, i) => html`
             <a class="tile press track reveal" href="#${x.p}">
               <span class="tile__idx num">${pad(i + 1)}</span>
               ${raw(icon(x.icon))}
@@ -127,9 +146,9 @@ export default {
               <p>${x.d}</p>
             </a>`).join(''))}
         </div>
-      </section>
+      </section>` : ''}
 
-      <section class="section">
+      ${shown(settings, 'recent') ? html`<section class="section">
         ${raw(sectionHead('最近解讀', `<a class="chip" href="#/records">全部 ${store.records.length}</a>`))}
         ${recs.length ? raw(`<div class="stack">${recs.map(r => html`
           <a class="rec press reveal" href="#/records?id=${r.id}">
@@ -140,9 +159,9 @@ export default {
             <p>還沒有任何解讀紀錄。<br>到「提示詞」產生問句，貼給你慣用的 LLM，再把回覆貼回來。</p>
             <a class="btn btn--ghost press" href="#/prompt">${raw(icon('prompt'))} 開始</a>
           </div>`}
-      </section>
+      </section>` : ''}
 
-      <section class="section">
+      ${shown(settings, 'about') ? html`<section class="section">
         ${raw(sectionHead('這個 App 怎麼運作'))}
         <div class="card reveal track">
           <p class="card__label">Local first</p>
@@ -152,11 +171,74 @@ export default {
             所有資料都留在這台裝置，可在設定頁匯出備份。
           </p>
         </div>
-      </section>
+      </section>` : ''}
+
+      ${shown(settings, 'tools') ? '' : html`<p style="margin-top:var(--sp-5);text-align:center">
+        <button class="chip press" id="home-edit">${raw(icon('settings'))} 自訂首頁</button></p>`}
 
       <p style="margin-top:var(--sp-5);text-align:center">
         <a class="chip press" href="#/about">玄鑑 v${APP_VERSION}　更新紀錄</a>
       </p>
       ${DISCLAIMER}`;
   },
+
+  mount(root, { settings }) {
+    $$('#home-edit', root).forEach(b => b.addEventListener('click', () => openCustomise(settings)));
+  },
 };
+
+/* ── 自訂首頁 ─────────────────────────────────────── */
+function openCustomise(settings) {
+  const cards = settings.homeCards || {};
+  const picked = Array.isArray(settings.homeTiles) && settings.homeTiles.length
+    ? settings.homeTiles : TILES.map(t => t.p);
+  sheet({
+    title: '自訂首頁',
+    body: html`
+      <div class="stack" data-noswipe>
+        <div>
+          <p class="card__label">要顯示哪些區塊</p>
+          <div class="stack" style="gap:2px;margin-top:6px">
+            ${HOME_CARDS.map(c => html`
+              <label class="switch">
+                <span>${c.name}</span>
+                <input type="checkbox" data-card="${c.key}" ${(cards[c.key] ?? true) ? 'checked' : ''}>
+              </label>`)}
+          </div>
+        </div>
+        <div>
+          <p class="card__label">工具區要放哪幾個</p>
+          <p class="hint" style="margin-top:4px">點一下切換；順序照你勾選的先後排。</p>
+          <div class="row" style="gap:5px;margin-top:var(--sp-3)" id="tile-pick">
+            ${TILES.map(t => html`
+              <button class="chip press" data-tile="${t.p}" aria-pressed="${picked.includes(t.p)}">${raw(icon(t.icon))}${t.t}</button>`)}
+          </div>
+        </div>
+      </div>`,
+    actions: html`<div class="row" style="gap:var(--sp-2)">
+      <button class="btn btn--ghost press" data-reset>${raw(icon('refresh'))} 回復預設</button>
+      <button class="btn btn--primary press" data-ok style="flex:1">${raw(icon('check'))} 套用</button>
+    </div>`,
+    onMount(sr, close) {
+      // 記住勾選的先後順序
+      const order = [...picked];
+      $$('[data-tile]', sr).forEach(b => b.addEventListener('click', () => {
+        const on = b.getAttribute('aria-pressed') !== 'true';
+        b.setAttribute('aria-pressed', String(on));
+        const i = order.indexOf(b.dataset.tile);
+        if (on && i < 0) order.push(b.dataset.tile);
+        if (!on && i >= 0) order.splice(i, 1);
+      }));
+      $('[data-ok]', sr).addEventListener('click', () => {
+        const nextCards = {};
+        $$('[data-card]', sr).forEach(el => { nextCards[el.dataset.card] = el.checked; });
+        store.setSettings({ homeCards: nextCards, homeTiles: order });
+        close(); toast('首頁已更新'); resolve();
+      });
+      $('[data-reset]', sr).addEventListener('click', () => {
+        store.setSettings({ homeCards: {}, homeTiles: [] });
+        close(); toast('已回復預設'); resolve();
+      });
+    },
+  });
+}

@@ -5,6 +5,7 @@ import { ziweiChart } from '../engines/ziwei.js';
 import { analyzeName } from '../engines/naming.js';
 import { baziLuck, ziweiLimits, fortuneOfYear, monthsOfYear, shiShen } from '../engines/fortune.js';
 import { analyzeNumber, lifePath, analyzePlate } from '../engines/numbers.js';
+import { analyze as baziAnalyze, toText as baziText } from '../engines/bazi.js';
 
 export function computeAll(profile, settings) {
   if (!profile) return null;
@@ -57,6 +58,7 @@ export function buildBlocks(A, settings) {
       `日主：${z.dayMaster}（${z.dayMasterEl}）`,
       `納音：年${z.year.nayin.name}、月${z.month.nayin.name}、日${z.day.nayin.name}、時${z.hour.nayin.name}`,
     ].join('\n');
+    try { B.bazi_strength = baziText(baziAnalyze(z), z); } catch { /* 資料不全就略過 */ }
     B.bazi_table = ['柱\t天干\t地支\t干支五行\t納音',
       ...[['年', z.year], ['月', z.month], ['日', z.day], ['時', z.hour]]
         .map(([k, v]) => `${k}\t${v.stem}\t${v.branch}\t${v.stemEl}/${v.branchEl}\t${v.nayin.name}`)].join('\n');
@@ -70,8 +72,12 @@ export function buildBlocks(A, settings) {
       `上升：${c.ascendant.text}`,
       `中天：${c.midheaven.text}`,
       `月相：${c.moonPhase.name}（日月相位 ${c.moonPhase.angle.toFixed(1)}°）`,
-      `元素分布（日月升）：${Object.entries(c.elements).filter(([, v]) => v).map(([k, v]) => k + v).join('、')}`,
+      `元素分布（日月與七政）：${Object.entries(c.elements).filter(([, v]) => v).map(([k, v]) => k + v).join('、')}`,
+      '行星：',
+      ...c.planets.map(p2 => `・${p2.zh}　${p2.signName} ${p2.deg.toFixed(1)}°　第 ${p2.house} 宮${p2.retro ? '　逆行' : ''}`),
     ].join('\n');
+    B.astro_aspects = ['相位（依容許度由小到大，容許度越小越明顯）',
+      ...c.aspects.map(x => `・${x.label}　差 ${x.orb.toFixed(2)}°${x.tight ? '（緊密）' : ''}`)].join('\n');
     B.astro_table = ['宮位\t起始星座\t宮位主題',
       ...c.houses.map((h, i) => `第${i + 1}宮\t${SIGNS[Math.floor(h / 30)].zh}\t${houseMeaning(i + 1, settings.register)}`)].join('\n');
   }
@@ -140,8 +146,10 @@ export function buildBlocks(A, settings) {
 export const BLOCK_META = [
   { key: 'basic', label: '基本資料', hint: '姓名、性別、出生時間地點' },
   { key: 'bazi', label: '四柱八字', hint: '年月日時干支、納音、日主' },
+  { key: 'bazi_strength', label: '八字旺衰', hint: '五行力量、日主強弱、喜用忌神' },
   { key: 'bazi_table', label: '八字表格', hint: '四柱明細表' },
   { key: 'astro', label: '西洋星盤', hint: '日月升 MC、月相、元素' },
+  { key: 'astro_aspects', label: '星盤相位', hint: '所有相位與容許度' },
   { key: 'astro_table', label: '十二宮表', hint: '各宮起始星座與主題' },
   { key: 'ziwei', label: '紫微摘要', hint: '命身宮、五行局、四化' },
   { key: 'ziwei_table', label: '紫微全盤', hint: '十二宮完整星曜表' },

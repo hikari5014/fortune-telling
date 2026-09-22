@@ -115,7 +115,7 @@ ${OUT}`,
   {
     id: 'astro-big3', name: '星盤日月升', category: '占星', icon: 'astro',
     desc: '太陽、月亮、上升三重奏與宮位落點。',
-    blocks: ['basic', 'astro', 'astro_table'],
+    blocks: ['basic', 'astro', 'astro_aspects', 'astro_table'],
     body: `你是現代心理占星取向的占星師，重視「怎麼活出來」而非宿命論。
 
 {{data}}
@@ -132,7 +132,7 @@ ${OUT}`,
   {
     id: 'bazi-deep', name: '八字格局分析', category: '八字', icon: 'clock',
     desc: '日主強弱、十神、喜用神方向。',
-    blocks: ['basic', 'bazi', 'bazi_table'],
+    blocks: ['basic', 'bazi', 'bazi_strength', 'bazi_table'],
     body: `你是子平八字的論命者。
 
 {{data}}

@@ -1,9 +1,13 @@
-import { html, raw, $, $$, toast, sheet, confirmSheet, haptic } from '../ui.js';
+import { html, raw, $, $$, toast, sheet, confirmSheet, haptic, copyText, encodeCode, decodeCode } from '../ui.js';
 import { icon } from '../icons.js';
 import { store, uid } from '../store.js';
 import { invalidate } from '../app.js';
 import { resolve } from '../router.js';
 import { DISCLAIMER, sectionHead, pad } from './_shared.js';
+
+/* 分享碼只帶推算需要的欄位，不含紀錄、標籤或其他個人資料 */
+const PROFILE_FIELDS = ['surname', 'givenName', 'label', 'gender', 'birth', 'city', 'lat', 'lon', 'tz'];
+const slim = (p) => Object.fromEntries(PROFILE_FIELDS.filter(k => p[k] != null).map(k => [k, p[k]]));
 
 const CITIES = [
   ['台北', 25.0330, 121.5654, 8], ['新北', 25.0169, 121.4627, 8], ['桃園', 24.9937, 121.3010, 8],
@@ -115,13 +119,73 @@ function editSheet(p) {
   });
 }
 
+/* ── 分享碼 ───────────────────────────────────────── */
+export const PROFILE_CODE_PREFIX = 'XJPRO1:';
+
+export function profileCode(p) {
+  return PROFILE_CODE_PREFIX + encodeCode(JSON.stringify({ app: 'xuanjian', kind: 'profile', v: 1, item: slim(p) }));
+}
+
+/** 解析分享碼；失敗回傳 null */
+export function parseProfileCode(code) {
+  try {
+    const raw = String(code || '').trim().replace(/^XJPRO1:/, '');
+    const data = JSON.parse(decodeCode(raw));
+    if (data.app !== 'xuanjian' || data.kind !== 'profile' || !data.item?.birth) return null;
+    const b = data.item.birth;
+    if (![b.y, b.m, b.d].every(n => Number.isFinite(n))) return null;
+    return data.item;
+  } catch { return null; }
+}
+
+function openShare(current) {
+  const list = store.profiles;
+  sheet({
+    title: '出生資料分享碼',
+    body: html`
+      <div class="stack" data-noswipe>
+        <p class="hint">分享碼是一段純文字，可以直接貼到訊息裡傳給朋友。
+          對方貼回自己的 App 就能合盤，不需要帳號、不經過任何伺服器。</p>
+        <div class="field"><label for="pc-who">要分享哪一份</label>
+          <select class="select" id="pc-who">
+            ${list.map(p => html`<option value="${p.id}" ${p.id === current?.id ? 'selected' : ''}>${(p.surname || '') + (p.givenName || '') || p.label || '未命名'}</option>`)}
+          </select></div>
+        <div class="preview" id="pc-out" style="max-height:120px"></div>
+        <button class="btn btn--primary btn--block press" id="pc-copy">${raw(icon('copy'))} 複製分享碼</button>
+        <p class="hint">只含姓名、性別、出生時間與出生地 —— 推算需要的欄位。
+          不含你的解讀紀錄、標籤或任何其他資料。</p>
+        <div class="field" style="margin-top:var(--sp-3)"><label for="pc-in">貼上別人的分享碼</label>
+          <textarea class="textarea textarea--code" id="pc-in" style="min-height:90px" placeholder="XJPRO1:..."></textarea></div>
+        <button class="btn btn--ghost btn--block press" id="pc-import">${raw(icon('check'))} 匯入成新檔案</button>
+      </div>`,
+    onMount(sr, close) {
+      const out = $('#pc-out', sr);
+      const draw = () => {
+        const p = store.profiles.find(x => x.id === $('#pc-who', sr).value);
+        out.textContent = p ? profileCode(p) : '';
+      };
+      draw();
+      $('#pc-who', sr).addEventListener('change', draw);
+      $('#pc-copy', sr).addEventListener('click', () => copyText(out.textContent, '分享碼已複製'));
+      $('#pc-import', sr).addEventListener('click', () => {
+        const item = parseProfileCode($('#pc-in', sr).value);
+        if (!item) { toast('分享碼無法解析'); return; }
+        const p = store.saveProfile({ ...item, id: uid('pro') });
+        close();
+        toast(`已匯入：${(p.surname || '') + (p.givenName || '') || p.label || '未命名'}`);
+        resolve();
+      });
+    },
+  });
+}
+
 export default {
   title: '檔案', eyebrow: 'PROFILES',
   render({ profile }) {
     const list = store.profiles;
     return html`
       <section class="section" style="margin-top:0">
-        ${raw(sectionHead('出生資料', `<button class="chip press" id="add">${icon('plus')} 新增</button>`))}
+        ${raw(sectionHead('出生資料', `<button class="chip press" id="add">${icon('plus')} 新增</button><button class="chip press" id="pro-io">${icon('share')} 分享碼</button>`))}
         ${list.length ? raw(`<div class="grid grid--auto">${list.map(p => html`
           <button class="profile press track reveal" data-id="${p.id}" aria-current="${p.id === profile?.id}">
             <b>${(p.surname || '') + (p.givenName || '') || p.label || '未命名'}</b>
@@ -152,6 +216,7 @@ export default {
       ${DISCLAIMER}`;
   },
   mount(root, { profile }) {
+    $('#pro-io', root)?.addEventListener('click', () => openShare(profile));
     $('#add', root)?.addEventListener('click', () => editSheet(null));
     $('#add2', root)?.addEventListener('click', () => editSheet(null));
     $$('.profile', root).forEach(btn => {

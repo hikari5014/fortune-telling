@@ -34,19 +34,63 @@ export default {
       </section>
 
       <section class="section">
+        ${raw(sectionHead('七政與外行星', `<span class="hint">R＝逆行</span>`))}
+        <div class="planets">
+          ${raw(c.planets.map(x => html`
+            <button class="planet press track reveal" data-body="${x.key}">
+              <span class="planet__sym">${x.sym}</span>
+              <span class="planet__n">
+                <b>${x.zh}${x.retro ? html`<i>R</i>` : ''}</b>
+                <small>${x.outer ? '世代星' : SIGNS[x.sign].el + '象' + SIGNS[x.sign].mode}</small>
+              </span>
+              <span class="planet__s">
+                <b>${x.signName}</b>
+                <small class="num">${x.deg.toFixed(1)}° · 第 ${x.house} 宮</small>
+              </span>
+            </button>`).join(''))}
+        </div>
+        <p class="hint" style="margin-top:var(--sp-3)">
+          天王星、海王星、冥王星走得慢，同世代的人星座幾乎一樣，要看的是落在第幾宮。
+        </p>
+      </section>
+
+      <section class="section">
+        ${raw(sectionHead('相位', `<span class="hint">共 ${c.aspects.length} 個</span>`))}
+        <div class="daylist">
+          ${raw(c.aspects.slice(0, 12).map(x => html`
+            <div class="dayrow" style="cursor:default">
+              <span class="dayrow__d">
+                <b>${x.aSym} ${x.sym} ${x.bSym}</b>
+                <small>${x.tight ? '緊密' : ''}</small>
+              </span>
+              <span class="dayrow__m">
+                <b>${x.label}</b>
+                <small>${x.text}</small>
+              </span>
+              <span class="luck ${x.score > 0 ? 'luck--good' : 'luck--bad'}"><span class="num">${x.orb.toFixed(1)}°</span></span>
+            </div>`).join(''))}
+        </div>
+        ${c.aspects.length > 12 ? html`<p class="hint" style="margin-top:var(--sp-2)">只列出容許度最小的 12 個。</p>` : ''}
+        <p class="hint" style="margin-top:var(--sp-2)">
+          右邊是容許度（差幾度才精準），越小影響越明顯。日月放寬、外行星收緊。
+        </p>
+      </section>
+
+      <section class="section">
         ${raw(sectionHead('概況'))}
         <div class="card reveal track">
           ${raw(kv('月相', `${c.moonPhase.name}（照亮 ${(c.moonPhase.illum * 100).toFixed(0)}%）`))}
           ${raw(kv('日月角距', `<span class="num">${c.moonPhase.angle.toFixed(1)}°</span>`))}
-          ${raw(kv('元素分布（日月升）', Object.entries(c.elements).filter(([, v]) => v).map(([k, v]) => `${k}×${v}`).join('　') || '—'))}
+          ${raw(kv('元素分布（日月與七政）', Object.entries(c.elements).filter(([, v]) => v).map(([k, v]) => `${k}×${v}`).join('　') || '—'))}
           ${b ? raw(kv('生肖 / 日主', `${b.zodiac}　${b.dayMaster}（${b.dayMasterEl}）`)) : ''}
           ${b ? raw(kv('節氣月令', b.jieqi)) : ''}
+          ${raw(kv('元素分布（日月升）', Object.entries(c.elementsBig3).filter(([, v]) => v).map(([k, v]) => `${k}×${v}`).join('　') || '—'))}
           ${raw(kv('本地恆星時', `<span class="num">${(c.lst / 15).toFixed(2)} h</span>`))}
         </div>
       </section>
 
       <section class="section">
-        ${raw(sectionHead('四柱八字'))}
+        ${raw(sectionHead('四柱八字', `<a class="chip press" href="#/bazi">${icon('pillars')} 旺衰喜用</a>`))}
         ${b ? html`
         <div class="pillars reveal">
           ${raw([['年', b.year], ['月', b.month], ['日', b.day], ['時', b.hour]].map(([k, v]) => html`
@@ -93,7 +137,7 @@ export default {
       btn.textContent = box.hidden ? '展開' : '收合';
       if (!box.hidden) box.animate?.([{ opacity: 0, transform: 'translateY(-8px)' }, { opacity: 1, transform: 'none' }], { duration: 320, easing: 'cubic-bezier(.16,1,.3,1)' });
     });
-    $$('.signcard', root).forEach(el => el.addEventListener('click', () => {
+    $$('.signcard, .planet', root).forEach(el => el.addEventListener('click', () => {
       const b = all.astro.bodies.find(x => x.key === el.dataset.body);
       const s = SIGNS[b.sign];
       sheet({
@@ -105,6 +149,9 @@ export default {
             ${raw(kv('守護星', s.ruler))}
             ${raw(kv('落入宮位', `第 ${b.house} 宮 — ${houseMeaning(b.house, settings.register)}`))}
             ${raw(kv('元素特質', ELEMENT_TEXT[s.el]))}
+            ${b.speed != null ? raw(kv('每日移動', `<span class="num">${b.speed >= 0 ? '+' : ''}${b.speed.toFixed(3)}°</span>${b.retro ? '　逆行中' : ''}`)) : ''}
+            ${b.about ? html`<p class="hint">${b.about}</p>` : ''}
+            ${b.retro ? html`<p class="hint">逆行不是壞事，通常表示這一塊的能量比較向內、需要繞一圈才用得出來。</p>` : ''}
             <div class="row" style="gap:var(--sp-2)">
               ${raw(focusBtn(`深問${b.zh}`))}
               <a class="btn btn--ghost press" href="#/prompt?t=astro-big3">${raw(icon('prompt'))} 日月升總覽</a>
@@ -118,7 +165,9 @@ export default {
               `星體：${b.zh}　星座：${b.signName}　精確位置：${b.text}`,
               `元素：${s.el}象　模式：${s.mode}宮　守護星：${s.ruler}`,
               `落入第 ${b.house} 宮 —— ${houseMeaning(b.house, settings.register)}`,
-            ].join('\n'),
+              b.speed != null ? `每日移動 ${b.speed >= 0 ? '+' : ''}${b.speed.toFixed(3)}°${b.retro ? '（逆行）' : ''}` : '',
+              `與這顆星有相位的：${all.astro.aspects.filter(x => x.aKey === b.key || x.bKey === b.key).map(x => `${x.label}（差 ${x.orb.toFixed(1)}°）`).join('；') || '無'}`,
+            ].filter(Boolean).join('\n'),
           }));
         },
       });

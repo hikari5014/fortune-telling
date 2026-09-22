@@ -11,6 +11,7 @@ export const NAV = [
   { p: '/',          t: '首頁', icon: 'home',     eyebrow: 'XUAN JIAN',      tab: 1 },
   { p: '/astro',     t: '星盤', icon: 'astro',    eyebrow: 'NATAL CHART',    tab: 1 },
   { p: '/ziwei',     t: '紫微', icon: 'ziwei',    eyebrow: 'ZI WEI DOU SHU', tab: 1 },
+  { p: '/bazi',      t: '八字', icon: 'pillars',  eyebrow: 'FOUR PILLARS' },
   { p: '/fortune',   t: '運勢', icon: 'clock',    eyebrow: 'LUCK CYCLES',    tab: 1 },
   { p: '/daily',     t: '擇日', icon: 'calendar', eyebrow: 'DAY PICKER' },
   { p: '/direction', t: '方位', icon: 'compass',  eyebrow: 'EIGHT MANSIONS' },
@@ -31,6 +32,7 @@ const VIEWS = {
   '/':         () => import('./views/home.js'),
   '/astro':    () => import('./views/astro.js'),
   '/ziwei':    () => import('./views/ziwei.js'),
+  '/bazi':     () => import('./views/bazi.js'),
   '/fortune':  () => import('./views/fortune.js'),
   '/daily':    () => import('./views/daily.js'),
   '/direction':() => import('./views/direction.js'),
@@ -184,6 +186,15 @@ function boot() {
     haptic(10);
   });
   $('#btn-back').addEventListener('click', () => history.back());
+
+  // 快速搜尋：吸頂列的放大鏡，或桌機的 ⌘K／Ctrl+K
+  const palette = () => import('./palette.js').then(m => m.openPalette(NAV));
+  $('#btn-search').innerHTML = icon('search');
+  $('#btn-search').dataset.tip = '快速搜尋';
+  $('#btn-search').addEventListener('click', () => { haptic(8); palette(); });
+  addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); palette(); }
+  });
 
   addEventListener('scroll', () => {
     $('#topbar').classList.toggle('is-stuck', scrollY > 8);

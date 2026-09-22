@@ -4,28 +4,13 @@ import {
   STEM_HE, STEM_CHONG, BR_LIUHE, BR_CHONG, BR_SANHE, BR_XING, BR_XING2, BR_SELF, BR_HAI,
   pairHas, inSanhe,
 } from './calendar.js';
-import { SIGNS } from './astro.js';
+import { SIGNS, ASPECTS, aspectBetween } from './astro.js';
 import { PALACES } from './ziwei.js';
 
-/* ── 西洋相位 ─────────────────────────────────────── */
-export const ASPECTS = [
-  { key: 'conj',  zh: '合相', deg: 0,   orb: 8, score: 3,  text: '能量疊加，最直接的牽引' },
-  { key: 'sext',  zh: '六分', deg: 60,  orb: 5, score: 2,  text: '順手的協助，需要主動使用' },
-  { key: 'squa',  zh: '四分', deg: 90,  orb: 6, score: -2, text: '摩擦與推力，會逼彼此改變' },
-  { key: 'trin',  zh: '三分', deg: 120, orb: 7, score: 3,  text: '自然流暢，相處省力' },
-  { key: 'oppo',  zh: '對分', deg: 180, orb: 8, score: -1, text: '互補也互相拉扯，容易投射' },
-];
-const KEYS = ['sun', 'moon', 'asc', 'mc'];
+/* ── 西洋相位（定義在 astro.js，兩邊共用同一份） ──── */
+export { ASPECTS, aspectBetween };
 
-export function aspectBetween(lonA, lonB) {
-  let d = Math.abs(norm360(lonA - lonB));
-  if (d > 180) d = 360 - d;
-  for (const a of ASPECTS) {
-    const off = Math.abs(d - a.deg);
-    if (off <= a.orb) return { ...a, exact: d, orb: off, strength: 1 - off / a.orb };
-  }
-  return null;
-}
+const KEYS = ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn', 'asc', 'mc'];
 
 export function astroSynastry(chartA, chartB) {
   const bodyOf = (c, k) => c.bodies.find(b => b.key === k);

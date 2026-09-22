@@ -26,6 +26,7 @@ const P = {
   star: '<path d="m12 4 2.3 5 5.5.7-4 3.8 1 5.5-4.8-2.7-4.8 2.7 1-5.5-4-3.8 5.5-.7z"/>',
   refresh: '<path d="M19 12a7 7 0 1 1-2.1-5"/><path d="M19.5 4.5V10H14"/>',
   install: '<path d="M12 3.5v11M8 11l4 4 4-4"/><path d="M4.5 16v3.5h15V16"/>',
+  pillars: '<path d="M5 4.5h3.4v15H5zM10.3 4.5h3.4v15h-3.4zM15.6 4.5H19v15h-3.4z"/><path d="M5 11.5h14"/>',
   compass: '<circle cx="12" cy="12" r="8.4"/><path d="m15.2 8.8-1.9 4.5-4.5 1.9 1.9-4.5z"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/>',
   calendar: '<rect x="3.6" y="5.4" width="16.8" height="15" rx="1.8"/><path d="M3.6 10h16.8M8.4 3.6v3.6M15.6 3.6v3.6"/><circle cx="12" cy="14.6" r="1.3" fill="currentColor" stroke="none"/>',
   clock: '<circle cx="12" cy="12" r="8.4"/><path d="M12 7v5.4l3.4 2"/>',

@@ -1,4 +1,4 @@
-import { html, raw, $, $$, sheet, toast, copyText, confirmSheet, download } from '../ui.js';
+import { html, raw, $, $$, sheet, toast, copyText, confirmSheet, download, encodeCode, decodeCode } from '../ui.js';
 import { icon } from '../icons.js';
 import { store, uid } from '../store.js';
 import { BUILTIN, VARS, CATEGORIES } from '../prompt/templates.js';
@@ -526,15 +526,4 @@ function synastryText(A, B) {
 
 
 /* 分享碼：UTF-8 → base64（URL 安全） */
-function encodeCode(str) {
-  const bytes = new TextEncoder().encode(str);
-  let bin = '';
-  bytes.forEach(b => { bin += String.fromCharCode(b); });
-  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-}
-function decodeCode(code) {
-  const b64 = code.replace(/-/g, '+').replace(/_/g, '/');
-  const bin = atob(b64 + '='.repeat((4 - b64.length % 4) % 4));
-  const bytes = Uint8Array.from(bin, c => c.charCodeAt(0));
-  return new TextDecoder().decode(bytes);
-}
+
