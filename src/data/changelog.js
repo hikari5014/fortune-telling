@@ -2,11 +2,24 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.8.1';
+export const APP_VERSION = '0.9.0';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.9.0', date: '2026-09-22', title: '七政｜星盤加上行星',
+    items: [
+      { kind: 'add', text: '星盤補上水星、金星、火星、木星、土星，以及天王、海王、冥王三顆世代星' },
+      { kind: 'add', text: '每顆星附星座、度數、落入宮位、每日移動速度與順逆行；命盤圖上逆行標 R' },
+      { kind: 'add', text: '新增「相位」區塊：合相、六分、四分、三分、對分，附容許度，日月放寬、外行星收緊' },
+      { kind: 'change', text: '合盤的相位從日月升中天四個點擴到九個（加上五顆行星）' },
+      { kind: 'change', text: '元素分布改用日月與七政（占星的標準算法），日月升那一版另外保留' },
+      { kind: 'add', text: '點任一顆行星可以「深問這一項」，會帶上它所有的相位' },
+      { kind: 'data', text: '行星位置用 JPL 的克卜勒軌道根數推算，適用 1800–2050' },
+      { kind: 'fix', text: '命盤圖上角距太近的星體會往內縮一圈，不再疊在一起' },
+    ],
+  },
   {
     v: '0.8.1', date: '2026-09-22', title: '提示詞：專精與自由度',
     items: [

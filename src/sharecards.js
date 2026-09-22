@@ -16,6 +16,14 @@ export function natalCard(all, profile) {
   if (a) {
     blocks.push({ t: 'big', text: `${a.sun.signName}　${a.moon.signName}　${a.ascendant.signName}`, sub: '太陽　月亮　上升', size: 72 });
   }
+  if (a?.planets?.length) {
+    blocks.push({ t: 'h', text: '七政與外行星' });
+    blocks.push({ t: 'kv', items: a.planets.map(x => [`${x.sym} ${x.zh}${x.retro ? ' ℞' : ''}`, `${x.signName} ${x.deg.toFixed(1)}° · ${x.house}宮`]) });
+  }
+  if (a?.aspects?.length) {
+    blocks.push({ t: 'h', text: '主要相位' });
+    blocks.push({ t: 'kv', items: a.aspects.slice(0, 8).map(x => [x.label, `差 ${x.orb.toFixed(1)}°`]) });
+  }
   if (b) {
     blocks.push({ t: 'h', text: '四柱八字' });
     blocks.push({ t: 'big', text: `${b.year.name} ${b.month.name} ${b.day.name} ${b.hour.name}`, size: 68 });

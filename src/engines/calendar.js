@@ -89,7 +89,7 @@ export function deltaT(year) {
   if (year >= 2050) { const t = year - 2000; return 62.92 + 0.32217 * t + 0.005589 * t * t; }
   return 0;
 }
-const ttFromUT = (jd) => jd + deltaT(dateFromJD(jd).y) / 86400;
+export const ttFromUT = (jd) => jd + deltaT(dateFromJD(jd).y) / 86400;
 const utFromTT = (jd) => jd - deltaT(dateFromJD(jd).y) / 86400;
 
 /* ── 太陽 ───────────────────────────────────────────── */

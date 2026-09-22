@@ -115,7 +115,7 @@ ${OUT}`,
   {
     id: 'astro-big3', name: '星盤日月升', category: '占星', icon: 'astro',
     desc: '太陽、月亮、上升三重奏與宮位落點。',
-    blocks: ['basic', 'astro', 'astro_table'],
+    blocks: ['basic', 'astro', 'astro_aspects', 'astro_table'],
     body: `你是現代心理占星取向的占星師，重視「怎麼活出來」而非宿命論。
 
 {{data}}

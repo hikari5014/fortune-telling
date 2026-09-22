@@ -1,6 +1,7 @@
 /* 西洋占星：太陽 / 月亮星座、上升、中天、宮位起點 */
-import { jdFromUTC, sunLongitude, moonLongitude, obliquity, norm360, trueSolarOffsetMinutes } from './calendar.js';
+import { jdFromUTC, sunLongitude, moonLongitude, obliquity, norm360, trueSolarOffsetMinutes, ttFromUT } from './calendar.js';
 import { HOUSE_WEN } from '../data/wenyan.js';
+import { allPlanets, PLANETS } from './planets.js';
 
 const D2R = Math.PI / 180, R2D = 180 / Math.PI;
 const sin = (d) => Math.sin(d * D2R), cos = (d) => Math.cos(d * D2R), tan = (d) => Math.tan(d * D2R);
@@ -47,7 +48,7 @@ function gmstDeg(jdUT) {
  * 計算本命星盤基本要素
  * @param {object} o {y,m,d,h,minute,tz,lat,lon,trueSolarTime}
  */
-export function natalChart({ y, m, d, h = 12, minute = 0, tz = 8, lat = 25.033, lon = 121.565, trueSolarTime = false }) {
+export function natalChart({ y, m, d, h = 12, minute = 0, tz = 8, lat = 25.033, lon = 121.565, trueSolarTime = false, outer = true }) {
   let jd = jdFromUTC(y, m, d, h + minute / 60) - tz / 24;      // UT
   let solarCorrection = 0;
   if (trueSolarTime) {
@@ -69,13 +70,19 @@ export function natalChart({ y, m, d, h = 12, minute = 0, tz = 8, lat = 25.033, 
 
   const houses = Array.from({ length: 12 }, (_, i) => norm360(asc + i * 30));   // 等宮制
 
+  // 行星：地心黃經（當日黃道），含每日速度與順逆
+  const jde = ttFromUT(jd);
+  const planets = allPlanets(jde, { outer });
+
   const bodies = [
-    { key: 'sun',  zh: '太陽', lon: sunLon },
-    { key: 'moon', zh: '月亮', lon: moonLon },
-    { key: 'asc',  zh: '上升', lon: asc },
-    { key: 'mc',   zh: '中天', lon: mc },
-    { key: 'dsc',  zh: '下降', lon: norm360(asc + 180) },
-    { key: 'ic',   zh: '天底', lon: norm360(mc + 180) },
+    { key: 'sun',  zh: '太陽', sym: '☉', lon: sunLon, speed: sunLongitude(jd + 1) - sunLon },
+    { key: 'moon', zh: '月亮', sym: '☾', lon: moonLon },
+    { key: 'asc',  zh: '上升', sym: 'AC', lon: asc },
+    { key: 'mc',   zh: '中天', sym: 'MC', lon: mc },
+    { key: 'dsc',  zh: '下降', sym: 'DC', lon: norm360(asc + 180) },
+    { key: 'ic',   zh: '天底', sym: 'IC', lon: norm360(mc + 180) },
+    ...planets.map(p => ({ key: p.key, zh: p.zh, sym: p.sym, lon: p.lon, lat: p.lat,
+                           speed: p.speed, retro: p.retro, outer: p.outer, about: p.text })),
   ].map(b => ({
     ...b,
     sign: signOf(b.lon), signName: SIGNS[signOf(b.lon)].zh,
@@ -87,15 +94,71 @@ export function natalChart({ y, m, d, h = 12, minute = 0, tz = 8, lat = 25.033, 
   const phase = norm360(moonLon - sunLon);
   const phaseName = ['新月', '眉月', '上弦月', '盈凸月', '滿月', '虧凸月', '下弦月', '殘月'][Math.floor(norm360(phase + 22.5) / 45)];
 
+  // 元素分布：日月 + 水金火木土（占星的標準算數），另外保留日月升三顆的版本
+  const CORE = ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn'];
   const elCount = { 火: 0, 土: 0, 風: 0, 水: 0 };
-  bodies.slice(0, 3).forEach(b => elCount[SIGNS[b.sign].el]++);
+  bodies.filter(b => CORE.includes(b.key)).forEach(b => elCount[SIGNS[b.sign].el]++);
+  const elBig3 = { 火: 0, 土: 0, 風: 0, 水: 0 };
+  bodies.slice(0, 3).forEach(b => elBig3[SIGNS[b.sign].el]++);
 
   return {
     jd, solarCorrection, lst, eps, asc, mc, houses, bodies,
     sun: bodies[0], moon: bodies[1], ascendant: bodies[2], midheaven: bodies[3],
     moonPhase: { angle: phase, name: phaseName, illum: (1 - cos(phase)) / 2 },
-    elements: elCount,
+    elements: elCount, elementsBig3: elBig3,
+    planets: bodies.filter(b => PLANETS.some(p => p.key === b.key)),
+    aspects: natalAspects(bodies),
   };
+}
+
+/* ── 相位 ─────────────────────────────────────────── */
+/* 定義放在這裡（合盤也用同一份），避免 astro ↔ synastry 互相 import */
+export const ASPECTS = [
+  { key: 'conj', zh: '合相', sym: '☌', deg: 0,   orb: 8, score: 3,  text: '能量疊加，最直接的牽引' },
+  { key: 'sext', zh: '六分', sym: '⚹', deg: 60,  orb: 5, score: 2,  text: '順手的協助，需要主動使用' },
+  { key: 'squa', zh: '四分', sym: '□', deg: 90,  orb: 6, score: -2, text: '摩擦與推力，會逼你改變' },
+  { key: 'trin', zh: '三分', sym: '△', deg: 120, orb: 7, score: 3,  text: '自然流暢，用起來省力' },
+  { key: 'oppo', zh: '對分', sym: '☍', deg: 180, orb: 8, score: -1, text: '互補也互相拉扯，容易投射' },
+];
+
+/** 兩個黃經之間的相位；沒有就回傳 null */
+export function aspectBetween(lonA, lonB, tighten = 1) {
+  let d = Math.abs(norm360(lonA - lonB));
+  if (d > 180) d = 360 - d;
+  for (const a of ASPECTS) {
+    const off = Math.abs(d - a.deg);
+    const orb = a.orb * tighten;
+    if (off <= orb) return { ...a, exact: d, orb: off, strength: 1 - off / orb };
+  }
+  return null;
+}
+
+/* 容許度依星體調整：日月放寬，外行星收緊 */
+const ORB_W = { sun: 1.15, moon: 1.15, asc: 1, mc: 1, uranus: .75, neptune: .75, pluto: .75 };
+const ASPECT_KEYS = ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune', 'pluto', 'asc', 'mc'];
+
+/** 同一張盤內的相位 */
+export function natalAspects(bodies) {
+  const list = bodies.filter(b => ASPECT_KEYS.includes(b.key));
+  const out = [];
+  for (let i = 0; i < list.length; i++) for (let j = i + 1; j < list.length; j++) {
+    const a = list[i], b = list[j];
+    // 上升與中天本來就差 90° 上下，兩者之間的相位沒有意義
+    if ((a.key === 'asc' && b.key === 'mc') || (a.key === 'mc' && b.key === 'asc')) continue;
+    if ((a.key === 'sun' && b.key === 'mercury') || (a.key === 'mercury' && b.key === 'sun')) {
+      // 水星永遠不離太陽 28°，合相是常態，仍列出但標明
+    }
+    const asp = aspectBetween(a.lon, b.lon, Math.min(ORB_W[a.key] ?? 1, ORB_W[b.key] ?? 1));
+    if (!asp) continue;
+    out.push({
+      a: a.zh, b: b.zh, aKey: a.key, bKey: b.key,
+      aSym: a.sym, bSym: b.sym,
+      ...asp,
+      label: `${a.zh} ${asp.zh} ${b.zh}`,
+      tight: asp.orb < 2,
+    });
+  }
+  return out.sort((x, y) => x.orb - y.orb);
 }
 
 /** 生成命盤 SVG（黑白線稿） */
@@ -129,12 +192,22 @@ export function wheelSVG(chart) {
     const [x1, y1] = pt(a, R - 26), [x2, y2] = pt(b, R - 26);
     s += `<line class="w-axis w-anim" x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke-dasharray="600" />`;
   });
-  const marks = { sun: '☉', moon: '☾', asc: 'AC', mc: 'MC' };
-  chart.bodies.filter(b => marks[b.key]).forEach((b, i) => {
-    const [x, y] = pt(b.lon, R - 52 - (i % 2) * 16);
-    s += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="13" fill="none" class="w-ring"/>`;
-    s += `<text class="w-body" x="${x.toFixed(1)}" y="${(y + 4.5).toFixed(1)}" text-anchor="middle">${marks[b.key]}</text>`;
-  });
+  // 星體：角度太近的往內縮一圈，避免疊在一起看不清
+  const SHOW = ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune', 'pluto', 'asc', 'mc'];
+  const drawn = [];
+  chart.bodies.filter(b => SHOW.includes(b.key))
+    .slice().sort((a, b) => a.lon - b.lon)
+    .forEach(b => {
+      // 角距小於 10° 就往內縮一圈；最多縮兩圈，再多就接受重疊
+      const gap = (d) => Math.abs(((d.lon - b.lon + 540) % 360) - 180);
+      let ring = 0;
+      while (ring < 2 && drawn.some(d => d.ring === ring && gap(d) < 10)) ring++;
+      drawn.push({ lon: b.lon, ring });
+      const [x, y] = pt(b.lon, R - 50 - ring * 24);
+      s += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="12" fill="none" class="w-ring"/>`;
+      s += `<text class="w-body" x="${x.toFixed(1)}" y="${(y + 4.5).toFixed(1)}" text-anchor="middle">${b.sym || b.zh[0]}</text>`;
+      if (b.retro) s += `<text class="w-retro" x="${(x + 11).toFixed(1)}" y="${(y - 7).toFixed(1)}" text-anchor="middle">R</text>`;
+    });
   s += `</svg>`;
   return s;
 }

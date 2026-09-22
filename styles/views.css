@@ -528,3 +528,20 @@
 .cvrow .input { min-height: 40px; padding: 8px var(--sp-3); }
 .preview[contenteditable="true"] { cursor: text; }
 .preview[contenteditable="true"]:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+/* ── 行星表 ───────────────────────────────────────── */
+.planets { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 6px; }
+.planet {
+  display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: var(--sp-3);
+  padding: 10px var(--sp-3); border: 1px solid var(--line); border-radius: var(--r-2);
+  background: var(--surface); text-align: left; width: 100%;
+  transition: border-color var(--dur-2) var(--ease);
+}
+.planet__sym { font-size: var(--step-2); line-height: 1; width: 26px; text-align: center; }
+.planet__n, .planet__s { display: grid; gap: 1px; min-width: 0; }
+.planet__s { text-align: right; }
+.planet__n b, .planet__s b { font-size: var(--step--1); font-weight: 500; letter-spacing: .04em; }
+.planet__n i { font-style: normal; font-size: 10px; margin-left: 3px; padding: 0 3px; border: 1px solid currentColor; border-radius: 3px; vertical-align: 2px; }
+.planet__n small, .planet__s small { font-size: var(--step--2); color: var(--ink-3); }
+@media (hover: hover) { .planet:hover { border-color: var(--ink-3); } }
+.wheel .w-retro { fill: var(--ink-3); font-family: var(--font-num); font-size: 9px; }
