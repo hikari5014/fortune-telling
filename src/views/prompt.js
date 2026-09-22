@@ -144,6 +144,7 @@ export default {
       strokeCombos: $('#x-combos', root).value.trim(),
       other: otherAll ? Object.entries(buildBlocks(otherAll, settings)).map(([k, v]) => v).join('\n\n') : '',
       synastry: otherAll && all ? synastryText(all, otherAll) : '',
+      dayinfo: active.id === 'day-pick' ? (store.drafts.dayPick || '') : '',
       divination: active.id === 'tarot' ? (store.drafts.tarotResult || '')
                 : active.id === 'iching' ? (store.drafts.ichingResult || '')
                 : active.id === 'qian' ? (store.drafts.qianResult || '') : '',

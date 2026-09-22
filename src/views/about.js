@@ -6,6 +6,7 @@ import { dictSize } from '../data/strokes.js';
 import { DECK } from '../data/tarot.js';
 import { HEX_BY_N } from '../data/hexagrams.js';
 import { BUILTIN } from '../prompt/templates.js';
+import { PENGZU_STEM, PENGZU_BRANCH } from '../engines/daily.js';
 import { DISCLAIMER, sectionHead, kv } from './_shared.js';
 
 const REPO = 'https://github.com/hikari5014/fortune-telling';
@@ -56,6 +57,7 @@ export default {
           ${raw(kv('康熙筆畫字典', `<span class="num">${dictSize.toLocaleString()}</span> 字（Unicode Unihan 推算）`))}
           ${raw(kv('周易卦數', `<span class="num">${Object.keys(HEX_BY_N).length}</span> 卦`))}
           ${raw(kv('塔羅牌數', `<span class="num">${DECK.length}</span> 張`))}
+          ${raw(kv('彭祖百忌條文', `<span class="num">${PENGZU_STEM.length + PENGZU_BRANCH.length}</span> 條`))}
           ${raw(kv('內建提示詞模板', `<span class="num">${BUILTIN.length}</span> 個`))}
         </div>
       </section>

@@ -43,6 +43,7 @@ const DEFAULT_SETTINGS = {
   qianSetId: 'xuanjian60',
   qianNeed: 1,               // 擲筊確認需要幾個聖筊（1 或 3）
   qianVertical: false,       // 籤詩直書（部分字型缺垂直度量，預設關閉）
+  dayPurpose: 'open',        // 擇日預設事項
 };
 
 const listeners = new Set();
