@@ -2,7 +2,7 @@
    —— 採「建除十二神」這一派的簡化宜忌。傳統通書另外疊了數十種神煞，
    各家取用不同，本 App 只做能明確講清楚出處的部分，並把每一分的來源列出來。 */
 import {
-  STEMS, BRANCHES, ZODIAC, jdFromUTC, sunLongitude, fourPillars, toLunar,
+  STEMS, BRANCHES, ZODIAC, HOUR_RANGE, jdFromUTC, sunLongitude, fourPillars, toLunar, gzIndexOf, gzName,
   STEM_HE, STEM_CHONG, BR_LIUHE, BR_SANHE, BR_CHONG, BR_XING, BR_XING2, BR_SELF, BR_HAI,
   pairHas, inSanhe, TERMS,
 } from './calendar.js';
@@ -251,4 +251,75 @@ export function toText(info, rating, purpose) {
     L.push('評分理由：\n' + rating.reasons.map(r => `・[${r.tag}] ${r.text}（${r.delta >= 0 ? '+' : ''}${r.delta}）`).join('\n'));
   }
   return L.join('\n');
+}
+
+/* ── 擇時：十二時辰吉凶 ───────────────────────────────
+   三組規則，全部短、標準、可推導，畫面上會把用到哪一條列出來：
+   1. 黃黑道十二神 —— 以日支定青龍起點「子午起申、丑未起戌、寅申起子、
+      卯酉起寅、辰戌起辰、巳亥起午」，即 青龍支 = (日支 × 2 + 8) mod 12，
+      再順排 青龍、明堂、天刑、朱雀、金匱、天德、白虎、玉堂、天牢、玄武、司命、勾陳。
+   2. 日祿（甲祿在寅…）與天乙貴人（甲戊庚牛羊…）落在哪個時辰。
+   3. 時支與日支的沖、六合、三合。                                  */
+
+export const SHEN12 = [
+  { n: '青龍', tone: '黃', text: '諸事順遂，最好的一個時辰' },
+  { n: '明堂', tone: '黃', text: '見貴、談事、開會都好' },
+  { n: '天刑', tone: '黑', text: '易有爭執與刑傷，避開簽約與動刀' },
+  { n: '朱雀', tone: '黑', text: '口舌是非，少講話、少留訊息' },
+  { n: '金匱', tone: '黃', text: '利財、婚嫁、收納' },
+  { n: '天德', tone: '黃', text: '又稱寶光，逢凶化吉' },
+  { n: '白虎', tone: '黑', text: '主血光與衝突，不宜冒險' },
+  { n: '玉堂', tone: '黃', text: '貴人與文書，適合讀書、送件' },
+  { n: '天牢', tone: '黑', text: '易被困住、被拖延' },
+  { n: '玄武', tone: '黑', text: '暗昧、遺失、盜賊，貴重物品收好' },
+  { n: '司命', tone: '黃', text: '主生機，適合開始與祈福' },
+  { n: '勾陳', tone: '黑', text: '牽扯不清，文件與土地事宜緩辦' },
+];
+
+/* 日祿：甲祿在寅、乙卯、丙戊巳、丁己午、庚申、辛酉、壬亥、癸子 */
+const LU = [2, 3, 5, 6, 5, 6, 8, 9, 11, 0];
+/* 天乙貴人：甲戊庚牛羊、乙己鼠猴鄉、丙丁豬雞位、壬癸兔蛇藏、六辛逢馬虎 */
+const GUIREN = [
+  [1, 7], [0, 8], [11, 9], [11, 9], [1, 7],
+  [0, 8], [1, 7], [6, 2], [3, 5], [3, 5],
+];
+
+/** 某一天的十二時辰 */
+export function hoursOf(info) {
+  const db = info.dayBranch, ds = info.dayStem;
+  const qingLong = (db * 2 + 8) % 12;             // 青龍落在哪個時支
+  const lu = LU[ds];
+  const gui = GUIREN[ds];
+
+  return HOUR_RANGE.map((range, b) => {
+    const shen = SHEN12[((b - qingLong) % 12 + 12) % 12];
+    const reasons = [];
+    let score = 60;
+    const add = (d, text, tag) => { score += d; reasons.push({ delta: d, text, tag }); };
+
+    add(shen.tone === '黃' ? 12 : -12, `${shen.n}（${shen.tone}道）：${shen.text}`, '十二神');
+    if (gui.includes(b)) add(10, `天乙貴人時，日干${STEMS[ds]}的貴人在${BRANCHES[b]}`, '貴人');
+    if (b === lu) add(6, `日祿時，日干${STEMS[ds]}的祿在${BRANCHES[b]}`, '祿');
+    if (pairHas(BR_CHONG, b, db)) add(-14, `時支${BRANCHES[b]}沖日支${BRANCHES[db]}，此時辰破日`, '沖日');
+    else if (pairHas(BR_LIUHE, b, db)) add(7, `時支${BRANCHES[b]}與日支${BRANCHES[db]}六合`, '合日');
+    else if (inSanhe(b, db)) add(5, `時支${BRANCHES[b]}與日支${BRANCHES[db]}三合`, '合日');
+
+    score = Math.max(0, Math.min(100, Math.round(score)));
+    const level = levelOf(score);
+    const hourGZ = gzIndexOf(((ds % 5) * 2 + b) % 10, b);   // 五鼠遁
+    return {
+      idx: b, branch: BRANCHES[b], name: BRANCHES[b] + '時', range,
+      gz: gzName(hourGZ),
+      shen: shen.n, tone: shen.tone, shenText: shen.text,
+      score, level: level.name, cls: level.cls,
+      reasons: reasons.sort((x, y) => Math.abs(y.delta) - Math.abs(x.delta)),
+    };
+  });
+}
+
+/** 現在是哪個時辰（0–11）；不是同一天就回傳 null */
+export function currentHourIndex(info, now = new Date()) {
+  const sameDay = now.getFullYear() === info.y && now.getMonth() + 1 === info.m && now.getDate() === info.d;
+  if (!sameDay) return null;
+  return Math.floor(((now.getHours() + 1) % 24) / 2);
 }
