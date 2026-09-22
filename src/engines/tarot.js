@@ -16,19 +16,43 @@ export function shuffle(deck = DECK, rand = Math.random) {
  * @param {object} o {spread:key, allowReversed, rand, spreads 可傳入含自訂牌陣的清單}
  */
 export function draw({ spread = 'three', allowReversed = true, rand = Math.random, spreads = SPREADS } = {}) {
-  const sp = spreads.find(s => s.key === spread) || SPREADS.find(s => s.key === spread) || SPREADS[1];
+  const sp = pickSpread(spread, spreads);
   const cards = shuffle(DECK, rand).slice(0, sp.n).map((c, i) => {
     const reversed = allowReversed && rand() < 0.42;
     return { ...c, reversed, slot: sp.slots[i], meaning: reversed ? c.rev : c.up };
   });
+  return assemble(sp, cards);
+}
+
+export const pickSpread = (key, spreads = SPREADS) =>
+  spreads.find(s => s.key === key) || SPREADS.find(s => s.key === key) || SPREADS[1];
+
+/**
+ * 使用者自己從攤開的扇面上挑位置時用這個。
+ * 牌在 order 被洗好的那一刻就定了，挑的是位置 —— 跟實體牌一樣。
+ * @param {object} o {spread key, order 洗好的整副牌, picks 位置, reversed 對應的正逆位, spreads}
+ */
+export function fromPicks({ spread = 'three', order, picks, reversed = [], spreads = SPREADS }) {
+  const sp = pickSpread(spread, spreads);
+  const cards = picks.map((idx, i) => {
+    const c = order[idx];
+    const rev = !!reversed[i];
+    return { ...c, reversed: rev, slot: sp.slots[i] || `第 ${i + 1} 張`, meaning: rev ? c.rev : c.up };
+  });
+  return assemble(sp, cards);
+}
+
+/** 把抽好的牌組成一份結果（整體判讀的那幾句話只寫在這裡一份） */
+function assemble(sp, cards) {
+  const n = cards.length || 1;
   const majors = cards.filter(c => c.arcana === '大').length;
   const revs = cards.filter(c => c.reversed).length;
   return {
     spread: sp, cards, majors, revs,
     note: [
-      majors / sp.n >= 0.5 ? '大牌偏多：這件事牽涉的是人生階段與內在課題，不只是眼前的小決定。' : '',
-      revs / sp.n >= 0.6 ? '逆位偏多：能量卡住或方向相反，先處理內部阻礙再談行動。' : '',
-      revs === 0 && sp.n > 1 ? '全為正位：能量流動順暢，可以直接往前推。' : '',
+      majors / n >= 0.5 ? '大牌偏多：這件事牽涉的是人生階段與內在課題，不只是眼前的小決定。' : '',
+      revs / n >= 0.6 ? '逆位偏多：能量卡住或方向相反，先處理內部阻礙再談行動。' : '',
+      revs === 0 && n > 1 ? '全為正位：能量流動順暢，可以直接往前推。' : '',
       suitNote(cards),
     ].filter(Boolean),
   };
