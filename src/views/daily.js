@@ -4,6 +4,7 @@ import { store } from '../store.js';
 import { ctx } from '../app.js';
 import {
   PURPOSES, purposeName, dayInfo, rateDay, monthGrid, findDays, toText,
+  hoursOf, currentHourIndex,
 } from '../engines/daily.js';
 import { observeReveal, initSeg, dial, runCountUps } from '../motion.js';
 import { DISCLAIMER, sectionHead, kv, pad } from './_shared.js';
@@ -81,6 +82,7 @@ export default {
           </div>
         </div>
         ${jianchuCard(info)}
+        ${hoursCard(info)}
         ${reasonCard(r)}
         ${infoCard(info)}
         <div class="row" style="margin-top:var(--sp-5)">
@@ -100,6 +102,55 @@ export default {
           ${info.jianchu.bad.length ? html`<span class="tags__k">忌</span>${info.jianchu.bad.map(k => html`<span class="tag">${purposeName(k)}</span>`)}` : ''}
         </div>
       </div>`;
+
+    const hoursCard = (info) => {
+      const hs = hoursOf(info);
+      const now = currentHourIndex(info);
+      const best = Math.max(...hs.map(h => h.score));
+      return html`
+      <div class="card reveal" style="margin-top:var(--sp-4)">
+        ${raw(sectionHead('十二時辰', `<span class="hint">黃道六神為吉</span>`))}
+        <div class="hours">
+          ${hs.map(h => html`
+            <button class="hour press ${h.idx === now ? 'is-now' : ''} ${h.tone === '黃' ? 'is-good' : 'is-bad'}"
+                    data-h="${h.idx}" data-date="${info.y},${info.m},${info.d}"
+                    aria-label="${h.name} ${h.range} ${h.shen} ${h.score} 分">
+              <span class="hour__b">${h.branch}</span>
+              <span class="hour__r num">${h.range}</span>
+              <span class="hour__s">${h.shen}</span>
+              <span class="hour__n num ${h.score === best ? 'is-top' : ''}">${h.score}</span>
+            </button>`)}
+        </div>
+        <p class="hint" style="margin-top:var(--sp-3)">
+          ${now != null ? `現在是${hs[now].name}（${hs[now].shen}）。` : ''}
+          黃黑道十二神以日支起青龍，再加上日祿、天乙貴人與時支對日支的沖合。點任一格看理由。
+        </p>
+      </div>`;
+    };
+
+    function openHour(y, m, d, idx) {
+      const info = dayInfo(y, m, d, { tz });
+      const h = hoursOf(info)[idx];
+      haptic(6);
+      sheet({
+        title: `${h.name}　${h.range}`,
+        body: `
+          <div class="row row--between" style="margin-bottom:var(--sp-4)">
+            <div><p class="dayhead" style="font-size:var(--step-3)">${h.gz}<small>時</small></p>
+            <p class="hint">${info.date}　${info.gz.day.name}日</p></div>
+            <span class="luck ${h.cls}">${h.score}　${h.level}</span>
+          </div>
+          <div class="reasons">
+            ${h.reasons.map(x => `
+              <div class="reason">
+                <span class="reason__tag">${x.tag}</span>
+                <span class="reason__txt">${x.text}</span>
+                <span class="reason__n num ${x.delta >= 0 ? 'is-up' : 'is-down'}">${x.delta >= 0 ? '+' : ''}${x.delta}</span>
+              </div>`).join('')}
+          </div>
+          <p class="hint" style="margin-top:var(--sp-3)">基準 60 分起算。</p>`,
+      });
+    }
 
     const reasonCard = (r) => html`
       <div class="card reveal" style="margin-top:var(--sp-4)">
@@ -219,6 +270,7 @@ export default {
           </div>
           <div class="sheetcards">
             ${jianchuCard(info)}
+            ${hoursCard(info)}
             ${reasonCard(r)}
             ${infoCard(info)}
           </div>
@@ -228,6 +280,10 @@ export default {
         onMount(el) {
           observeReveal(el);
           runCountUps(el);
+          $$('.hour', el).forEach(b => b.addEventListener('click', () => {
+            const [yy, mm, dd] = b.dataset.date.split(',').map(Number);
+            openHour(yy, mm, dd, Number(b.dataset.h));
+          }));
           $$('[data-day-prompt]', el).forEach(b => b.addEventListener('click', () => toPrompt(info, r)));
         },
       });
@@ -246,6 +302,10 @@ export default {
       initSeg(stage);
       runCountUps(stage);
 
+      $$('.hour', stage).forEach(b => b.addEventListener('click', () => {
+        const [y, m, d] = b.dataset.date.split(',').map(Number);
+        openHour(y, m, d, Number(b.dataset.h));
+      }));
       if (tab === 'today') {
         const [y, m, d] = today();
         const info = dayInfo(y, m, d, { tz });

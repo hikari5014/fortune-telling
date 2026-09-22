@@ -2,11 +2,20 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.6.0';
+export const APP_VERSION = '0.6.1';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.6.1', date: '2026-09-22', title: '擇時',
+    items: [
+      { kind: 'add', text: '擇日補上「幾點」：今日與月曆抽屜都列出十二時辰吉凶，現在所在的時辰會框起來' },
+      { kind: 'add', text: '黃黑道十二神（青龍、明堂、天刑、朱雀、金匱、天德、白虎、玉堂、天牢、玄武、司命、勾陳）以日支起青龍' },
+      { kind: 'add', text: '加計日祿、天乙貴人，以及時支對日支的沖、六合、三合' },
+      { kind: 'add', text: '點任一時辰看完整加減分理由，一樣不藏分數' },
+    ],
+  },
   {
     v: '0.6.0', date: '2026-09-22', title: '方位',
     items: [
