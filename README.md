@@ -1,26 +1,16 @@
 # 玄鑑 XUAN JIAN
 
-一個**離線可用的命理 PWA**。所有推算（曆法、節氣、農曆、四柱、星盤、紫微、姓名五格、數字磁場）
-都在你的裝置上完成，不連網、不上傳。需要「解讀」時，App 會幫你組出一段提示詞，
+一個**離線可用的命理 PWA**。曆法、節氣、農曆、四柱、星盤、紫微、大運流年、合盤、
+易經、塔羅、求籤、姓名五格、數字磁場 —— 全部在你的裝置上算，不連網、不上傳。
+
+需要「解讀」的部分不內建模型，而是幫你把資料組成一段提示詞，
 你複製到任何 LLM，再把回覆貼回來存檔。
+
+**線上版**：https://hikari5014.github.io/fortune-telling/
 
 > 零建置、零相依套件。原生 ES Modules + CSS，開一個靜態伺服器就能跑。
 
-## 版本
-
-目前 **v0.3.0（demo）**。版號與完整更新紀錄都在 App 的「關於」頁，
-單一來源在 `src/data/changelog.js`；`tools/check_version.py` 會確認它與 `sw.js`
-的離線快取版號一致，CI 在部署前會跑這個檢查。
-
-## 快速開始
-
-```bash
-python3 -m http.server 8080
-# 開 http://localhost:8080
-```
-
-或直接把整個資料夾丟到任何靜態主機（GitHub Pages / Netlify / Vercel）。
-需要 HTTPS 才能安裝成 App 與啟用 Service Worker。
+---
 
 ## 功能
 
@@ -36,63 +26,127 @@ python3 -m http.server 8080
 | **求籤** | 搖籤筒、擲筊請示（一聖筊或連三聖筊）、六十甲子編號籤詩、可匯入自己的籤詩集 |
 | **姓名** | 康熙筆畫五格三才、81 靈動數、取名筆畫推薦、候選名收藏比較、單字筆畫手動修正 |
 | **數字** | 八星磁場（天醫／生氣／延年／伏位／絕命／五鬼／六煞／禍害）、手機車牌評分、生命靈數、雙號匹配、幸運數字 |
-| **提示詞** | 15 個內建模板 + 完全自由的自訂模板、資料積木勾選、變數面板、輸出控制、匯出入與分享碼 |
+| **提示詞** | 18 個內建模板 + 完全自由的自訂模板、資料積木勾選、變數面板、輸出控制、匯出入與分享碼 |
 | **紀錄** | 貼回的 LLM 解讀，依對象歸檔，可匯出 Markdown |
 | **設定** | 外觀、動態、命理參數、提示詞預設、資料匯出入 |
+| **關於** | 版本號、完整更新紀錄、內建資料統計、檢查更新 |
+
+版號與更新紀錄在 App 的「關於」頁；單一來源是 `src/data/changelog.js`。
+
+## 快速開始
+
+```bash
+python3 -m http.server 8080
+# 開 http://localhost:8080
+```
+
+或直接把整個資料夾丟到任何靜態主機。安裝成 App 與 Service Worker 需要 HTTPS。
+
+## 專案結構
+
+```
+index.html                外殼（含首次繪製前套用主題的內聯腳本）
+manifest.webmanifest      PWA 資訊清單
+sw.js                     Service Worker（外殼與字型快取、版本更新）
+styles/
+  tokens.css              設計代幣：黑白色票、間距、時間、曲線
+  base.css                重置、版面、觸控基礎、顆粒層
+  motion.css              過場、進場、漣漪、圖示互動、提示泡泡、分段色塊
+  components.css          按鈕、卡片、表單、導覽、抽屜、吐司
+  views.css               各頁面專屬樣式
+src/
+  app.js                  導覽、路由掛載、過場、全域互動、版本提示
+  router.js               hash 路由
+  store.js                localStorage：設定、檔案、模板、紀錄、候選名、籤詩集
+  ui.js                   安全模板、吐司、底部抽屜、複製、極簡 Markdown
+  motion.js               進場、漣漪、滑動切頁、分段色塊、數值計數
+  icons.js                自繪 SVG 圖示集（30 個，不使用 emoji）
+  engines/
+    calendar.js           儒略日、太陽月亮黃經、節氣、定朔定氣農曆、四柱、納音
+    astro.js              星座、上升、中天、宮位、命盤 SVG
+    ziwei.js              命身宮、五行局、十四主星、輔星、四化
+    fortune.js            八字大運、十神、流年流月、紫微大限小限
+    synastry.js           西洋相位、八字刑沖合害、紫微宮位對照
+    naming.js             五格三才、81 靈動、取名筆畫推薦
+    numbers.js            八星磁場、號碼評分、生命靈數、匹配
+    iching.js             起卦、動爻、之卦互卦錯卦綜卦
+    tarot.js              洗牌抽牌、牌陣、整體判讀
+    qian.js               搖籤、擲筊、籤詩集
+  data/
+    kangxi.js             康熙筆畫（Unihan 推算，20,992 字，自動產生）
+    strokes.js            筆畫查詢＋姓名學例外表＋數目字規則
+    lucky81.js            81 靈動數吉凶
+    magnetic.js           八星數字磁場
+    hexagrams.js          六十四卦
+    tarot.js              78 張塔羅牌
+    qian.js               六十籤（自撰）與匯入格式
+    changelog.js          版號與更新紀錄（單一來源）
+  prompt/
+    context.js            把引擎結果組裝成「資料積木」
+    templates.js          18 個內建提示詞模板
+    builder.js            變數渲染與提示詞組裝
+  views/                  15 個頁面
+tools/
+  gen_kangxi.py           由 Unicode Unihan 產生康熙筆畫字典
+  make_icons.py           產生 App 圖示 PNG（自寫光柵化，不需影像函式庫）
+  check_version.py        檢查 changelog 與 sw.js 的版號一致
+docs/DESIGN.md            設計決策、實作陷阱、里程碑
+```
 
 ## 技術重點
 
-- **天文演算**：太陽視黃經（誤差 < 0.01°）、月亮主要項（< 0.3°）、Meeus 朔望公式、ΔT 修正
+### 命理演算
+
+- **天文**：太陽視黃經（誤差 < 0.01°）、月亮主要項（< 0.3°）、Meeus 朔望公式、ΔT 修正
 - **農曆**：定朔定氣法 —— 朔日為初一、無中氣置閏，不依賴任何查表資料
 - **上升**：`Asc = atan2(cos RAMC, −(sin RAMC · cos ε + tan φ · sin ε))`，需出生地經緯度
 - **日柱**：`(JDN + 49) mod 60`
 - **大運起運**：順逆依陽男陰女，出生到交節的天數三日折一年
 - **易經**：六十四卦由上下經卦查表，動爻變出之卦，另求互卦、錯卦、綜卦
-- **PWA**：Service Worker 快取應用程式外殼與 Google Fonts，完全離線可用
+- **筆畫**：由 Unihan 的 `kRSUnicode`（部首序號 + 餘筆）推算康熙筆畫
+
+### 介面與動態
+
 - **黑白主題**：純單色設計代幣系統，層次靠灰階、細線與留白
-- **動態 UI**：View Transitions 過場、IntersectionObserver 逐項進場、滑動切頁、長按選單、
-  漣漪與指標光暈、數值計數、下拉關閉抽屜；可在設定切「關閉／輕量／完整」，並尊重
-  `prefers-reduced-motion`
-- **桌面過場**：只有主內容區參與 View Transition，固定的側欄與吸頂列不跟著位移；
-  `scrollbar-gutter: stable` 讓捲軸寬度恆定，切到較短的頁面不會左右跳
-- **圖示互動**：滑過時線條加粗（等同字重變化），並依語意「演一下」自己的意思
+- **圖示**：30 個自繪 SVG，滑過時線條加粗（等同字重變化）並依語意「演一下」自己的意思
   —— 設定轉 60°、重新整理逆轉 120°、箭頭前進 4px、上傳往上、下載往下
-- **iOS 專門處理**：避開 Safari 工具列收合造成的 `dvh` 尺寸抖動（改用 `svh`）、
-  固定層不使用 `mix-blend-mode`、觸控裝置停用 `backdrop-filter` 與指標光暈、
-  手勢方向鎖定 + rAF 節流 + 慣性捲動保護 + 螢幕邊緣讓位、抽屜開啟時鎖住背景捲動、
-  可編輯欄位字級不低於 16px（避免聚焦自動縮放）、以 `visualViewport` 追蹤鍵盤高度
+- **過場**：只有主內容區參與 View Transition，固定的側欄與吸頂列不跟著位移；
+  `scrollbar-gutter: stable` 讓捲軸寬度恆定，切到較短的頁面不會左右跳
+- **手勢**：滑動切頁有方向鎖定、rAF 節流、慣性捲動保護、螢幕邊緣讓位
+- **抽屜**：class 驅動的 transition（不是 animation），拖曳與關閉都能接手
+- **動畫強度**：設定可切「關閉／輕量／完整」，並尊重 `prefers-reduced-motion`
 
-## 目錄
+### iOS 專門處理
 
-```
-index.html            外殼
-manifest.webmanifest  PWA 資訊清單
-sw.js                 Service Worker
-styles/               tokens / base / motion / components / views
-src/
-  app.js router.js store.js ui.js motion.js icons.js
-  engines/  calendar astro ziwei naming numbers
-  data/     strokes lucky81 magnetic
-  prompt/   context templates builder
-  views/    home profile astro ziwei naming numbers prompt records settings
-assets/icons/         App 圖示（自繪幾何星盤，非 emoji）
-tools/make_icons.py   圖示 PNG 產生器
-docs/DESIGN.md        完整設計規劃書
-```
+這些都是實機上看得到差別的：
 
-## 籤詩的資料來源
+- 用 `svh` 取代 `dvh`：Safari 網址列收合時 `dvh` 會持續變動，版面每幀改變尺寸
+- 固定層不使用 `mix-blend-mode`：會強制整頁每一幀重新混色
+- 觸控裝置停用 `backdrop-filter` 與指標光暈，改用獨立合成層
+- 鎖背景捲動不改動版面（擋 `touchmove`，不是 `position: fixed`），網址列不會突然展開
+- 可編輯欄位字級不低於 16px，聚焦時不會自動放大整頁
+- 以 `visualViewport` 追蹤鍵盤高度，抽屜自動讓開
+
+### PWA
+
+Service Worker 快取應用程式外殼與 Google Fonts，完全離線可用。
+新版本接管後自動重新載入，「關於」頁可手動檢查更新。
+
+## 資料來源與準確度
+
+### 籤詩
 
 內建的「玄鑑六十籤」是**本專案自撰**的七言四句，依六十甲子編號，
 **不是任何宮廟籤詩的原文**。傳統的六十甲子籤、觀音百籤版本眾多，
-憑記憶寫出來容易變成假的經文，比不做更糟，所以選擇自撰並明確標示。
+憑記憶寫出來容易變成假的經文，比不做更糟，所以選擇自撰並在介面與文件明確標示。
 
-想用自己常去的宮廟籤詩，有兩條路：
+想用自己常去的宮廟籤詩：
 
-1. 到求籤頁「管理籤詩集」貼上 JSON 匯入（格式在同一個對話框裡，可一鍵複製）
+1. 求籤頁「管理籤詩集」貼上 JSON 匯入（格式在同一個對話框裡，可一鍵複製）
 2. 用內建的「查籤詩原文」提示詞請外部 LLM 提供，該模板明確要求
    **沒有把握的籤必須留空、不准自行創作**，再把結果貼回來匯入
 
-## 筆畫字典
+### 筆畫字典
 
 由 Unicode Unihan 的 `kRSUnicode`（部首序號 + 餘筆）推算，**涵蓋 CJK 基本區全部 20,992 個漢字**。
 康熙筆畫 = 部首本身的筆畫 + 餘筆，這正是姓名學所用的計法，所以氵自動算 4、艹算 6、
@@ -103,13 +157,38 @@ docs/DESIGN.md        完整設計規劃書
 - 數目字一～十可選擇「依數值計」或「依康熙實際筆畫」（設定頁切換）
 - 仍有疑義的字可在姓名頁手動修正，或用內建的「查康熙筆畫」模板去問外部 LLM
 
-## 免責
+### 流派差異
 
-本 App 為文化娛樂與自我探索工具。計算結果與 LLM 解讀皆不構成醫療、法律、投資或任何專業建議。
+命理各家算法不同。本專案在有分歧的地方一律**明講採用哪一種、並盡量做成可切換**：
+早晚子時換日、姓名學外格規則、數目字筆畫、擲筊確認次數，都在設定頁或頁面上可調。
+
+## 開發
+
+### 改版流程
+
+1. 改 `src/data/changelog.js` 的 `APP_VERSION`，並在 `CHANGELOG` 最前面加一筆
+2. 把 `sw.js` 的 `VERSION` 改成同一組版號
+3. `python3 tools/check_version.py` 確認一致（CI 在部署前也會跑）
+
+### 重新產生資料
+
+```bash
+# 康熙筆畫字典（需要 Unicode 官方 Unihan.zip）
+curl -sSLO https://www.unicode.org/Public/UCD/latest/ucd/Unihan.zip
+python3 tools/gen_kangxi.py Unihan.zip src/data/kangxi.js
+
+# App 圖示 PNG
+python3 tools/make_icons.py
+```
+
+### 沒有建置步驟
+
+不需要 npm、不需要打包。改完檔案重新整理瀏覽器就好。
+唯一要注意的是 Service Worker 會快取舊檔 —— 開發時在 DevTools 勾選 *Bypass for network*。
 
 ## 部署到 GitHub Pages
 
-專案已附上 `.github/workflows/deploy.yml`，推送後自動部署，**不需要任何建置步驟**。
+專案已附上 `.github/workflows/deploy.yml`，推送 `main` 後自動部署。
 
 第一次設定（只要做一次，**必須手動**）：
 
@@ -118,16 +197,15 @@ docs/DESIGN.md        完整設計規劃書
 3. 回到 **Actions → Deploy to GitHub Pages**，按 **Run workflow** 重跑一次
 
 > 為什麼不能自動？Actions 的預設 `GITHUB_TOKEN` 沒有建立 Pages 站台的權限，
-> 會回 `Resource not accessible by integration`。啟用之後，之後每次推送都會自動部署。
-
-如果部署時出現 `Branch is not allowed to deploy to github-pages`，
-表示 `github-pages` 環境限制只能從預設分支部署 —— 把這個分支合併到 `main` 即可，
-或到 **Settings → Environments → github-pages** 放寬分支限制。
-
-網址：`https://<使用者名稱>.github.io/fortune-telling/`
+> 會回 `Resource not accessible by integration`。啟用之後每次推送都會自動部署。
 
 注意事項：
 
 - 站台部署在子路徑底下，所以所有路徑都必須是**相對路徑**（本專案已全部使用相對路徑）
-- `.nojekyll` 一定要保留，否則 GitHub Pages 的 Jekyll 會忽略 `src/views/_shared.js`（底線開頭的檔案）
-- GitHub Pages 是 HTTPS，Service Worker 與「安裝成 App」都能正常運作
+- `.nojekyll` 一定要保留，否則 Jekyll 會忽略 `src/views/_shared.js`（底線開頭的檔案）
+- 若出現 `Branch is not allowed to deploy to github-pages`，表示 `github-pages`
+  環境限制只能從預設分支部署，把分支合併到 `main` 即可
+
+## 免責
+
+本 App 為文化娛樂與自我探索工具。計算結果與 LLM 解讀皆不構成醫療、法律、投資或任何專業建議。
