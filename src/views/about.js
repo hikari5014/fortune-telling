@@ -70,7 +70,7 @@ export default {
           ${raw(kv('解讀紀錄', `<span class="num">${store.records.length}</span> 筆`))}
           ${raw(kv('候選名', `<span class="num">${store.candidates.length}</span> 個`))}
           <p class="hint" style="margin-top:var(--sp-3)">
-            全部存在這台裝置的瀏覽器裡，不會上傳。到<a href="#/settings" style="text-decoration:underline">設定</a>可以匯出備份。
+            全部存在這台裝置的瀏覽器裡，不會上傳。到<a href="#/settings?g=data" style="text-decoration:underline">設定</a>可以匯出備份。
           </p>
         </div>
       </section>
