@@ -8,6 +8,7 @@ import { APP_VERSION, APP_STAGE, CHANGELOG } from '../data/changelog.js';
 import { DISCLAIMER } from './_shared.js';
 import { detect } from '../platform.js';
 import { SERVICES } from '../llm.js';
+import * as decks from '../decks.js';
 
 
 const row = (title, desc, control) => html`
@@ -101,6 +102,11 @@ export default {
 
         <section class="setgroup reveal">
           <div class="setgroup__head">塔羅</div>
+          ${raw(row('預設牌組',
+            '抽牌、今日一張、本命牌都用這一副。內建有偉特牌與鎏金太陽（只換牌背）；'
+            + '自訂牌組在「塔羅 → 牌組」新增，新增後也會出現在這裡。',
+            html`<select class="select" id="set-deck" style="max-width:220px">${raw(decks.allDecks().map(d =>
+              html`<option value="${d.id}" ${d.id === (s.tarotDeck || decks.BUILTIN) ? 'selected' : ''}>${d.name}</option>`).join(''))}</select>`))}
           ${raw(row('牌面圖像',
             '偉特牌（1909）的公有領域掃描，已轉成灰階配合黑白調性，深色主題下會反相。'
             + '78 張約 2.3 MB，第一次看到哪張才下載哪張，之後離線也看得到，換版本不會重抓。'
@@ -222,6 +228,11 @@ export default {
     bindVal('set-pformat', 'promptFormat');
     bindVal('set-prefix', 'promptPrefix');
     bindVal('set-suffix', 'promptSuffix');
+    // 牌組：自訂牌組可能同名，所以選單的值直接放 id；換了馬上套上那一副的牌背
+    $('#set-deck', root)?.addEventListener('change', (e) => {
+      save({ tarotDeck: e.target.value });
+      decks.useDeck(e.target.value).catch(() => {});
+    });
     // 下拉選的是名字，存的是 id
     $('#set-llm', root)?.addEventListener('change', (e) => {
       const hit = SERVICES.find(x => x.name === e.target.value);

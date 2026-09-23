@@ -59,7 +59,17 @@ test('表單存的永遠是國曆，農曆只是輸入方式', () => {
   assert.match(view, /calMode\(root\) === 'lunar' \? \{ cal: 'lunar' \} : \{\}/);
   assert.match(view, /y: num\('f-y', 2000\), m: num\('f-m', 1\), d: num\('f-d', 1\)/);
   // 農曆那一邊改動時要把國曆欄位同步寫回去
-  assert.match(view, /g\.y\.value = got\.y; g\.m\.value = got\.m; g\.d\.value = got\.d;/);
+  assert.match(view, /setSel\(g\.y, got\.y,/);
+  assert.match(view, /g\.m\.value = String\(got\.m\)/);
+  assert.match(view, /rebuildSolarDays\(got\.d\)/);
+});
+
+test('生日與時辰用選的：沒有要打字的數字欄位', () => {
+  const view = readFileSync('src/views/profile.js', 'utf8');
+  for (const id of ['f-y', 'f-m', 'f-d', 'f-ly', 'f-h', 'f-min']) {
+    assert.ok(!new RegExp(`<input[^>]*id="${id}"`).test(view), `${id} 還是輸入框`);
+    assert.match(view, new RegExp(`pick\\('${id}'`), `${id} 不是選單`);
+  }
 });
 
 test('干支年用農曆年算，不是拿西元年硬湊', () => {

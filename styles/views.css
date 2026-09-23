@@ -987,3 +987,7 @@ body.cer-open { overflow: hidden; }
   padding: 1px 7px; border-radius: var(--r-full); background: var(--accent); color: var(--accent-ink);
 }
 .exrow--warn { background: var(--bg-2); outline: 1px dashed var(--line-2); }
+
+/* 牌組清單：選中的那一副標「使用中」 */
+.tmpl .dk-cur { display: none; color: var(--accent); }
+.tmpl[aria-pressed="true"] .dk-cur { display: inline; }

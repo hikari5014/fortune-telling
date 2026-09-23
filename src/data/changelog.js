@@ -2,11 +2,20 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.29.0';
+export const APP_VERSION = '0.30.0';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.30.0', date: '2026-09-23', title: '生日改成用選的，預設牌組可以在設定換',
+    items: [
+      { kind: 'change', text: '新增／編輯檔案的年、月、日、時、分全部改成下拉選單，不用再打字；日期只會列出那個月真的有的天數' },
+      { kind: 'add', text: '「時」旁邊直接標時辰（例如 23 時・子時），不用自己換算' },
+      { kind: 'add', text: '設定頁「塔羅」多了「預設牌組」，牌組頁選中的那一副會標「使用中」' },
+      { kind: 'fix', text: '國曆／農曆切換鈕被拉成整列寬，改回剛好包住兩個按鈕' },
+    ],
+  },
   {
     v: '0.29.0', date: '2026-09-23', title: '內建第二副牌背：鎏金太陽',
     items: [

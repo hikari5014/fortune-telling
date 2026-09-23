@@ -15,6 +15,24 @@ const seg = (id, items, value) => `<div class="seg" id="${id}">${items
   .map(([v, label]) => `<button type="button" class="press" data-v="${v}" aria-pressed="${v === value}">${label}</button>`)
   .join('')}</div>`;
 
+/* ── 生日與時辰用選的，不用打的 ─────────────────────
+   手機上打數字要叫出鍵盤、還可能打出 2 月 31 日；
+   下拉選單在手機上是原生的滾輪，而且日期只會出現那個月真的有的天數。 */
+const range = (a, b) => Array.from({ length: b - a + 1 }, (_, i) => a + i);
+/** 年份：今年往後五年到 1900 由新到舊（出生年多半是近幾十年，不用滑過一整個世紀）。
+    舊資料的年份不在範圍內也要留著，不然一打開就被改掉。 */
+const years = (keep) => {
+  const top = new Date().getFullYear() + 5;
+  const list = range(1900, top).reverse();
+  return keep != null && !list.includes(keep) ? [keep, ...list] : list;
+};
+const monthDays = (y, m) => new Date(Date.UTC(y, m, 0)).getUTCDate();
+const BRANCH = '子丑寅卯辰巳午未申酉戌亥';
+/** 時旁邊標時辰：23 點已經是子時（隔天的子時，八字引擎會處理換日） */
+const hourLabel = (h) => `${pad(h)} 時・${BRANCH[Math.floor((h + 1) / 2) % 12]}時`;
+const pick = (id, list, value, label) => `<select class="select num" id="${id}">${list
+  .map(v => `<option value="${v}" ${v === value ? 'selected' : ''}>${label(v)}</option>`).join('')}</select>`;
+
 /* 分享碼只帶推算需要的欄位，不含紀錄、標籤或其他個人資料 */
 const PROFILE_FIELDS = ['surname', 'givenName', 'label', 'gender', 'birth', 'city', 'lat', 'lon', 'tz'];
 const slim = (p) => Object.fromEntries(PROFILE_FIELDS.filter(k => p[k] != null).map(k => [k, p[k]]));
@@ -22,7 +40,7 @@ const slim = (p) => Object.fromEntries(PROFILE_FIELDS.filter(k => p[k] != null).
 
 function form(p = {}) {
   const b = p.birth || {};
-  const now = new Date();
+  const y0 = b.y ?? new Date().getFullYear() - 30;
   return html`
     <div class="stack" data-noswipe>
       <div class="grid grid--2">
@@ -42,12 +60,12 @@ function form(p = {}) {
         ${raw(seg('f-cal', [['solar', '國曆'], ['lunar', '農曆']], b.cal === 'lunar' ? 'lunar' : 'solar'))}
       </div>
       <div class="grid grid--3" id="f-solar">
-        <div class="field"><label for="f-y">西元年</label><input class="input num" id="f-y" type="number" inputmode="numeric" min="1900" max="2100" value="${b.y ?? now.getFullYear() - 30}"></div>
-        <div class="field"><label for="f-m">月</label><input class="input num" id="f-m" type="number" inputmode="numeric" min="1" max="12" value="${b.m ?? 1}"></div>
-        <div class="field"><label for="f-d">日</label><input class="input num" id="f-d" type="number" inputmode="numeric" min="1" max="31" value="${b.d ?? 1}"></div>
+        <div class="field"><label for="f-y">西元年</label>${raw(pick('f-y', years(b.y), y0, (y) => `${y} 年`))}</div>
+        <div class="field"><label for="f-m">月</label>${raw(pick('f-m', range(1, 12), b.m ?? 1, (m) => `${m} 月`))}</div>
+        <div class="field"><label for="f-d">日</label>${raw(pick('f-d', range(1, monthDays(y0, b.m ?? 1)), b.d ?? 1, (d) => `${d} 日`))}</div>
       </div>
       <div class="grid grid--3" id="f-lunar" hidden>
-        <div class="field"><label for="f-ly">農曆年</label><input class="input num" id="f-ly" type="number" inputmode="numeric" min="1901" max="2099" value="${b.y ?? now.getFullYear() - 30}"></div>
+        <div class="field"><label for="f-ly">農曆年</label>${raw(pick('f-ly', years(b.y), y0, (y) => `${y} 年`))}</div>
         <div class="field"><label for="f-lm">月</label><select class="select" id="f-lm"></select></div>
         <div class="field"><label for="f-ld">日</label><select class="select" id="f-ld"></select></div>
       </div>
@@ -57,8 +75,8 @@ function form(p = {}) {
         <input type="checkbox" id="f-hu" ${b.hourUnknown ? 'checked' : ''}>
       </label>
       <div class="grid grid--2" id="f-hour-row">
-        <div class="field"><label for="f-h">時（24 小時制）</label><input class="input num" id="f-h" type="number" inputmode="numeric" min="0" max="23" value="${b.h ?? 12}"></div>
-        <div class="field"><label for="f-min">分</label><input class="input num" id="f-min" type="number" inputmode="numeric" min="0" max="59" value="${b.minute ?? 0}"></div>
+        <div class="field"><label for="f-h">時</label>${raw(pick('f-h', range(0, 23), b.h ?? 12, hourLabel))}</div>
+        <div class="field"><label for="f-min">分</label>${raw(pick('f-min', range(0, 59), b.minute ?? 0, (m) => `${pad(m)} 分`))}</div>
       </div>
       <p class="hint" id="f-hour-note">照樣算得出來，只是會用中午 12:00 代入。
         App 會在受影響的地方標出來，提示詞也會提醒 LLM 哪些結論站不住腳。</p>
@@ -146,6 +164,19 @@ function bindCalendar(root) {
       `<option value="${i + 1}" ${i + 1 === keepD ? 'selected' : ''}>${lunarDayName(i + 1)}</option>`).join('');
   }
 
+  /** 國曆的日期選單跟著年月長：2 月只有 28 或 29 天可選 */
+  function rebuildSolarDays(keepDay = null) {
+    const days = monthDays(int(g.y, 1990), int(g.m, 1));
+    const d = Math.min(keepDay ?? int(g.d, 1), days);
+    g.d.innerHTML = range(1, days).map(i => `<option value="${i}" ${i === d ? 'selected' : ''}>${i} 日</option>`).join('');
+  }
+
+  /** 設定選單的值；選單裡沒有這個值（超出年份範圍）就補一個進去 */
+  const setSel = (el, v, label) => {
+    if (![...el.options].some(o => o.value === String(v))) el.add(new Option(label(v), v), 0);
+    el.value = String(v);
+  };
+
   /** 讀出農曆欄位現在選的是哪一天 */
   const readLunar = () => ({ y: int(l.y, 1990), ...parseMonth(l.m.value), day: int(l.d, 1) });
 
@@ -154,7 +185,8 @@ function bindCalendar(root) {
     const v = readLunar();
     const got = fromLunar(v.y, v.num, v.day, v.leap);
     if (!got) { note.textContent = '這一天不存在，請換一個。'; return false; }
-    g.y.value = got.y; g.m.value = got.m; g.d.value = got.d;
+    setSel(g.y, got.y, (y) => `${y} 年`); g.m.value = String(got.m);
+    rebuildSolarDays(got.d);
     return true;
   }
 
@@ -163,7 +195,7 @@ function bindCalendar(root) {
     const y = int(g.y, 1990), m = int(g.m, 1), d = int(g.d, 1);
     try {
       const lu = toLunar(y, m, d);
-      l.y.value = lu.year;
+      setSel(l.y, lu.year, (y) => `${y} 年`);
       rebuildLunar({ num: lu.month, leap: lu.leap, day: lu.day });
     } catch { /* 算不出來就不動農曆那一邊 */ }
   }
@@ -197,8 +229,9 @@ function bindCalendar(root) {
     haptic();
   }));
 
-  [g.y, g.m, g.d].forEach(el => el.addEventListener('input', () => { if (calMode(root) === 'solar') syncNote(); }));
-  l.y.addEventListener('input', () => { rebuildLunar(); if (lunarToSolar()) syncNote(); });
+  [g.y, g.m].forEach(el => el.addEventListener('change', () => { rebuildSolarDays(); if (calMode(root) === 'solar') syncNote(); }));
+  g.d.addEventListener('change', () => { if (calMode(root) === 'solar') syncNote(); });
+  l.y.addEventListener('change', () => { rebuildLunar(); if (lunarToSolar()) syncNote(); });
   l.m.addEventListener('change', () => { rebuildLunar(); if (lunarToSolar()) syncNote(); });
   l.d.addEventListener('change', () => { if (lunarToSolar()) syncNote(); });
 
