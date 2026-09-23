@@ -5,6 +5,7 @@ import { resolve } from '../router.js';
 import { shakeQian, castJiao, toText, BUILTIN_SET, normalizeSet, SET_SCHEMA, luckScore } from '../engines/qian.js';
 import { observeReveal } from '../motion.js';
 import { DISCLAIMER, sectionHead, kv, shareBtn, doShare, askPrompt } from './_shared.js';
+import { trackBtn, bindTrack } from '../verify.js';
 import { tube as tubeArt, stick as stickArt, slip as slipArt, jiao as jiaoArt } from '../relics.js';
 
 const luckCls = (l) => ['大吉', '上吉', '吉'].includes(l) ? 'luck--good' : l === '中吉' || l === '中平' ? 'luck--half' : 'luck--bad';
@@ -212,6 +213,7 @@ export default {
           <button class="btn btn--ghost press" id="copy-q">${raw(icon('copy'))} 複製籤詩</button>
           ${shareBtn('q-share', '長圖')}
           <button class="btn btn--ghost press" id="again">${raw(icon('refresh'))} 重新求籤</button>
+          ${trackBtn()}
         </div>`;
       observeReveal(stage);
       haptic(18);
@@ -223,6 +225,7 @@ export default {
         store.setSettings({ qianVertical: on });
       });
       $('#copy-q', stage).addEventListener('click', () => copyText(plain, '籤詩已複製'));
+      bindTrack(stage, () => ({ kind: 'qian', question: q, text: plain, profile: all?.profile || null }));
       $('#again', stage).addEventListener('click', reset);
       $('#q-share', stage).addEventListener('click', async () => {
         const { qianCard } = await import('../sharecards.js');

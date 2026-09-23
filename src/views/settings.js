@@ -51,7 +51,7 @@ const GROUPS = [
   { k: 'calc',   t: '命理參數',   icon: 'compass', d: '時區與城市、真太陽時、子時換日、姓名學算法' },
   { k: 'tarot',  t: '塔羅',       icon: 'star',    d: '預設牌組、牌面圖像、抽牌儀式、對照本命盤' },
   { k: 'prompt', t: '提示詞預設', icon: 'prompt',  d: '外部 LLM、語言語氣深度、格式、前後綴' },
-  { k: 'data',   t: '資料',       icon: 'folder',  d: '匯出匯入備份、安裝為 App、新手教學、重設與清除' },
+  { k: 'data',   t: '資料',       icon: 'folder',  d: '匯出匯入備份、應驗回顧、安裝為 App、重設與清除' },
   { k: 'about',  t: '關於',       icon: 'info',    d: '' },
 ];
 /** 目前在哪一類；沒有或不認得就是第一層 */
@@ -185,6 +185,9 @@ export default {
             `${store.profiles.length} 份檔案 · ${store.templates.length} 個自訂模板 · ${store.records.length} 筆紀錄`
             + (store.profiles.some(p => p.private) ? `（其中 ${store.profiles.filter(p => p.private).length} 份保密，不會進備份檔）` : ''),
             `<button class="btn btn--ghost btn--sm press" id="btn-export">${icon('down')} 匯出</button>`))}
+          ${raw(row('應驗回顧',
+            '卜卦、塔羅、求籤按「記下來」之後，過幾天首頁會問你後來準不準。答案會算成紀錄頁的應驗率。',
+            seg('set-verify', [['3', '3 天'], ['7', '7 天'], ['30', '30 天'], ['0', '不提醒']], String(s.verifyDays ?? 7))))}
           ${raw(row('匯入備份', '會覆蓋同 ID 的資料。', `<button class="btn btn--ghost btn--sm press" id="btn-import">${icon('up')} 匯入</button>`))}
           ${raw(row('安裝為 App', `偵測到：${plat.os} · ${plat.browser}${plat.installed ? '（已從主畫面開啟）' : ''}。加到主畫面後是全螢幕、可離線。`,
             `<button class="btn btn--ghost btn--sm press" id="btn-install">${icon('install')} ${plat.installed ? '已安裝' : '安裝'}</button>`))}
@@ -240,6 +243,11 @@ export default {
     bindSeg('set-fx', 'chartEffects');
     bindSeg('set-motion', 'motion');
     bindSeg('set-stardensity', 'starDensity');
+    $$('#set-verify button', root).forEach(b => b.addEventListener('click', () => {
+      $$('#set-verify button', root).forEach(x => x.setAttribute('aria-pressed', 'false'));
+      b.setAttribute('aria-pressed', 'true');
+      save({ verifyDays: Number(b.dataset.v) });
+    }));
     bindSeg('set-zi', 'lateZiRule');
     bindSeg('set-wai', 'wageWaiRule');
     ['set-swipe|swipeNav', 'set-haptics|haptics', 'set-glow|pointerGlow', 'set-scorecolor|scoreColor', 'set-tst|trueSolarTime', 'set-pdisc|promptDisclaimer', 'set-numeral|numeralRule', 'set-tarotimg|tarotImages', 'set-tarotlink|tarotChartLink', 'set-tarotcer|tarotCeremony', 'set-advprompt|advancedPrompt', 'set-sky|starfield', 'set-llmauto|llmAutoOpen']
