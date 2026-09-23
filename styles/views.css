@@ -826,17 +826,21 @@ body.cer-open { overflow: hidden; }
   filter: drop-shadow(0 8px 24px rgba(0,0,0,.55));
   transition: opacity 420ms var(--ease), transform 760ms var(--ease-out);
 }
+/* --flip 預設是 1（不鏡射）。素材本來就是一對：
+   左手往右上傾、右手往左上傾，兩張都直接用就對著球。
+   只有「沒有右手素材、拿左手充數」時 JS 才加 .is-flip 把它翻過來。 */
 .rite__hand--l { left: -26%;  transform: translate3d(-40%, 34%, 0) rotate(22deg); }
-.rite__hand--r { right: -26%; transform: translate3d(40%, 34%, 0) rotate(-22deg) scaleX(-1); }
+.rite__hand--r { --flip: 1; right: -26%; transform: translate3d(40%, 34%, 0) rotate(-22deg) scaleX(var(--flip)); }
+.rite__hand--r.is-flip { --flip: -1; }
 .rite.is-rub .rite__hand { opacity: 1; }
 .rite.is-rub .rite__hand--l { transform: translate3d(0, 6%, 0) rotate(6deg); }
 .rite.is-rub .rite__hand--r {
-  transform: translate3d(0, 6%, 0) rotate(-6deg) scaleX(-1);
+  transform: translate3d(0, 6%, 0) rotate(-6deg) scaleX(var(--flip));
   animation: rite-rub 900ms var(--ease) infinite 620ms;
 }
 .rite.is-burst .rite__hand { opacity: 0; animation: none; }
 .rite.is-burst .rite__hand--l { transform: translate3d(-40%, 34%, 0) rotate(22deg); }
-.rite.is-burst .rite__hand--r { transform: translate3d(40%, 34%, 0) rotate(-22deg) scaleX(-1); }
+.rite.is-burst .rite__hand--r { transform: translate3d(40%, 34%, 0) rotate(-22deg) scaleX(var(--flip)); }
 
 /* 白光：從球心一圈擴出去，蓋滿整個螢幕。
    用的是帶一點金的暖白，不是純白 —— 深色 App 裡突然閃一片純白很刺眼，

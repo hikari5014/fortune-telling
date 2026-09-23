@@ -26,8 +26,12 @@ export const ART = {
   handR: 'assets/ceremony/hand-r.webp',
 };
 /* 兩隻手一起從下面伸上來合圍水晶球，右手再多一個搓的動作。
-   左手負責「捧著」，右手負責「在摸」—— 兩件事分給兩隻手，看得比較懂。 */
-const NEEDED = ['orb', 'aura', 'handL', 'handR'];
+   左手負責「捧著」，右手負責「在摸」—— 兩件事分給兩隻手，看得比較懂。
+
+   hand-r 是選配：素材本來就是一對（左手往右上傾、右手往左上傾），
+   有的話直接用、**不要鏡射**；沒有的話才拿左手鏡射過去充數。
+   一開始不分青紅皂白鏡射右手，結果把本來就對的方向翻成反的。 */
+const NEEDED = ['orb', 'aura', 'handL'];
 
 const loadOne = (src) => new Promise((res) => {
   const im = new Image();
@@ -37,12 +41,23 @@ const loadOne = (src) => new Promise((res) => {
 });
 
 let artReady = null;
-/** 預載插圖。回傳 true 才畫水晶球。 */
+/**
+ * 預載插圖。
+ * @returns {Promise<false|{handR: string, flip: boolean}>}
+ *   false 表示必要的插圖不齊，整段跳過、按鈕原樣放回去。
+ *   flip 為真表示右手是拿左手充數的，要鏡射；有真的右手素材就不要動它 ——
+ *   素材本來就是一對（左手往右上傾、右手往左上傾），再鏡射一次方向就反了。
+ */
 export function loadArt() {
   if (artReady) return artReady;
   if (typeof Image !== 'function') return (artReady = Promise.resolve(false));
-  artReady = Promise.all(NEEDED.map(k => loadOne(ART[k])))
-    .then(rs => rs.every(Boolean))
+  const keys = Object.keys(ART);
+  artReady = Promise.all(keys.map(k => loadOne(ART[k])))
+    .then((rs) => {
+      const ok = Object.fromEntries(keys.map((k, i) => [k, rs[i]]));
+      if (!NEEDED.every(k => ok[k])) return false;
+      return ok.handR ? { handR: ART.handR, flip: false } : { handR: ART.handL, flip: true };
+    })
     .catch(() => false);
   return artReady;
 }
@@ -120,6 +135,7 @@ export async function mountCast(root, onCast, settings) {
  * @returns {Promise<function>} fade
  */
 export async function castRite(orb) {
+  const art = await loadArt();
   const r = orb.getBoundingClientRect();
   const layer = document.createElement('div');
   layer.className = 'rite';
@@ -129,14 +145,17 @@ export async function castRite(orb) {
       <img class="rite__aura" src="${ART.aura}" alt="" draggable="false">
       <img class="rite__orb" src="${ART.orb}" alt="" draggable="false">
       <img class="rite__hand rite__hand--l" src="${ART.handL}" alt="" draggable="false">
-      <img class="rite__hand rite__hand--r" src="${ART.handR}" alt="" draggable="false">
+      <img class="rite__hand rite__hand--r" alt="" draggable="false">
     </div>
     <div class="rite__flash"></div>`;
   document.body.append(layer);
   document.body.classList.add('cer-open');
 
   const stage = layer.querySelector('.rite__stage');
-  const flash = layer.querySelector('.rite__flash');
+  const rightHand = layer.querySelector('.rite__hand--r');
+  rightHand.src = art ? art.handR : ART.handR;
+  // 只有「拿左手充數」的時候才鏡射
+  if (art?.flip) rightHand.classList.add('is-flip');
   // 從頁面上那顆球的位置長出來，畫面才不會跳一下
   stage.style.setProperty('--from-x', `${r.left + r.width / 2 - innerWidth / 2}px`);
   stage.style.setProperty('--from-y', `${r.top + r.height / 2 - innerHeight / 2}px`);

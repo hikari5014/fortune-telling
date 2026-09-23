@@ -279,13 +279,10 @@ export function ceremony({ spread, order, question = '', allowReversed = true, r
       const st = stage.getBoundingClientRect();
       slot.classList.add('is-on');
       cards[i].el.classList.add('is-taken');
-      put(cards[i], {
-        x: sr.left - st.left + sr.width / 2 - CW / 2,
-        y: sr.top - st.top - CW / 0.5957 - 8,
-        deg: 0, s: .72, ms: 520, z: 500 + picks.length,
-      });
+      const p = slotPos(sr, st);
+      put(cards[i], { ...p, deg: 0, s: .72, ms: 520, z: 500 + picks.length });
       haptic(14);
-      sky.burst(sr.left - st.left + sr.width / 2, sr.top - st.top, 26);
+      sky.burst(p.x + CW / 2, p.y + CW / 0.5957 / 2, 26);
       const left = need - picks.length;
       tipEl.textContent = left ? pickTip(left) : '';
       if (!left) reveal();
@@ -306,16 +303,20 @@ export function ceremony({ spread, order, question = '', allowReversed = true, r
       tipEl.textContent = pickTip(need - picks.length);
     }
 
+    /* 選走的牌停在哪：牌位標籤的**下面**。
+       一開始放在標籤上面，結果那一排在舞台上緣之外 ——
+       手機上就疊到最上面的標題去了。放下面就落在舞台裡，怎麼樣都不會出界。 */
+    const slotPos = (sr, st) => ({
+      x: sr.left - st.left + sr.width / 2 - CW / 2,
+      y: sr.bottom - st.top + 10,
+    });
+
     /** 把還在手上的牌，重新對到它現在的牌位 */
     function relayoutSlots() {
       const st = stage.getBoundingClientRect();
       picks.forEach((idx, k) => {
         const sr = slotRow.children[k].getBoundingClientRect();
-        put(cards[idx], {
-          x: sr.left - st.left + sr.width / 2 - CW / 2,
-          y: sr.top - st.top - CW / 0.5957 - 8,
-          deg: 0, s: .72, ms: 360, z: 500 + k + 1,
-        });
+        put(cards[idx], { ...slotPos(sr, st), deg: 0, s: .72, ms: 360, z: 500 + k + 1 });
       });
     }
 
