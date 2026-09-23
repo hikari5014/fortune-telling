@@ -651,74 +651,6 @@ body.cer-open { overflow: hidden; }
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cer__sp { font-family: var(--font-num); font-size: var(--step--2); letter-spacing: .16em; color: rgba(242,236,220,.42); margin-top: 2px; }
 
-/* 起卦：水晶球 + 光暈 + 兩隻手。
-   整層絕對定位疊在舞台上，不占版面，也不吃點擊
-   —— 點任何地方都是「跳過」，那個監聽掛在最外層。 */
-.cer__rite {
-  position: absolute; inset: 0; z-index: 3; pointer-events: none;
-  display: grid; place-items: center;
-  opacity: 0; visibility: hidden;
-  transition: opacity 420ms var(--ease), visibility 0s linear 420ms;
-}
-.cer__rite.is-on { opacity: 1; visibility: visible; transition-delay: 0s; }
-.cer__rite > img { position: absolute; user-select: none; -webkit-user-drag: none; }
-
-/* 光暈已經去過背（見 tools/make_ceremony.py）。
-   這裡用 screen 疊加 —— 透明處不動，有顏色的地方會把底下的夜空「點亮」，
-   而不是蓋掉它，所以星星還看得見。 */
-.cer__aura {
-  width: min(132vw, 820px); margin-bottom: 18vh; mix-blend-mode: screen;
-  /* 光束本來就畫到圖的邊緣，不加遮罩的話會看到一條被切斷的直線。
-     用一圈徑向遮罩讓它自己淡掉，看起來才像光散進夜色裡。 */
-  -webkit-mask-image: radial-gradient(closest-side, #000 62%, transparent 100%);
-  mask-image: radial-gradient(closest-side, #000 62%, transparent 100%);
-  opacity: 0; transform: scale(.42) rotate(-14deg);
-  transition: opacity 900ms var(--ease-out), transform 1400ms var(--ease-out);
-}
-.cer__rite.is-aura .cer__aura {
-  opacity: .92; transform: scale(1) rotate(0deg);
-  animation: rite-turn 42s linear infinite 1.4s;
-}
-
-.cer__orb {
-  width: min(46vw, 210px); margin-bottom: 18vh;
-  opacity: 0; transform: translateY(38px) scale(.82);
-  filter: drop-shadow(0 22px 44px rgba(0,0,0,.6));
-  transition: opacity 620ms var(--ease-out), transform 820ms var(--spring), filter 380ms var(--ease);
-}
-.cer__rite.is-orb .cer__orb {
-  opacity: 1; transform: none;
-  animation: rite-float 5.5s var(--ease) infinite .9s;
-}
-/* 亮起來的那一下：球本身變亮，外面再加一圈金光 */
-.cer__rite.is-flare .cer__orb {
-  filter: drop-shadow(0 0 34px rgba(232,217,168,.85)) drop-shadow(0 22px 44px rgba(0,0,0,.6)) brightness(1.5);
-}
-.cer__rite.is-flare .cer__aura { opacity: 1; transform: scale(1.14); }
-
-/* 兩隻手：手腕在畫面外的左下與右下，指尖朝上朝內，
-   往上伸到球的兩側就停住 —— 不要蓋住球，球才是主角。
-   右手直接把左手水平鏡射，所以素材只要一隻就夠。 */
-.cer__hand {
-  /* 用高度定尺寸不是寬度：素材是「手腕在下、指尖在上」的長條，
-     照高度排才能保證指尖真的伸到球的旁邊。 */
-  height: min(54vh, 470px); width: auto; bottom: 0; opacity: 0;
-  transform-origin: bottom center;
-  transition: opacity 520ms var(--ease), transform 900ms var(--ease-out);
-  filter: drop-shadow(0 8px 24px rgba(0,0,0,.55));
-}
-.cer__hand--l { left: -26%;  transform: translate3d(-40%, 34%, 0) rotate(22deg); }
-.cer__hand--r { right: -26%; transform: translate3d(40%, 34%, 0) rotate(-22deg) scaleX(-1); }
-.cer__rite.is-hands .cer__hand { opacity: 1; }
-.cer__rite.is-hands .cer__hand--l { transform: translate3d(0, 6%, 0) rotate(6deg); }
-.cer__rite.is-hands .cer__hand--r { transform: translate3d(0, 6%, 0) rotate(-6deg) scaleX(-1); }
-
-@keyframes rite-float { 0%, 100% { translate: 0 0; } 50% { translate: 0 -10px; } }
-@keyframes rite-turn  { to { rotate: 360deg; } }
-
-/* 起卦的時候不需要看到牌位標籤，畫面留給球 */
-.cer[data-phase="rite"] .cer__slots { opacity: 0; }
-
 .cer__slots { position: relative; z-index: 2; display: flex; justify-content: center; flex-wrap: wrap;
   gap: 6px; padding: var(--sp-4) var(--sp-4) 0; transition: opacity var(--dur-3) var(--ease); }
 .cer__slots.is-dim { opacity: 0; }
@@ -760,6 +692,9 @@ body.cer-open { overflow: hidden; }
 .tc.is-rev.is-face .tc__face img { transform: rotate(180deg); }
 /* 被挑走、以及翻開後的那幾張，加一圈金邊讓它跟扇面分開 */
 .tc.is-taken .tc__back { box-shadow: 0 0 0 1px rgba(232,217,168,.55), 0 0 18px rgba(232,217,168,.22), 0 10px 22px -12px #000; }
+/* 正在被拖著的那張：抬高一點、光暈強一點，看得出來「它在你手上」 */
+.tc.is-drag { z-index: 900; }
+.tc.is-drag .tc__back { box-shadow: 0 0 0 1px rgba(232,217,168,.8), 0 0 26px rgba(232,217,168,.4), 0 22px 40px -14px #000; }
 .tc.is-out .tc__back, .tc.is-out .tc__face { border-radius: 7px; box-shadow: 0 0 0 1px rgba(232,217,168,.4), 0 14px 30px -14px #000; }
 
 .cer__tag {
@@ -770,3 +705,149 @@ body.cer-open { overflow: hidden; }
 .cer__tag.is-in { opacity: 1; transform: translate(-50%, 0); }
 
 @media (min-width: 900px) { .cer__stage { max-width: 620px; width: 100%; justify-self: center; } }
+
+/* ── 起卦：抽牌頁上的水晶球 ──────────────────────────────
+   「洗牌並抽牌」那顆按鈕的位置，現在放的是水晶球本人。
+   插圖載不到時 JS 會把這一塊藏起來、把普通按鈕放回去。 */
+.cast { display: grid; justify-items: center; gap: var(--sp-2); margin-top: var(--sp-5); }
+.cast__orb {
+  position: relative; width: min(58vw, 216px); aspect-ratio: 456 / 621;
+  display: block; padding: 0; border: 0; background: none; cursor: pointer;
+  /* 觸控長按預設會跳出選取與放大鏡，圖片也會被拖走 */
+  -webkit-touch-callout: none; -webkit-user-select: none; user-select: none;
+  touch-action: manipulation;
+  transition: transform var(--dur-3) var(--spring), opacity var(--dur-2) var(--ease);
+}
+.cast__orb.is-gone { opacity: 0; }
+.cast__ball {
+  width: 100%; height: 100%; object-fit: contain; -webkit-user-drag: none;
+  filter: drop-shadow(0 18px 34px rgba(0,0,0,.5));
+  transition: filter var(--dur-3) var(--ease);
+  animation: cast-float 6s var(--ease) infinite;
+}
+.cast__orb:active { transform: scale(.97); }
+
+/* 閃光：球面上一道遊走的光，加上幾顆會眨的星點。
+   ・滑鼠：移上去就閃（有 hover 可用）
+   ・觸控：按著的時候才閃 —— 手指沒有 hover，按住就是它的 hover */
+.cast__shine, .cast__sparks {
+  position: absolute; left: 3%; top: 1%; width: 94%; aspect-ratio: 1;
+  border-radius: 50%; pointer-events: none;
+}
+.cast__shine {
+  opacity: 0; overflow: hidden;
+  background: linear-gradient(115deg, transparent 38%, rgba(255,255,255,.62) 50%, transparent 62%);
+  background-size: 280% 280%;
+  transition: opacity var(--dur-3) var(--ease);
+  mix-blend-mode: screen;
+}
+.cast__sparks i {
+  position: absolute; width: var(--sz); height: var(--sz); margin: calc(var(--sz) / -2);
+  opacity: 0; background: radial-gradient(circle, #fff 0 22%, rgba(232,217,168,.85) 45%, transparent 70%);
+  border-radius: 50%;
+}
+.cast__sparks i::after {
+  content: ""; position: absolute; inset: -60%;
+  background: conic-gradient(from 0deg, transparent 0 6%, rgba(255,255,255,.75) 8%, transparent 10% 31%,
+    rgba(255,255,255,.75) 33%, transparent 35% 56%, rgba(255,255,255,.75) 58%, transparent 60% 81%,
+    rgba(255,255,255,.75) 83%, transparent 85%);
+  -webkit-mask-image: radial-gradient(circle, #000 0 8%, transparent 62%);
+  mask-image: radial-gradient(circle, #000 0 8%, transparent 62%);
+}
+.cast__orb.is-lit .cast__shine { opacity: 1; animation: cast-sweep 1.5s var(--ease) infinite; }
+.cast__orb.is-lit .cast__ball { filter: drop-shadow(0 0 22px rgba(232,217,168,.55)) drop-shadow(0 18px 34px rgba(0,0,0,.5)); }
+.cast__orb.is-lit .cast__sparks i { animation: cast-twinkle 1.8s var(--ease) infinite; }
+@media (hover: hover) and (pointer: fine) {
+  .cast__orb:hover .cast__shine { opacity: 1; animation: cast-sweep 1.5s var(--ease) infinite; }
+  .cast__orb:hover .cast__ball { filter: drop-shadow(0 0 22px rgba(232,217,168,.55)) drop-shadow(0 18px 34px rgba(0,0,0,.5)); }
+  .cast__orb:hover .cast__sparks i { animation: cast-twinkle 1.8s var(--ease) infinite; }
+}
+.cast__orb.is-press .cast__shine { opacity: 1; animation: cast-sweep 1.1s var(--ease) infinite; }
+.cast__orb.is-press .cast__ball { filter: drop-shadow(0 0 26px rgba(232,217,168,.7)) drop-shadow(0 18px 34px rgba(0,0,0,.5)); }
+.cast__orb.is-press .cast__sparks i { animation: cast-twinkle 1.1s var(--ease) infinite; }
+
+.cast__tip { font-size: var(--step--1); letter-spacing: .18em; color: var(--ink-3); }
+
+@keyframes cast-float { 0%, 100% { translate: 0 0; } 50% { translate: 0 -7px; } }
+@keyframes cast-sweep { 0% { background-position: 120% 120%; } 100% { background-position: -20% -20%; } }
+@keyframes cast-twinkle { 0%, 100% { opacity: 0; scale: .4; } 45% { opacity: 1; scale: 1; } }
+
+:root[data-motion="off"] .cast__ball,
+:root[data-motion="off"] .cast__shine,
+:root[data-motion="off"] .cast__sparks i { animation: none; }
+
+/* ── 起卦的全螢幕過場 ───────────────────────────────────
+   球從頁面上那顆的位置浮到中央 → 右手搓 → 球亮、光暈綻開 →
+   白光蓋滿螢幕。白光是接力棒：它蓋住的那幾百毫秒，
+   抽牌儀式在底下就位，所以中間沒有接縫。 */
+.rite { position: fixed; inset: 0; z-index: 80; overflow: hidden; pointer-events: none; }
+.rite__stage {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  transform: translate3d(var(--from-x), var(--from-y), 0) scale(var(--from-s));
+  transition: transform 620ms var(--ease-out);
+}
+.rite.is-rise .rite__stage { transform: none; }
+.rite__stage > img { position: absolute; -webkit-user-drag: none; }
+
+.rite__orb {
+  width: min(46vw, 210px);
+  filter: drop-shadow(0 22px 44px rgba(0,0,0,.6));
+  transition: filter 520ms var(--ease), transform 620ms var(--ease-out);
+}
+.rite.is-rise .rite__orb { animation: rite-float 5.5s var(--ease) infinite; }
+.rite.is-charge .rite__orb {
+  filter: drop-shadow(0 0 40px rgba(232,217,168,.9)) drop-shadow(0 22px 44px rgba(0,0,0,.6)) brightness(1.45);
+}
+.rite.is-burst .rite__orb {
+  filter: drop-shadow(0 0 90px rgba(255,255,255,1)) brightness(2.6);
+  transform: scale(1.12);
+}
+
+.rite__aura {
+  width: min(132vw, 820px); mix-blend-mode: screen;
+  opacity: 0; transform: scale(.4) rotate(-14deg);
+  -webkit-mask-image: radial-gradient(closest-side, #000 62%, transparent 100%);
+  mask-image: radial-gradient(closest-side, #000 62%, transparent 100%);
+  transition: opacity 760ms var(--ease-out), transform 1200ms var(--ease-out);
+}
+.rite.is-charge .rite__aura {
+  opacity: .95; transform: scale(1) rotate(0deg);
+  animation: rite-turn 40s linear infinite 1.2s;
+}
+.rite.is-burst .rite__aura { opacity: 1; transform: scale(1.3); }
+
+/* 手從右下伸進來，停在球上，小幅來回「搓」。
+   搓的位移放在 translate 這個獨立屬性上，才不會跟 transform 打架。 */
+.rite__hand {
+  height: min(56vh, 480px); width: auto; bottom: 0; right: -22%;
+  opacity: 0; transform: translate3d(42%, 36%, 0) rotate(-20deg) scaleX(-1);
+  filter: drop-shadow(0 8px 24px rgba(0,0,0,.55));
+  transition: opacity 420ms var(--ease), transform 760ms var(--ease-out);
+}
+.rite.is-rub .rite__hand {
+  opacity: 1; transform: translate3d(0, 4%, 0) rotate(-6deg) scaleX(-1);
+  animation: rite-rub 900ms var(--ease) infinite 620ms;
+}
+.rite.is-burst .rite__hand { opacity: 0; transform: translate3d(42%, 36%, 0) rotate(-20deg) scaleX(-1); animation: none; }
+
+/* 白光：從球心一圈擴出去，蓋滿整個螢幕。
+   用的是帶一點金的暖白，不是純白 —— 深色 App 裡突然閃一片純白很刺眼，
+   而且暖白才跟鎏金是同一個世界。 */
+.rite__flash {
+  position: absolute; inset: -20%;
+  background: radial-gradient(circle at 50% 50%, #fffaf0 0 34%, rgba(255,248,232,.88) 52%, rgba(255,248,232,0) 74%);
+  opacity: 0; transform: scale(.06);
+  transition: opacity 420ms var(--ease-out), transform 520ms cubic-bezier(.5,0,.2,1);
+}
+.rite.is-burst .rite__flash { opacity: .97; transform: scale(2.4); }
+.rite.is-fade .rite__flash { opacity: 0; transition: opacity 600ms var(--ease); }
+.rite.is-fade .rite__stage { opacity: 0; transition: opacity 260ms var(--ease); }
+
+@keyframes rite-float { 0%, 100% { translate: 0 0; } 50% { translate: 0 -10px; } }
+@keyframes rite-turn  { to { rotate: 360deg; } }
+@keyframes rite-rub {
+  0%, 100% { translate: 0 0; }
+  25% { translate: -9px -4px; }
+  50% { translate: 2px 5px; }
+  75% { translate: 8px -3px; }
+}
