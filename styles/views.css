@@ -686,7 +686,8 @@ body.cer-open { overflow: hidden; }
   backface-visibility: hidden; -webkit-backface-visibility: hidden;
   box-shadow: 0 1px 0 rgba(232,217,168,.22), 0 10px 22px -12px rgba(0,0,0,.9);
 }
-.tc__back { background: #0d1630 url("../assets/tarot/back.webp") center/cover no-repeat; }
+/* 牌背可以換：--card-back 由 decks.js 在換牌組時寫進來 */
+.tc__back { background: #0d1630 var(--card-back, url("../assets/tarot/back.webp")) center/cover no-repeat; }
 .tc__face { transform: rotateY(180deg); background: #fff; }
 .tc__face img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .tc.is-rev.is-face .tc__face img { transform: rotate(180deg); }
@@ -858,3 +859,23 @@ body.cer-open { overflow: hidden; }
   50% { translate: 2px 5px; }
   75% { translate: 8px -3px; }
 }
+
+/* ── 牌組：79 格的內容表 ─────────────────────────── */
+.dkgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: var(--sp-2); }
+.dkcell {
+  display: grid; gap: 4px; padding: 0; background: none; border: 0; text-align: center; cursor: pointer;
+  -webkit-touch-callout: none; -webkit-user-select: none; user-select: none;
+  transition: transform var(--dur-2) var(--spring);
+}
+.dkcell:active { transform: scale(.94); }
+.dkcell img {
+  width: 100%; aspect-ratio: 5 / 8; object-fit: cover; border-radius: var(--r-1);
+  background: var(--surface-2); -webkit-user-drag: none;
+  /* 還沒換過的那幾格壓暗，一眼看得出哪些是自己的 */
+  opacity: .38; filter: grayscale(1);
+  transition: opacity var(--dur-2) var(--ease), filter var(--dur-2) var(--ease), box-shadow var(--dur-2) var(--ease);
+}
+.dkcell.is-own img { opacity: 1; filter: none; box-shadow: 0 0 0 1px var(--accent); }
+.dkcell span { font-size: 10px; letter-spacing: .04em; color: var(--ink-3); line-height: 1.3;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dkcell.is-own span { color: var(--ink-2); }

@@ -24,6 +24,7 @@
 import { icon } from './icons.js';
 import { starfield } from './starfield.js';
 import { haptic } from './ui.js';
+import { srcOf } from './decks.js';
 
 
 const wait = (ms) => new Promise(r => setTimeout(r, ms));
@@ -270,7 +271,7 @@ export function ceremony({ spread, order, question = '', allowReversed = true, r
         const img = new Image();
         img.alt = '';
         img.decoding = 'async';
-        img.src = `assets/tarot/${cards[i].card.img}.webp`;
+        img.src = srcOf(cards[i].card.img);
         face.append(img);
       }
       const slot = slotRow.children[picks.length - 1];
