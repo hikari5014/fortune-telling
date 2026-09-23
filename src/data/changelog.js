@@ -2,11 +2,20 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.19.3';
+export const APP_VERSION = '0.20.0';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.20.0', date: '2026-09-23', title: '按一下就複製好提示詞',
+    items: [
+      { kind: 'change', text: '占卜、抽籤、命盤頁上的「請 LLM 解讀」改成按一下直接把整份提示詞複製好，然後跳到新的「貼回結果」頁' },
+      { kind: 'add', text: '貼回結果頁：複製了什麼可以展開核對、可以再複製一次、三個常見 LLM 的捷徑，回覆貼回來就存成紀錄' },
+      { kind: 'add', text: '設定 →「進階提示詞」（預設關閉）：打開之後那些按鈕改回先進提示詞產生器，可以換模板、調語氣、加自訂變數' },
+      { kind: 'fix', text: '產生器與一鍵複製改用同一份組裝程式，什麼都沒調的情況下兩邊組出來的提示詞一字不差' },
+    ],
+  },
   {
     v: '0.19.3', date: '2026-09-23', title: '外觀試驗：六個版本',
     items: [

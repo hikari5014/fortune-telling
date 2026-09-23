@@ -5,7 +5,7 @@ import {
   TRIGRAMS, mingGua, eightDirections, zhaiGua, matchZhai, compassSVG, toText, STAR_ORDER,
 } from '../engines/bagua.js';
 import { observeReveal, initSeg } from '../motion.js';
-import { focusBtn, goFocus, DISCLAIMER, needProfile, sectionHead, kv, shareBtn, doShare } from './_shared.js';
+import { focusBtn, goFocus, DISCLAIMER, needProfile, sectionHead, kv, shareBtn, doShare, askPrompt } from './_shared.js';
 
 const SITS = TRIGRAMS.map(t => t.dir);
 
@@ -143,7 +143,7 @@ export default {
             <a class="btn btn--ghost press" href="#/numbers" data-close>${icon('numbers')} 去數字頁</a>
           </div>`,
         onMount(sr) {
-          $('[data-focus]', sr).addEventListener('click', () => goFocus({
+          $('[data-focus]', sr).addEventListener('click', () => goFocus({ all,
             template: 'direction',
             label: `方位 ${d.dir}（${d.gua}卦・${d.star}）`,
             text: [
@@ -196,7 +196,7 @@ export default {
     });
     $('#g-prompt', root).addEventListener('click', () => {
       store.setDraft('guaInfo', text());
-      location.hash = '#/prompt?t=direction';
+      askPrompt('/prompt?t=direction', all);
     });
 
     observeReveal(root);

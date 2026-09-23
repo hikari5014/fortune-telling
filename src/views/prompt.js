@@ -3,8 +3,8 @@ import { icon } from '../icons.js';
 import { store, uid } from '../store.js';
 import { BUILTIN, VARS, CATEGORIES } from '../prompt/templates.js';
 import { compose, estTokens, BLOCK_META } from '../prompt/builder.js';
-import { buildBlocks, computeAll } from '../prompt/context.js';
-import { synastry } from '../engines/synastry.js';
+import { buildBlocks } from '../prompt/context.js';
+import { allTemplates, findParty, partyChart, synastryText, draftExtras } from '../prompt/quick.js';
 import { observeReveal } from '../motion.js';
 import { DISCLAIMER, sectionHead } from './_shared.js';
 
@@ -13,8 +13,6 @@ const DEPTHS = ['入門易懂', '中等', '深入專業', '極深（含推導過
 const FORMATS = ['Markdown 小標＋條列', '純文字段落', '表格為主', 'JSON 結構化輸出', '先結論後理由'];
 const LENGTHS = ['短（300 字內）', '中等（600–1200 字）', '長（2000 字以上）', '不限'];
 const LANGS = ['繁體中文', '简体中文', 'English', '日本語'];
-
-const allTemplates = () => [...store.templates, ...BUILTIN];
 
 export default {
   title: '提示詞產生器', eyebrow: 'PROMPT STUDIO',
@@ -191,11 +189,7 @@ export default {
       strokeCombos: $('#x-combos', root).value.trim(),
       other: otherAll ? Object.entries(buildBlocks(otherAll, settings)).map(([k, v]) => v).join('\n\n') : '',
       synastry: otherAll && all ? synastryText(all, otherAll) : '',
-      dayinfo: active.id === 'day-pick' ? (store.drafts.dayPick || '') : '',
-      guainfo: active.id === 'direction' ? (store.drafts.guaInfo || '') : '',
-      divination: active.id === 'tarot' ? (store.drafts.tarotResult || '')
-                : active.id === 'iching' ? (store.drafts.ichingResult || '')
-                : active.id === 'qian' ? (store.drafts.qianResult || '') : '',
+      ...draftExtras(active.id),
     });
 
     const build = () => {
@@ -492,8 +486,7 @@ function cvRows(map) {
     </div>`).join('');
 }
 
-/** 第二方：別人的出生資料，或公司／團隊的檔案 */
-export const findParty = (id) => store.profiles.find(x => x.id === id) || store.orgs.find(x => x.id === id) || null;
+export { findParty };
 
 function otherSelect(current) {
   const list = store.profiles.filter(p => p.id !== current?.id);
@@ -504,41 +497,3 @@ function otherSelect(current) {
     ${raw(orgs.length ? `<optgroup label="公司／團隊">${orgs.map(o => html`<option value="${o.id}">${o.label}</option>`).join('')}</optgroup>` : '')}
   </select>`;
 }
-
-/** 算第二方的盤。公司沒有性別，紫微那一套用不上，算完就拿掉。 */
-function partyChart(p, settings) {
-  if (!p) return null;
-  const isOrg = store.orgs.some(o => o.id === p.id);
-  const A = computeAll({ gender: '不設定', ...p, ...(isOrg ? { org: true } : {}) }, settings);
-  return isOrg ? { ...A, ziwei: null, limits: null, luck: null, naming: null } : A;
-}
-
-
-function synastryText(A, B) {
-  try {
-    const r = synastry(A, B);
-    const lines = [`綜合契合度：${r.score}/100（${r.level}）`];
-    if (r.astro) {
-      lines.push('', '【星盤相位】', ...r.astro.items.map(i => `${i.label}，差 ${i.orb.toFixed(1)}°（${i.text}）`));
-      if (!r.astro.items.length) lines.push('日月升中天之間無主要相位。');
-    }
-    if (r.bazi) {
-      lines.push('', `【八字互動】日主 ${r.bazi.dayMasters}`,
-        ...r.bazi.items.map(i => `${i.kind}：${i.pair} — ${i.text}`));
-      if (!r.bazi.items.length) lines.push('四柱之間無明顯刑沖合害。');
-    }
-    if (r.ziwei) {
-      lines.push('', '【紫微對照】',
-        `命宮關係：${r.ziwei.lifeRel.kind} — ${r.ziwei.lifeRel.text}`,
-        `B 的命宮落在 A 盤的「${r.ziwei.bInA.name}」宮：${r.ziwei.bInA.main.join('、') || '空宮'}`,
-        `A 的命宮落在 B 盤的「${r.ziwei.aInB.name}」宮：${r.ziwei.aInB.main.join('、') || '空宮'}`,
-        `五行局：${r.ziwei.juPair}`);
-    }
-    if (r.tips.length) lines.push('', '【自動判讀】', ...r.tips.map(t => '・' + t));
-    return lines.join('\n');
-  } catch { return ''; }
-}
-
-
-/* 分享碼：UTF-8 → base64（URL 安全） */
-

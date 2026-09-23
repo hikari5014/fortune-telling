@@ -7,7 +7,7 @@ import {
   hoursOf, currentHourIndex,
 } from '../engines/daily.js';
 import { observeReveal, initSeg, dial, runCountUps } from '../motion.js';
-import { DISCLAIMER, sectionHead, kv, pad, shareBtn, doShare } from './_shared.js';
+import { DISCLAIMER, sectionHead, kv, pad, shareBtn, doShare, askPrompt } from './_shared.js';
 
 const WD = ['日', '一', '二', '三', '四', '五', '六'];
 const today = () => { const n = new Date(); return [n.getFullYear(), n.getMonth() + 1, n.getDate()]; };
@@ -299,7 +299,7 @@ export default {
     function toPrompt(info, r) {
       store.setDraft('dayPick', toText(info, r, purpose));
       store.setDraft('dayPickDate', info.date);
-      location.hash = '#/prompt?t=day-pick';
+      askPrompt('/prompt?t=day-pick', all);
     }
 
     /* ── 繪製 ─────────────────────────────────────── */

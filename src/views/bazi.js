@@ -164,7 +164,7 @@ export default {
 
     const text = () => toText(a, b);
     $('#b-copy', root).addEventListener('click', () => copyText(text()));
-    $('[data-focus]', root).addEventListener('click', () => goFocus({
+    $('[data-focus]', root).addEventListener('click', () => goFocus({ all,
       template: 'bazi-deep',
       label: `八字旺衰　${a.use.balance}（${a.strength.band}）`,
       text: text(),

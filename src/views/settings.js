@@ -112,6 +112,12 @@ export default {
 
         <section class="setgroup reveal">
           <div class="setgroup__head">提示詞預設</div>
+          ${raw(row('進階提示詞',
+            '關著的時候（預設）：占卜、命盤頁上的「請 LLM 解讀」按一下就把整份提示詞複製好，'
+            + '直接跳到貼回頁，可以馬上去外部 LLM 貼上。'
+            + '打開之後：那些按鈕改成先進提示詞產生器，可以換模板、調語氣、加自訂變數，再自己按複製。'
+            + '兩邊組出來的提示詞，在什麼都沒調的情況下完全一樣。',
+            sw('set-advprompt', s.advancedPrompt === true)))}
           ${raw(row('語言', '', select('set-plang', ['繁體中文', '简体中文', 'English', '日本語'], s.promptLang)))}
           ${raw(row('語氣', '', select('set-ptone', ['溫和但直接', '犀利不客氣', '學術嚴謹', '像朋友聊天', '簡潔條列', '鼓勵取向'], s.promptTone)))}
           ${raw(row('深度', '', select('set-pdepth', ['入門易懂', '中等', '深入專業', '極深（含推導過程）'], s.promptDepth)))}
@@ -185,7 +191,7 @@ export default {
     bindSeg('set-motion', 'motion');
     bindSeg('set-zi', 'lateZiRule');
     bindSeg('set-wai', 'wageWaiRule');
-    ['set-swipe|swipeNav', 'set-haptics|haptics', 'set-glow|pointerGlow', 'set-scorecolor|scoreColor', 'set-tst|trueSolarTime', 'set-pdisc|promptDisclaimer', 'set-numeral|numeralRule', 'set-tarotimg|tarotImages', 'set-tarotlink|tarotChartLink', 'set-tarotcer|tarotCeremony']
+    ['set-swipe|swipeNav', 'set-haptics|haptics', 'set-glow|pointerGlow', 'set-scorecolor|scoreColor', 'set-tst|trueSolarTime', 'set-pdisc|promptDisclaimer', 'set-numeral|numeralRule', 'set-tarotimg|tarotImages', 'set-tarotlink|tarotChartLink', 'set-tarotcer|tarotCeremony', 'set-advprompt|advancedPrompt']
       .forEach(x => { const [id, key] = x.split('|'); bindSw(id, key); });
     bindVal('set-tz', 'tzOffset', Number);
     bindVal('set-city', 'city');

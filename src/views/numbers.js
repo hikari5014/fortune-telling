@@ -132,7 +132,7 @@ export default {
       ${DISCLAIMER}`;
   },
 
-  mount(root, { profile, settings }) {
+  mount(root, { profile, settings, all }) {
     /* 八星抽屜：分析結果與「八星速查」共用 */
     const openStar = (name) => {
       const s2 = STARS[name];
@@ -154,7 +154,7 @@ export default {
           <p style="color:var(--ink-2)">${s2.text}</p>
           ${raw(focusBtn(`深問${name}`))}</div>`,
         onMount(sr) {
-          $('[data-focus]', sr).addEventListener('click', () => goFocus({
+          $('[data-focus]', sr).addEventListener('click', () => goFocus({ all,
             template: 'number-pick',
             label: `數字磁場 ${name}`,
             text: [

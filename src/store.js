@@ -41,6 +41,9 @@ const DEFAULT_SETTINGS = {
   promptDisclaimer: true,
   promptPrefix: '',
   promptSuffix: '',
+  /* 進階提示詞：功能頁的「請 LLM 解讀」先進產生器，再自己按複製。
+     預設關閉 —— 一般情況下按一下就把提示詞複製好，直接跳到貼回頁。 */
+  advancedPrompt: false,
   // 內部：上次看過的版號
   seenVersion: null,
   qianSetId: 'xuanjian60',

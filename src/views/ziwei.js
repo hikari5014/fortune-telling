@@ -110,7 +110,7 @@ export default {
             </div>
           </div>`,
         onMount(sr) {
-          $('[data-focus]', sr).addEventListener('click', () => goFocus({
+          $('[data-focus]', sr).addEventListener('click', () => goFocus({ all,
             template: 'ziwei-deep',
             label: `紫微 ${p.name}（${p.branchName}宮・${p.gz}）`,
             text: [
