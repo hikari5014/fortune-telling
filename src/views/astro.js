@@ -2,8 +2,58 @@ import { html, raw, $, $$, sheet } from '../ui.js';
 import { icon } from '../icons.js';
 import { wheelSVG, SIGNS, houseMeaning } from '../engines/astro.js';
 import { focusBtn, goFocus, hourWarning, DISCLAIMER, needProfile, sectionHead, kv, promptLink, pad, shareBtn, doShare } from './_shared.js';
+import { transits, transitText } from '../engines/transit.js';
+import { isHourUnknown } from '../engines/unknown.js';
 
 const ELEMENT_TEXT = { 火: '行動、直覺、熱度', 土: '務實、穩定、累積', 風: '思考、交流、彈性', 水: '情感、直覺、連結' };
+
+/* ── 行運 ─────────────────────────────────────────
+   今天的天空疊到本命盤上。預設看今天，可以換日期看其他天。 */
+const today = () => { const n = new Date(); return { y: n.getFullYear(), m: n.getMonth() + 1, d: n.getDate() }; };
+const ymd = ({ y, m, d }) => `${y}-${pad(m)}-${pad(d)}`;
+
+function calcTransit(all, settings, profile, day) {
+  try {
+    return transits(all.astro, { ...day, tz: settings.tzOffset ?? 8,
+      hourKnown: !isHourUnknown(profile), reg: settings.register });
+  } catch { return null; }
+}
+
+function transitBody(t) {
+  if (!t) return html`<p class="hint">這一天算不出來。</p>`;
+  const top = t.list.slice(0, 8);
+  return html`
+    <div class="card reveal" style="margin-bottom:var(--sp-3)">
+      <div class="row row--between" style="align-items:flex-start;gap:var(--sp-3)">
+        <div style="min-width:0">
+          <p class="card__label">月亮在${t.moon.signName}${t.moon.house ? `　走到你的第 ${t.moon.house} 宮` : ''}</p>
+          <p style="font-family:var(--font-display);font-size:var(--step-1);margin-top:4px;letter-spacing:.06em">
+            ${t.moon.house ? `今天心思容易放在「${t.moon.houseText}」` : '今天的天空'}
+          </p>
+          <p class="hint" style="margin-top:4px">${t.retro.length ? `逆行中：${t.retro.join('、')}` : '今天沒有行星逆行'}</p>
+        </div>
+        <span class="luck luck--${t.tone.key === 'good' ? 'good' : t.tone.key === 'bad' ? 'bad' : 'half'}" style="flex:none">整體 ${t.tone.text}</span>
+      </div>
+    </div>
+    ${top.length ? html`<div class="daylist">
+      ${raw(top.map(x => html`
+        <div class="dayrow" style="cursor:default">
+          <span class="dayrow__d">
+            <b>${x.moverSym} ${x.sym} ${x.targetSym}</b>
+            <small>${x.slow ? '這陣子' : '這兩天'}</small>
+          </span>
+          <span class="dayrow__m">
+            <b>${x.label}</b>
+            <small>${x.say}　·　${x.applying ? '還在變強' : '高峰已過'}</small>
+          </span>
+          <span class="luck ${x.score > 0 ? 'luck--good' : 'luck--bad'}"><span class="num">${x.orb.toFixed(1)}°</span></span>
+        </div>`).join(''))}
+    </div>` : html`<p class="hint">今天沒有碰到本命盤的緊密相位 —— 算是平靜的一天。</p>`}
+    <p class="hint" style="margin-top:var(--sp-2)">
+      「這陣子」是木星以外的慢星，相位會維持幾週到幾個月；「這兩天」是快星，過幾天就換了。
+      ${t.hourKnown ? '' : '出生時辰不詳，所以沒列上升、中天與宮位。'}
+    </p>`;
+}
 
 export default {
   title: '星盤', eyebrow: 'NATAL CHART',
@@ -21,6 +71,15 @@ export default {
           ${(settings.chartEffects ?? 'full') === 'full' ? html` · 內圈細線為相位（實線和諧、虛線緊張）` : ''}
           ${settings.trueSolarTime ? html` · 真太陽時校正 ${c.solarCorrection.toFixed(1)} 分` : ''}
         </p>
+      </section>
+
+      <section class="section" id="transit">
+        ${raw(sectionHead('行運', `<input class="input num" type="date" id="tr-date" value="${ymd(today())}" style="height:36px;width:auto;padding:0 10px" aria-label="看哪一天">`))}
+        <p class="hint" style="margin-bottom:var(--sp-3)">把那一天的天空疊到你的本命盤上，看碰到了哪幾顆星。</p>
+        <div id="tr-body">${raw(transitBody(calcTransit(all, settings, profile, today())))}</div>
+        <div class="row" style="gap:var(--sp-2);margin-top:var(--sp-3)">
+          <button class="btn btn--ghost press" id="tr-ask">${raw(icon('prompt'))} 請 LLM 解讀行運</button>
+        </div>
       </section>
 
       <section class="section">
@@ -128,6 +187,21 @@ export default {
       ${DISCLAIMER}`;
   },
   mount(root, { all, profile, settings }) {
+    // 行運：換日期就重算這一塊，不重畫整頁
+    let day = today();
+    const dateEl = $('#tr-date', root);
+    dateEl?.addEventListener('change', () => {
+      const [y, m, d] = dateEl.value.split('-').map(Number);
+      if (!y || !m || !d) return;
+      day = { y, m, d };
+      $('#tr-body', root).innerHTML = String(transitBody(calcTransit(all, settings, profile, day)));
+    });
+    $('#tr-ask', root)?.addEventListener('click', () => {
+      const t = calcTransit(all, settings, profile, day);
+      if (!t) return;
+      goFocus({ all, label: `行運 ${t.date}`, text: transitText(t),
+        question: `請解讀 ${t.date} 的行運對我的影響：哪些是這陣子的主題、哪些只是這兩天的起伏，以及可以怎麼應對。` });
+    });
     $('#a-share', root)?.addEventListener('click', async () => {
       const { natalCard } = await import('../sharecards.js');
       doShare(() => natalCard(all, profile), '玄鑑-命盤.png');

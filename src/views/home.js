@@ -10,10 +10,13 @@ import { APP_VERSION } from '../data/changelog.js';
 import { ziweiLimits, fortuneOfYear, baziLuck, shiShen } from '../engines/fortune.js';
 import { dayInfo, rateDay, purposeName } from '../engines/daily.js';
 import { DISCLAIMER, sectionHead, pad } from './_shared.js';
+import { transits } from '../engines/transit.js';
+import { isHourUnknown } from '../engines/unknown.js';
 
 /* 首頁可自訂：哪些卡片要出現、工具區要放哪幾個 */
 export const HOME_CARDS = [
   { key: 'today',  name: '今日宜忌' },
+  { key: 'transit', name: '今日行運' },
   { key: 'luck',   name: '今年運限' },
   { key: 'tarot',  name: '今日一張（塔羅）' },
   { key: 'tools',  name: '工具入口' },
@@ -73,6 +76,35 @@ function todayCard(all, settings, t) {
         <div class="tags" style="margin-top:6px">
           <span class="tags__k">忌</span>${j.bad.length ? j.bad.slice(0, 5).map(k => html`<span class="tag">${purposeName(k)}</span>`) : html`<span class="tag">—</span>`}
         </div>
+      </a>
+    </section>`;
+}
+
+/* 今日行運：今天的天空碰到本命盤的哪幾顆星，只列最重要的三個 */
+function transitCard(all, settings, profile, t) {
+  if (!all?.astro) return '';
+  let r;
+  try {
+    r = transits(all.astro, { y: t.y, m: t.m, d: t.d, tz: settings.tzOffset ?? 8,
+      hourKnown: !isHourUnknown(profile), reg: settings.register });
+  } catch { return ''; }
+  const top = r.list.slice(0, 3);
+  return html`
+    <section class="section">
+      ${raw(sectionHead('今日行運', `<a class="chip" href="#/astro">星盤</a>`))}
+      <a class="card press track reveal" href="#/astro" style="display:block">
+        <div class="row row--between" style="align-items:flex-start;gap:var(--sp-4)">
+          <div style="min-width:0">
+            <p class="card__label">月亮在${r.moon.signName}${r.moon.house ? `　第 ${r.moon.house} 宮` : ''}</p>
+            <p style="font-family:var(--font-display);font-size:var(--step-1);margin-top:4px;letter-spacing:.06em">
+              ${r.moon.house ? `心思容易放在「${r.moon.houseText}」` : '今天的天空'}
+            </p>
+          </div>
+          <span class="luck luck--${r.tone.key === 'good' ? 'good' : r.tone.key === 'bad' ? 'bad' : 'half'}" style="flex:none">整體 ${r.tone.text}</span>
+        </div>
+        ${top.length ? html`<div class="stack" style="gap:6px;margin-top:var(--sp-3)">
+          ${top.map(x => html`<p class="hint" style="margin:0"><b style="color:var(--ink-2)">${x.moverZh}${x.zh}${x.targetZh}</b>　${x.say}</p>`)}
+        </div>` : html`<p class="hint" style="margin-top:var(--sp-3)">今天沒有緊密的行運相位，算是平靜的一天。</p>`}
       </a>
     </section>`;
 }
@@ -162,6 +194,7 @@ export default {
       </section>
 
       ${shown(settings, 'today') ? raw(todayCard(all, settings, t)) : ''}
+      ${shown(settings, 'transit') ? raw(transitCard(all, settings, profile, t)) : ''}
       ${shown(settings, 'luck') ? raw(luckCard(all, settings, t)) : ''}
       ${shown(settings, 'tarot') ? raw(tarotCard(profile, settings)) : ''}
 
