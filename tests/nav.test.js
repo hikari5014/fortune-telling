@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import { installDOM } from './_dom.js';
 installDOM();
 
-const { NAV, CATS, HOME, FLOW, itemsOf, catOf, arcShape, ARC } = await import('../src/data/nav.js');
+const { NAV, CATS, HOME, FLOW, itemsOf, catOf } = await import('../src/data/nav.js');
 const { place } = await import('../src/navmenu.js');
 
 test('每一頁都分得到類，沒有多也沒有少', () => {
@@ -23,9 +23,8 @@ test('每一頁都分得到類，沒有多也沒有少', () => {
 
 test('分類本身是合理的', () => {
   assert.equal(CATS.length, 4);
-  // 首頁鍵卡在正中間的缺口裡；分類是雙數，缺口才會落在中線上。
-  // 改成單數的話缺口會歪掉，圓鍵就會壓到中間那顆的字。
-  assert.equal(CATS.length % 2, 0, '分類要是雙數');
+  // 分類是雙數，首頁插在正中間之後才會是「二左一中二右」的橫條
+  assert.equal(CATS.length % 2, 0, '分類要是雙數，首頁才排得到正中間');
   assert.equal(CATS[0].key, 'tool', '工具要在最左邊');
   for (const c of CATS) {
     assert.equal(c.name.length, 2, `${c.name} 不是兩個字，扇形上排不整齊`);
@@ -42,21 +41,6 @@ test('左右滑與方向鍵的順序，跟側欄看到的一致', () => {
   assert.deepEqual(FLOW, ['/', ...CATS.flatMap(c => c.paths)]);
   assert.equal(new Set(FLOW).size, FLOW.length, '順序裡有重複');
   assert.equal(FLOW.length, NAV.length, '有頁面走不到');
-});
-
-test('扇形：中間最高、左右對稱、兩端的落差等於設定值', () => {
-  for (const n of [3, 4, 5, 6]) {
-    const sh = [...Array(n).keys()].map(i => arcShape(i, n));
-    for (let i = 0; i < n; i++) {
-      const j = n - 1 - i;
-      assert.ok(Math.abs(sh[i].dy - sh[j].dy) < 1e-9, `n=${n} 左右不對稱`);
-      assert.ok(Math.abs(sh[i].rot + sh[j].rot) < 1e-9, `n=${n} 左右傾斜不對稱`);
-      if (i + 1 < n / 2) assert.ok(sh[i].dy > sh[i + 1].dy, `n=${n} 越靠中間應該越高`);
-    }
-    assert.ok(Math.abs(Math.max(...sh.map(x => x.dy)) - ARC.rise) < 1e-9, `n=${n} 落差不等於設定值`);
-    assert.ok(Math.min(...sh.map(x => x.dy)) <= ARC.rise * 0.2, `n=${n} 中間沒比兩端高多少`);
-  }
-  assert.deepEqual(arcShape(0, 1), { dy: 0, rot: 0 }, '只有一顆的時候不該歪掉');
 });
 
 /* ── 選單的擺放 ─────────────────────────────────────
@@ -110,26 +94,6 @@ test('項目之間不會疊在一起', () => {
   }
 });
 
-test('導覽列不會擠在一起：高度補得回來、缺口比圓鍵寬', () => {
-  const css = readFileSync('styles/components.css', 'utf8');
-  const app = readFileSync('src/app.js', 'utf8');
-  // 兩端是用 transform 推下去的，transform 不佔版面高度 ——
-  // 沒把落差補回去，那兩顆會掛在導覽列外面
-  assert.match(css, /\.dock__arc \{[^}]*height: calc\(46px \+ var\(--arc-rise/,
-    '扇形那一排沒有把兩端的落差算進高度');
-  assert.match(app, /--arc-rise/, 'app.js 沒有把落差值傳進 CSS');
-  // 缺口要比圓鍵寬，不然圓鍵會壓到隔壁的字
-  const notch = Number(css.match(/\.dock__notch \{ width: (\d+)px/)[1]);
-  const home = Number(css.match(/\.dock \.tab\.dock__home \{[^}]*width: (\d+)px/s)[1]);
-  assert.ok(notch >= home + 12, `缺口 ${notch}px 只比圓鍵 ${home}px 寬 ${notch - home}px，太擠`);
-  assert.match(css, /\.dock \.tab\.dock__home \{[^}]*position: absolute/s,
-    '圓鍵要用絕對定位卡進缺口，不然會多佔一列');
-  // 版面留白要蓋得過導覽列
-  const base = readFileSync('styles/base.css', 'utf8');
-  const pad = Number(base.match(/padding-bottom: calc\((\d+)px \+ env\(safe-area-inset-bottom\)\)/)[1]);
-  assert.ok(pad >= 104 && pad <= 130, `頁尾留白 ${pad}px 跟導覽列高度（88 + 8）對不上`);
-});
-
 test('樣式與程式對得上：沒有殘留的舊分頁列', () => {
   const css = readFileSync('styles/components.css', 'utf8');
   const app = readFileSync('src/app.js', 'utf8');
@@ -137,6 +101,9 @@ test('樣式與程式對得上：沒有殘留的舊分頁列', () => {
   assert.ok(!/tab-more|openMore/.test(app), 'app.js 還留著「更多」按鈕');
   assert.match(css, /\.dock__cat/);
   assert.match(css, /\.dock__home/);
+  assert.ok(!/dock__arc|dock__notch|--arc-rise/.test(css + app), '扇形的殘骸沒清乾淨');
+  // 首頁要排在正中間：四個分類插一個首頁＝五格，中點是第三格
+  assert.match(app, /splice\(Math\.ceil\(CATS\.length \/ 2\), 0, null\)/);
   // 層次要照這個順序，不然抽屜會被導覽列壓住
   const z = (sel) => Number(css.slice(css.indexOf(sel)).match(/z-index:\s*(\d+)/)[1]);
   assert.ok(z('.navmenu {') < z('.dock {'), '選單應該在導覽列底下');

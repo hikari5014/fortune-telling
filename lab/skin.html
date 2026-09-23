@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="zh-Hant" data-theme="dark" data-skin="night">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5">
+<title>玄鑑 — 六種視覺方案</title>
+<meta name="description" content="星辰主題的六種視覺方案：同一個畫面、同一份內容，只換皮。">
+<meta name="theme-color" content="#07080b">
+<meta name="color-scheme" content="dark light">
+<link rel="icon" href="../assets/icons/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Noto+Serif+TC:wght@400;600;900&family=Space+Grotesk:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="./skin.css">
+</head>
+<body>
+
+<canvas class="sky" id="sky" aria-hidden="true"></canvas>
+
+<header class="lab">
+  <div class="lab__row">
+    <div>
+      <p class="lab__eyebrow">DESIGN LAB</p>
+      <h1 class="lab__title">六種視覺方案</h1>
+    </div>
+    <button class="lab__theme" id="theme" aria-label="切換深淺色"></button>
+  </div>
+  <nav class="lab__skins" id="skins" aria-label="選擇方案"></nav>
+  <div class="lab__note" id="note"></div>
+</header>
+
+<main class="app" id="app">
+  <!-- 首頁 -->
+  <section class="hero">
+    <p class="hero__date">2026-09-23　八月十三</p>
+    <h2 class="hero__gz"><span>庚</span><span>子</span><i>日</i></h2>
+    <p class="hero__sub">丙午年 丁酉月 · 節氣 白露 · 馬年</p>
+    <div class="row">
+      <span class="badge">目前對象</span>
+      <span class="chip chip--on">王大明</span>
+      <span class="chip">猴年 · 庚日主</span>
+      <span class="chip">天蠍座</span>
+    </div>
+  </section>
+
+  <!-- 今日宜忌 -->
+  <section class="sec">
+    <div class="sec__head"><h3>今日宜忌</h3><span class="chip chip--sm">擇日</span></div>
+    <div class="panel">
+      <div class="panel__top">
+        <div>
+          <p class="label">平日</p>
+          <p class="big">黑道日，宜守不宜攻</p>
+          <p class="dim">沖馬（午）　煞南</p>
+        </div>
+        <div class="dial" style="--pct:45">
+          <svg viewBox="0 0 64 64" aria-hidden="true">
+            <circle class="dial__bg" cx="32" cy="32" r="27"/>
+            <circle class="dial__arc" cx="32" cy="32" r="27"/>
+          </svg>
+          <b>45</b>
+        </div>
+      </div>
+      <div class="split"></div>
+      <div class="row"><span class="tag">宜</span><span class="pill">嫁娶</span><span class="pill">簽約</span></div>
+      <div class="row"><span class="tag">忌</span><span class="pill pill--off">動土</span></div>
+    </div>
+  </section>
+
+  <!-- 今年運限 -->
+  <section class="sec">
+    <div class="sec__head"><h3>今年運限</h3><span class="chip chip--sm">完整運勢</span></div>
+    <div class="panel">
+      <p class="label">2026 · 虛歲 37</p>
+      <p class="big big--serif">丙午　流年命宮在夫妻</p>
+      <p class="dim">大限 32–41 歲 · 田宅　大運 丁亥（正官）</p>
+      <div class="row row--wrap">
+        <span class="pill pill--ghost">天同化祿</span>
+        <span class="pill pill--ghost">天機化權</span>
+        <span class="pill pill--ghost">文昌化科</span>
+        <span class="pill pill--ghost">廉貞化忌</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 今日一張 -->
+  <section class="sec">
+    <div class="sec__head"><h3>今日一張</h3><span class="chip chip--sm">塔羅</span></div>
+    <div class="panel panel--row">
+      <img class="card" src="../assets/tarot/cups-02.webp" alt="聖杯二">
+      <div>
+        <p class="label">2026-09-23</p>
+        <p class="big big--serif">聖杯二</p>
+        <span class="pill pill--solid">正位</span>
+        <p class="dim dim--body">互相吸引、結盟。兩個人把各自的杯子端到對方面前，
+          交換的是意願，不是條件。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 工具 -->
+  <section class="sec">
+    <div class="sec__head"><h3>工具</h3><span class="chip chip--sm">自訂首頁</span></div>
+    <div class="grid" id="tiles"></div>
+  </section>
+
+  <p class="foot">玄鑑 · 視覺方案試玩</p>
+</main>
+
+<nav class="dock" id="dock" aria-label="主要導覽"></nav>
+
+<script type="module" src="./skin.js"></script>
+</body>
+</html>

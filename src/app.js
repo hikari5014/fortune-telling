@@ -7,7 +7,7 @@ import { register, navigate, resolve, start, path, query } from './router.js';
 import { computeAll } from './prompt/context.js';
 import { APP_VERSION } from './data/changelog.js';
 import { isPrivate, CHART_WARNING } from './privacy.js';
-import { NAV, CATS, HOME, FLOW, ARC, catOf, arcShape } from './data/nav.js';
+import { NAV, CATS, HOME, FLOW, catOf } from './data/nav.js';
 import { openCat, closeMenu, isOpen as menuOpen } from './navmenu.js';
 
 export { NAV } from './data/nav.js';
@@ -60,25 +60,18 @@ const link = (n) => html`
 function buildNav() {
   const dock = $('#tabbar');
   dock.className = 'dock';
-  // 兩端是用 transform 往下推的，transform 不佔版面高度 ——
-  // 不把落差補回去，那兩顆會掛在導覽列外面
-  dock.style.setProperty('--arc-rise', `${ARC.rise}px`);
-  dock.innerHTML = `
-    <div class="dock__arc">
-      ${CATS.map((c, i) => {
-        const { dy, rot } = arcShape(i, CATS.length);
-        // 正中間留一個缺口給首頁鍵。分類是雙數，缺口剛好落在中線上；
-        // 不留的話圓鍵會壓到中間那兩顆的字。
-        const notch = i === CATS.length / 2 ? '<span class="dock__notch" aria-hidden="true"></span>' : '';
-        return notch + `<button class="tab dock__cat" data-cat="${c.key}" aria-haspopup="menu" aria-expanded="false"
-                  style="--dy:${dy.toFixed(1)}px;--rot:${rot.toFixed(1)}deg">
-                  ${icon(c.icon)}<span>${c.name}</span></button>`;
-      }).join('')}
-    </div>
-    <a class="tab dock__home" href="#/" data-path="/" aria-label="首頁">${icon('home')}</a>`;
+  // 一般的橫條：分類平均分配，首頁擺正中間（五格的中點）
+  const cells = [...CATS];
+  cells.splice(Math.ceil(CATS.length / 2), 0, null);   // null 代表首頁
+  dock.innerHTML = cells.map(c => c
+    ? `<button class="tab dock__cat" data-cat="${c.key}" aria-haspopup="menu" aria-expanded="false">
+         ${icon(c.icon)}<span>${c.name}</span></button>`
+    : `<a class="tab dock__home" href="#/" data-path="/">${icon('home')}<span>首頁</span></a>`
+  ).join('');
 
   dock.querySelectorAll('.dock__cat').forEach(btn => {
     btn.addEventListener('click', (e) => {
+      e.preventDefault();
       const cat = CATS.find(c => c.key === btn.dataset.cat);
       if (menuOpen() && btn.getAttribute('aria-expanded') === 'true') { closeMenu(); return; }
       haptic(8);
@@ -89,7 +82,6 @@ function buildNav() {
         onPick: (n) => navigate(n.p),
         onClose: () => btn.setAttribute('aria-expanded', 'false'),
       });
-      e.preventDefault();
     });
   });
 

@@ -2,11 +2,28 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.19.1';
+export const APP_VERSION = '0.19.3';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.19.3', date: '2026-09-23', title: '外觀試驗：六個版本',
+    items: [
+      { kind: 'add', text: 'lab/skin.html 放了六套外觀提案（夜空、星圖、鎏金、霧面、留白、光暈），同一個畫面、六種長相，可切明暗對照' },
+      { kind: 'add', text: '六套都照同一條規則做：深色靠底色深淺分層、不畫框；淺色靠陰影分層' },
+      { kind: 'change', text: '星辰背景直接用 App 本體的同一支程式，看到的閃爍就是之後會上的那個' },
+      { kind: 'change', text: 'App 本體這一版沒動，等挑定再套' },
+    ],
+  },
+  {
+    v: '0.19.2', date: '2026-09-23', title: '導覽列改回橫條',
+    items: [
+      { kind: 'change', text: '扇形排法拿掉，回到一般的橫條：工具、命盤、首頁、占卜、人際，首頁在正中間' },
+      { kind: 'change', text: '點一下分類叫出選單這件事不變 —— 好用的是選單，不是扇形' },
+      { kind: 'change', text: '導覽列高度回到 62px，頁尾留白與各種浮動元件的位置跟著還原' },
+    ],
+  },
   {
     v: '0.19.1', date: '2026-09-23', title: '導覽列不再擠成一坨',
     items: [
