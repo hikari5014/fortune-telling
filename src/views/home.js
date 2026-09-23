@@ -1,7 +1,7 @@
 import { html, raw, $, $$, sheet, toast } from '../ui.js';
 import { icon } from '../icons.js';
 import { store } from '../store.js';
-import { resolve } from '../router.js';
+import { resolve, navigate } from '../router.js';
 import { quickAdd } from '../quickadd.js';
 import { dailyCard, todayKey } from '../engines/tarot.js';
 import { nameOf } from '../privacy.js';
@@ -12,6 +12,7 @@ import { dayInfo, rateDay, purposeName } from '../engines/daily.js';
 import { DISCLAIMER, sectionHead, pad } from './_shared.js';
 import { transits } from '../engines/transit.js';
 import { isHourUnknown } from '../engines/unknown.js';
+import { todayPick, mountReco } from '../recommend.js';
 import { due, askedOf, daysAgo, setVerdict, snooze, VERDICTS, KINDS, kindOf, daysSetting } from '../verify.js';
 
 /* 首頁可自訂：哪些卡片要出現、工具區要放哪幾個 */
@@ -270,6 +271,17 @@ export default {
   },
 
   mount(root, { settings }) {
+    // 今日推薦：新手教學還沒走完就不跳，免得兩個蓋在一起
+    if (settings.onboarded) {
+      const pick = todayPick({ enabled: settings.dailyReco !== false, hasProfile: store.profiles.length > 0 });
+      if (pick) setTimeout(() => {
+        if (!root.isConnected) return;          // 等的這段時間已經換頁了
+        mountReco(pick, {
+          go: (p) => navigate(p),
+          off: () => { store.setSettings({ dailyReco: false }); toast('已關閉今日推薦，設定 → 外觀可以再打開'); },
+        });
+      }, 700);
+    }
     // 回顧卡：答完讓卡片收起來，再換下一筆（或整塊消失）
     $$('#review [data-v]', root).forEach(b => b.addEventListener('click', () => {
       const card = b.closest('.review');

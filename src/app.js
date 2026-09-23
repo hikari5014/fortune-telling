@@ -125,6 +125,7 @@ const privacyNote = (c, p) => (CHART_PAGES.has(p) && isPrivate(c.profile)
 
 let lastPath = '/';
 async function paint(view, p) {
+  import('./recommend.js').then(m => m.markSeen(p)).catch(() => {});   // 今日推薦要知道哪些功能用過了
   const c = ctx();
   const nav = NAV.find(n => n.p === p) || NAV[0];
   const doRender = (animateFallback) => {
