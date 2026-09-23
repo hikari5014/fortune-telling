@@ -147,6 +147,26 @@
 .setrow__t { font-size: var(--step-0); }
 .setrow__d { font-size: var(--step--2); color: var(--ink-3); line-height: 1.55; }
 
+/* 設定的第一層：分類清單 */
+.setmenu__item {
+  display: grid; grid-template-columns: 40px 1fr auto; align-items: center; gap: var(--sp-3);
+  width: 100%; padding: var(--sp-3) var(--sp-4); text-align: left; color: var(--ink);
+  border-bottom: 1px solid var(--line);
+  transition: background var(--dur-2) var(--ease);
+}
+.setmenu__item:last-child { border-bottom: 0; }
+@media (hover: hover) { .setmenu__item:hover { background: var(--surface-2); } }
+.setmenu__ic {
+  display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px;
+  background: var(--bg-2); color: var(--accent);
+}
+.setmenu__ic svg { width: 20px; height: 20px; }
+.setmenu__t { display: grid; gap: 2px; min-width: 0; }
+.setmenu__t b { font-size: var(--step-0); font-weight: 500; letter-spacing: .06em; }
+.setmenu__t small { font-size: var(--step--2); color: var(--ink-3); line-height: 1.5; }
+.setmenu__chev { color: var(--ink-3); }
+.setmenu__chev svg { width: 16px; height: 16px; }
+
 /* 檔案卡 */
 .profile { display: grid; gap: 4px; padding: var(--sp-4); border: 1px solid var(--edge); box-shadow: var(--lift); border-radius: var(--r-3); background: var(--surface); text-align: left; width: 100%; }
 .profile[aria-current="true"] { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }

@@ -2,7 +2,7 @@ import { html, raw, $, $$, toast, confirmSheet, download, sheet, haptic, hapticS
 import { icon } from '../icons.js';
 import { store, applyChrome, DEFAULT_SETTINGS, EXPORT_PARTS } from '../store.js';
 import { invalidate } from '../app.js';
-import { resolve } from '../router.js';
+import { resolve, query, navigate } from '../router.js';
 import { dictSize } from '../data/strokes.js';
 import { APP_VERSION, APP_STAGE, CHANGELOG } from '../data/changelog.js';
 import { DISCLAIMER } from './_shared.js';
@@ -40,14 +40,45 @@ const sw = (id, on) => html`<div class="switch" role="switch" tabindex="0" id="$
 const select = (id, list, value) => html`<select class="select" id="${id}" style="max-width:220px">
   ${raw(list.map(x => html`<option ${x === value ? 'selected' : ''}>${x}</option>`).join(''))}</select>`;
 
+/* ── 二級選單 ─────────────────────────────────────
+   設定一頁攤開有三十幾列，捲到底找不到東西。
+   第一層只列分類；點進去才看到那一類的設定（網址帶 ?g=，返回鍵就回到分類）。
+   各分類的內容照樣全部 render，只是不是這一類的先 hidden ——
+   mount 裡的綁定不用跟著拆，也不會漏綁。 */
+const GROUPS = [
+  { k: 'look',   t: '外觀',       icon: 'moon',    d: '主題、字級、介面密度、語調' },
+  { k: 'motion', t: '動態',       icon: 'spark',   d: '動畫強度、滑動切頁、觸覺回饋、背景星空、命盤特效' },
+  { k: 'calc',   t: '命理參數',   icon: 'compass', d: '時區與城市、真太陽時、子時換日、姓名學算法' },
+  { k: 'tarot',  t: '塔羅',       icon: 'star',    d: '預設牌組、牌面圖像、抽牌儀式、對照本命盤' },
+  { k: 'prompt', t: '提示詞預設', icon: 'prompt',  d: '外部 LLM、語言語氣深度、格式、前後綴' },
+  { k: 'data',   t: '資料',       icon: 'folder',  d: '匯出匯入備份、安裝為 App、新手教學、重設與清除' },
+  { k: 'about',  t: '關於',       icon: 'info',    d: '' },
+];
+/** 目前在哪一類；沒有或不認得就是第一層 */
+const groupOf = () => { const g = query().g; return GROUPS.some(x => x.k === g) ? g : null; };
+
+function menu() {
+  return html`
+    <nav class="setgroup setmenu reveal" aria-label="設定分類">
+      ${raw(GROUPS.map(x => html`
+        <button class="setmenu__item press" data-g="${x.k}">
+          <span class="setmenu__ic">${raw(icon(x.icon))}</span>
+          <span class="setmenu__t"><b>${x.t}</b><small>${x.k === 'about' ? `v${APP_VERSION} · 更新紀錄與運作方式` : x.d}</small></span>
+          <span class="setmenu__chev">${raw(icon('chev'))}</span>
+        </button>`).join(''))}
+    </nav>`;
+}
+
 export default {
-  title: '設定', eyebrow: 'SETTINGS',
+  title: () => (GROUPS.find(x => x.k === groupOf()) || { t: '設定' }).t,
+  eyebrow: 'SETTINGS',
   render({ settings: s }) {
     const plat = detect();
+    const g = groupOf();
     return html`
       <div class="stack">
-        <section class="setgroup reveal">
-          <div class="setgroup__head">外觀</div>
+        ${raw(g ? '' : menu())}
+        <section class="setgroup reveal" data-g="look" ${raw(g === 'look' ? '' : 'hidden')}>
           ${raw(row('主題', '靛黑或米白，重點上金。整個 App 只有這一個彩度。', seg('set-theme', [['system', '跟隨系統'], ['light', '白'], ['dark', '黑']], s.theme)))}
           ${raw(rowStack('字級', `目前 ${Math.round(s.fontScale * 100)}%`,
             `<input type="range" id="set-font" min="0.85" max="1.3" step="0.05" value="${s.fontScale}" style="width:100%">`))}
@@ -59,8 +90,7 @@ export default {
             seg('set-register', [['bai', '白話文'], ['wen', '文言文']], s.register)))}
         </section>
 
-        <section class="setgroup reveal">
-          <div class="setgroup__head">動態</div>
+        <section class="setgroup reveal" data-g="motion" ${raw(g === 'motion' ? '' : 'hidden')}>
           ${raw(row('動畫強度', '關閉後仍保留必要的狀態提示。', seg('set-motion', [['off', '關閉'], ['light', '輕量'], ['full', '完整']], s.motion)))}
           ${raw(row('左右滑動切頁', '在觸控裝置上左右滑動切換分頁。方向鎖定後才會跟手，螢幕邊緣讓給系統返回手勢。', sw('set-swipe', s.swipeNav)))}
           ${raw(row('觸覺回饋', hapticNote(), sw('set-haptics', s.haptics)))}
@@ -83,8 +113,7 @@ export default {
             sw('set-scorecolor', s.scoreColor !== false)))}
         </section>
 
-        <section class="setgroup reveal">
-          <div class="setgroup__head">命理參數</div>
+        <section class="setgroup reveal" data-g="calc" ${raw(g === 'calc' ? '' : 'hidden')}>
           ${raw(row('預設時區', '新建檔案時的預設值（UTC 偏移）。',
             `<input class="input num" id="set-tz" type="number" step="0.5" value="${s.tzOffset}" style="max-width:110px">`))}
           ${raw(row('預設城市', '', `<input class="input" id="set-city" value="${s.city}" style="max-width:150px">`))}
@@ -100,8 +129,7 @@ export default {
           ${raw(row('筆畫字典', `涵蓋 ${dictSize.toLocaleString()} 個漢字，由 Unicode Unihan 部首餘筆推算；個別字可在姓名頁手動修正。`, `<span class="badge badge--dash">康熙</span>`))}
         </section>
 
-        <section class="setgroup reveal">
-          <div class="setgroup__head">塔羅</div>
+        <section class="setgroup reveal" data-g="tarot" ${raw(g === 'tarot' ? '' : 'hidden')}>
           ${raw(row('預設牌組',
             '抽牌、今日一張、本命牌都用這一副。內建有偉特牌與鎏金太陽（只換牌背）；'
             + '自訂牌組在「塔羅 → 牌組」新增，新增後也會出現在這裡。',
@@ -125,8 +153,7 @@ export default {
             sw('set-tarotlink', s.tarotChartLink !== false)))}
         </section>
 
-        <section class="setgroup reveal">
-          <div class="setgroup__head">提示詞預設</div>
+        <section class="setgroup reveal" data-g="prompt" ${raw(g === 'prompt' ? '' : 'hidden')}>
           ${raw(row('外部 LLM',
             '按下「去貼給 LLM」時預設開哪一個。ChatGPT、Claude、Perplexity 在瀏覽器裡開會把提示詞一起帶進輸入框；'
             + 'Gemini 沒有可以帶提示詞的官方網址參數，只能開起來自己貼。'
@@ -153,8 +180,7 @@ export default {
             `<textarea class="textarea" id="set-suffix" style="min-height:74px" placeholder="例：請用台灣用語，不要用簡體字。">${s.promptSuffix}</textarea>`))}
         </section>
 
-        <section class="setgroup reveal">
-          <div class="setgroup__head">資料</div>
+        <section class="setgroup reveal" data-g="data" ${raw(g === 'data' ? '' : 'hidden')}>
           ${raw(row('檔案 / 模板 / 紀錄',
             `${store.profiles.length} 份檔案 · ${store.templates.length} 個自訂模板 · ${store.records.length} 筆紀錄`
             + (store.profiles.some(p => p.private) ? `（其中 ${store.profiles.filter(p => p.private).length} 份保密，不會進備份檔）` : ''),
@@ -170,8 +196,7 @@ export default {
           ${raw(row('清除全部資料', '檔案、模板、紀錄、設定都會刪除。', `<button class="btn btn--ghost btn--sm press" id="btn-clear">${icon('trash')} 清除</button>`))}
         </section>
 
-        <section class="setgroup reveal">
-          <div class="setgroup__head">關於</div>
+        <section class="setgroup reveal" data-g="about" ${raw(g === 'about' ? '' : 'hidden')}>
           ${raw(row('版本', `v${APP_VERSION} · ${APP_STAGE}　${CHANGELOG[0].date} 發布`,
             `<a class="btn btn--ghost btn--sm press" href="#/about">${icon('info')} 更新紀錄</a>`))}
           ${raw(row('運作方式', '所有推算都在本機完成，不連網、不上傳。解讀交給你選的外部 LLM。',
@@ -182,6 +207,7 @@ export default {
   },
 
   mount(root) {
+    $$('.setmenu__item', root).forEach(b => b.addEventListener('click', () => navigate(`/settings?g=${b.dataset.g}`)));
     const save = (patch) => { store.setSettings(patch); invalidate(); };
 
     const bindSeg = (id, key, after) => $$(`#${id} button`, root).forEach(b => b.addEventListener('click', () => {

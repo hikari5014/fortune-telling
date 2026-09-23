@@ -2,11 +2,18 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.30.2';
+export const APP_VERSION = '0.31.0';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.31.0', date: '2026-09-23', title: '設定改成二級選單',
+    items: [
+      { kind: 'change', text: '設定頁第一層只列七個分類（外觀、動態、命理參數、塔羅、提示詞預設、資料、關於），每類寫著裡面有什麼' },
+      { kind: 'change', text: '點進分類只看那一類的設定，按返回回到分類清單' },
+    ],
+  },
   {
     v: '0.30.2', date: '2026-09-23', title: '圖示收邊加上立體感',
     items: [
