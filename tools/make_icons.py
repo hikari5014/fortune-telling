@@ -205,7 +205,9 @@ def draw(size, scale=1.0, squircle=True):
         cv.paint((0, 0, 512, 512),
                  lambda x, y, f=sd_rrect(C, C, 240, 240, 108): abs(f(x, y)) - 1.0, gold, 0.30)
     else:
-        cv.paint((0, 0, 512, 512), lambda x, y: -1.0, diagonal(BG_STOPS))
+        # 距離要給「非常裡面」：給 -1 的話，小尺寸（180px）時半個像素 > 1 個單位，
+        # 整片都被當成邊緣做反鋸齒，alpha 只剩 85% —— iOS 又會把那 15% 補成白。
+        cv.paint((0, 0, 512, 512), lambda x, y: -1e9, diagonal(BG_STOPS))
 
     # 中央的環境光暈
     for i in range(22):
