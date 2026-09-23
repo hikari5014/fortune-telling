@@ -275,6 +275,9 @@ if __name__ == "__main__":
     os.makedirs(out, exist_ok=True)
     draw(512).png(os.path.join(out, "icon-512.png"))
     draw(192).png(os.path.join(out, "icon-192.png"))
-    draw(180, scale=0.94).png(os.path.join(out, "apple-touch-icon.png"))
+    # iOS 主畫面：iOS 會自己裁圓角，而且會把透明的地方填成白色。
+    # 自己先畫圓角＋留透明角 → 兩種圓角對不齊，邊緣就露出一圈白邊。
+    # 所以跟 maskable 一樣整片鋪滿、不畫圓角也不畫金邊，圓角交給 iOS。
+    draw(180, scale=0.86, squircle=False).png(os.path.join(out, "apple-touch-icon.png"))
     # maskable：系統會裁成圓形或圓角，所以底要鋪滿、圖案縮進安全區
     draw(512, scale=0.72, squircle=False).png(os.path.join(out, "maskable-512.png"))

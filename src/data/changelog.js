@@ -2,11 +2,17 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.30.0';
+export const APP_VERSION = '0.30.1';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.30.1', date: '2026-09-23', title: 'iPhone 主畫面圖示的白邊',
+    items: [
+      { kind: 'fix', text: 'iPhone 主畫面的圖示外圍多一圈白邊：圖示改成整片鋪滿、圓角交給 iOS 自己裁（要把舊的從主畫面移除再重新加入才會換）' },
+    ],
+  },
   {
     v: '0.30.0', date: '2026-09-23', title: '生日改成用選的，預設牌組可以在設定換',
     items: [

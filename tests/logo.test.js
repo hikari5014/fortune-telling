@@ -73,3 +73,23 @@ test('主題色三個地方是一致的，不然開 App 時上下會閃一條舊
   assert.equal(manifest.background_color, '#060810');
   assert.match(html, /content="#060810" media="\(prefers-color-scheme: dark\)"/);
 });
+
+test('iOS 主畫面圖示整片不透明 —— 有透明角 iOS 會補白，變成一圈白邊', async () => {
+  assert.match(py, /draw\(180, scale=[\d.]+, squircle=False\)/);
+  const { inflateSync } = await import('node:zlib');
+  const b = readFileSync('assets/icons/apple-touch-icon.png');
+  assert.equal(b[25], 6, '預期 RGBA PNG');
+  // 取出 IDAT、解壓，看四個角的 alpha（每列開頭有一個 filter byte；角落像素只看第一列與最後一列）
+  let off = 8; const parts = [];
+  while (off < b.length) {
+    const len = b.readUInt32BE(off), tag = b.toString('latin1', off + 4, off + 8);
+    if (tag === 'IDAT') parts.push(b.subarray(off + 8, off + 8 + len));
+    off += 12 + len;
+  }
+  const raw = inflateSync(Buffer.concat(parts));
+  const w = b.readUInt32BE(16), h = b.readUInt32BE(20), stride = 1 + w * 4;
+  for (const row of [0, h - 1]) {
+    assert.equal(raw[row * stride], 0, '這支測試只看得懂 filter 0 的列');
+    for (const x of [0, w - 1]) assert.equal(raw[row * stride + 1 + x * 4 + 3], 255, `角落 (${x},${row}) 是透明的`);
+  }
+});
