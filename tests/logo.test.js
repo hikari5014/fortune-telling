@@ -75,7 +75,7 @@ test('主題色三個地方是一致的，不然開 App 時上下會閃一條舊
 });
 
 test('iOS 主畫面圖示整片不透明 —— 有透明角 iOS 會補白，變成一圈白邊', async () => {
-  assert.match(py, /draw\(180, scale=[\d.]+, squircle=False\)/);
+  assert.match(py, /draw\(180, scale=[\d.]+, squircle=False[,)]/);
   const { inflateSync } = await import('node:zlib');
   const b = readFileSync('assets/icons/apple-touch-icon.png');
   assert.equal(b[25], 6, '預期 RGBA PNG');
@@ -92,4 +92,11 @@ test('iOS 主畫面圖示整片不透明 —— 有透明角 iOS 會補白，變
     assert.equal(raw[row * stride], 0, '這支測試只看得懂 filter 0 的列');
     for (const x of [0, w - 1]) assert.equal(raw[row * stride + 1 + x * 4 + 3], 255, `角落 (${x},${row}) 是透明的`);
   }
+});
+
+test('圖示收邊：主畫面三個尺寸都用鎏金框，maskable 不加（會被裁成圓形，框對不齊）', () => {
+  assert.match(py, /draw\(512, style='frame'\)/);
+  assert.match(py, /draw\(192, style='frame'\)/);
+  assert.match(py, /draw\(180, scale=[\d.]+, squircle=False, style='frame'\)/);
+  assert.match(py, /draw\(512, scale=0\.72, squircle=False\)\.png/);
 });
