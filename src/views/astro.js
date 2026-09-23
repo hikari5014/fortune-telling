@@ -160,7 +160,7 @@ export default {
             </div>
           </div>`,
         onMount(sr) {
-          $('[data-focus]', sr).addEventListener('click', () => goFocus({
+          $('[data-focus]', sr).addEventListener('click', () => goFocus({ all,
             template: 'astro-big3',
             label: `星盤 ${b.zh}在${b.signName}`,
             text: [

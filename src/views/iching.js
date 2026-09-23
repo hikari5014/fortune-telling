@@ -3,7 +3,7 @@ import { icon } from '../icons.js';
 import { store, uid } from '../store.js';
 import { tossCoins, reading, timeHexagram, numberHexagram, hexText, yaoName, YAO_POS } from '../engines/iching.js';
 import { observeReveal } from '../motion.js';
-import { DISCLAIMER, sectionHead, kv } from './_shared.js';
+import { DISCLAIMER, sectionHead, kv, askPrompt } from './_shared.js';
 
 const hexSVG = (h, moving = [], title = '') => html`
   <div>
@@ -50,7 +50,7 @@ export default {
       ${DISCLAIMER}`;
   },
 
-  mount(root) {
+  mount(root, { all }) {
     let method = 'coin';
     const stage = $('#stage', root), result = $('#result', root);
 
@@ -110,7 +110,7 @@ export default {
       $('#again', result).addEventListener('click', () => { result.innerHTML = ''; stage.innerHTML = ''; scrollTo({ top: 0, behavior: 'smooth' }); });
       $('#ask', result).addEventListener('click', () => {
         store.setDraft('ichingResult', plain);
-        location.hash = `/prompt?t=iching&q=${encodeURIComponent($('#q', root).value.trim())}`;
+        askPrompt(`/prompt?t=iching&q=${encodeURIComponent($('#q', root).value.trim())}`, all);
       });
     };
 

@@ -4,7 +4,7 @@ import { store } from '../store.js';
 import { resolve } from '../router.js';
 import { shakeQian, castJiao, toText, BUILTIN_SET, normalizeSet, SET_SCHEMA, luckScore } from '../engines/qian.js';
 import { observeReveal } from '../motion.js';
-import { DISCLAIMER, sectionHead, kv, shareBtn, doShare } from './_shared.js';
+import { DISCLAIMER, sectionHead, kv, shareBtn, doShare, askPrompt } from './_shared.js';
 
 const luckCls = (l) => ['大吉', '上吉', '吉'].includes(l) ? 'luck--good' : l === '中吉' || l === '中平' ? 'luck--half' : 'luck--bad';
 const allSets = () => [BUILTIN_SET, ...store.qianSets];
@@ -41,7 +41,7 @@ export default {
       ${DISCLAIMER}`;
   },
 
-  mount(root) {
+  mount(root, { all }) {
     const stage = $('#qstage', root);
     let set = currentSet();
     let poem = null;
@@ -214,7 +214,7 @@ export default {
       });
       $('#ask', stage).addEventListener('click', () => {
         store.setDraft('qianResult', plain);
-        location.hash = `/prompt?t=qian&q=${encodeURIComponent(q)}`;
+        askPrompt(`/prompt?t=qian&q=${encodeURIComponent(q)}`, all);
       });
       setTimeout(() => stage.scrollIntoView({ behavior: 'smooth', block: 'start' }), 220);
     }

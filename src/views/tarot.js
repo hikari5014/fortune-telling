@@ -15,7 +15,7 @@ import { navigate } from '../router.js';
 import { draw, fromPicks, pickSpread, shuffle, toText, SPREADS, DECK, birthCard, yearCard, chartLink, dailyCard, todayKey } from '../engines/tarot.js';
 import { observeReveal } from '../motion.js';
 import { nameOf } from '../privacy.js';
-import { DISCLAIMER, sectionHead, needProfile } from './_shared.js';
+import { DISCLAIMER, sectionHead, needProfile, askPrompt } from './_shared.js';
 
 /* ── 牌面 ─────────────────────────────────────────── */
 
@@ -419,7 +419,7 @@ export default {
       $('#redraw', table).addEventListener('click', () => { table.innerHTML = ''; scrollTo({ top: 0, behavior: 'smooth' }); });
       $('#ask', table).addEventListener('click', () => {
         store.setDraft('tarotResult', plain);
-        navigate(`/prompt?t=tarot&q=${encodeURIComponent(question)}`);
+        askPrompt(`/prompt?t=tarot&q=${encodeURIComponent(question)}`, all);
       });
       setTimeout(() => $('#detail', table).scrollIntoView({ behavior: 'smooth', block: 'start' }), 200);
     });

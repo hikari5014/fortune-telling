@@ -176,7 +176,7 @@ export default {
           ${raw(focusBtn(`深問${x.key}`))}
         </div>`,
         onMount(sr) {
-          $('[data-focus]', sr).addEventListener('click', () => goFocus({
+          $('[data-focus]', sr).addEventListener('click', () => goFocus({ all,
             template: 'name-check',
             label: `姓名 ${x.key} ${x.n}（${x.el}）`,
             text: [

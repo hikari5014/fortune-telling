@@ -9,6 +9,7 @@ import { APP_VERSION } from './data/changelog.js';
 import { isPrivate, CHART_WARNING } from './privacy.js';
 import { NAV, CATS, HOME, FLOW, catOf } from './data/nav.js';
 import { openCat, closeMenu, isOpen as menuOpen } from './navmenu.js';
+import { askPrompt } from './views/_shared.js';
 
 export { NAV } from './data/nav.js';
 
@@ -28,6 +29,7 @@ const VIEWS = {
   '/naming':   () => import('./views/naming.js'),
   '/numbers':  () => import('./views/numbers.js'),
   '/prompt':   () => import('./views/prompt.js'),
+  '/paste':    () => import('./views/paste.js'),
   '/records':  () => import('./views/records.js'),
   '/profile':  () => import('./views/profile.js'),
   '/settings': () => import('./views/settings.js'),
@@ -205,6 +207,17 @@ function boot() {
     if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); palette(); }
   });
 
+  /* 所有「#/prompt?t=…」的連結統一交給 askPrompt：
+     預設一鍵複製＋跳貼回頁，設定裡開了「進階提示詞」才進產生器。
+     在這裡攔，功能頁上那幾十個連結就不必各自改寫。
+     點擊當下處理，剪貼簿才拿得到使用者手勢。 */
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest?.('a[href^="#/prompt?"]');
+    if (!a || e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || e.button > 0) return;
+    e.preventDefault();
+    askPrompt(a.getAttribute('href'), ctx().all);
+  });
+
   addEventListener('scroll', () => {
     $('#topbar').classList.toggle('is-stuck', scrollY > 8);
   }, { passive: true });
@@ -215,6 +228,7 @@ function boot() {
 
   initSwipe((dir) => {
     const i = FLOW.indexOf(path());
+    if (i < 0) return;                      // 不在流程裡的頁（例如貼回頁）不接手勢
     const next = FLOW[Math.min(FLOW.length - 1, Math.max(0, i + dir))];
     if (next && next !== path()) { haptic(6); navigate(next); }
   });
