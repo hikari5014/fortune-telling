@@ -4,6 +4,30 @@ import { store } from '../store.js';
 import { resolve } from '../router.js';
 import { observeReveal } from '../motion.js';
 import { DISCLAIMER, sectionHead, doShare } from './_shared.js';
+import { stats, trackable, verdictName, setVerdict, VERDICTS, KINDS } from '../verify.js';
+
+/* 準確率：有答過至少一筆才出現 */
+function statsCard() {
+  const s = stats();
+  if (!s.all.n) return '';
+  const pct = (x) => (x.rate == null ? '—' : `${Math.round(x.rate * 100)}%`);
+  const cell = (name, x) => html`
+    <div class="vstat">
+      <small>${name}</small>
+      <b>${pct(x)}</b>
+      <small>準 ${x.hit}　部分 ${x.partial}　不準 ${x.miss}</small>
+      <div class="vstat__bar"><i style="--w:${x.rate == null ? 0 : Math.round(x.rate * 100)}%"></i></div>
+    </div>`;
+  return html`
+    <section class="section" style="margin-top:0;margin-bottom:var(--sp-5)">
+      ${raw(sectionHead('應驗率', `<span class="hint">答過 ${s.all.n} 筆</span>`))}
+      <div class="vstats">
+        ${cell('全部', s.all)}
+        ${Object.entries(KINDS).filter(([k]) => s.by[k].n).map(([k, n]) => cell(n, s.by[k]))}
+      </div>
+      <p class="hint" style="margin-top:var(--sp-2)">準算一次、部分準算半次。樣本少的時候參考就好。</p>
+    </section>`;
+}
 
 const norm = (s) => String(s || '').toLowerCase();
 const excerpt = (s, n = 150) => String(s || '').replace(/[#*`>]/g, '').replace(/\s+/g, ' ').slice(0, n);
@@ -23,6 +47,7 @@ export default {
     const models = store.allModels;
 
     return html`
+      ${raw(statsCard())}
       <section class="section" style="margin-top:0" data-noswipe>
         <div class="field">
           <input class="input" id="q" type="search" placeholder="搜尋內容、模板、對象、標籤⋯⋯"
@@ -52,6 +77,7 @@ export default {
               <span>${r.templateName}</span><span>·</span><span>${r.who || '—'}</span>
               ${r.model ? html`<span>·</span><span class="rec__model">${r.model}</span>` : ''}
               <span>·</span><span>${fmtDate(r.createdAt)}</span>
+              ${r.verdict ? html`<span class="vbadge vbadge--${r.verdict}">${verdictName(r.verdict)}</span>` : ''}
             </div>
             ${(r.tags || []).length ? html`<div class="rec__tags">${r.tags.map(t => html`<span class="tag">#${t}</span>`)}</div>` : ''}
             <div class="rec__body">${excerpt(r.content)}</div>
@@ -150,6 +176,11 @@ export default {
             ${(r.tags || []).map(t => html`<button class="tag tag--on press" data-rm="${t}">#${t} ✕</button>`)}
             <button class="tag press" id="addtag">＋ 標籤</button>
           </div>
+          ${trackable(r) ? html`
+            <div class="row" style="gap:6px;margin-bottom:var(--sp-4);align-items:center" id="vrow">
+              <span class="hint" style="margin-right:4px">後來準嗎？</span>
+              ${VERDICTS.map(v => html`<button class="chip press" data-verdict="${v.k}" aria-pressed="${r.verdict === v.k}">${v.t}</button>`)}
+            </div>` : ''}
           <div class="md">${raw(md(r.content))}</div>`,
         actions: html`<div class="row" style="gap:var(--sp-2)">
           <button class="btn btn--ghost press" data-copy style="flex:1">${raw(icon('copy'))} 複製</button>
@@ -178,6 +209,12 @@ export default {
               store.removeRecord(r.id); toast('已刪除'); resolve();
             }
           });
+          // 準不準：再點一次同一個＝取消
+          $$('[data-verdict]', sr).forEach(b => b.addEventListener('click', () => {
+            const v = r.verdict === b.dataset.verdict ? null : b.dataset.verdict;
+            setVerdict(r.id, v);
+            close(); toast(v ? `記下了：${verdictName(v)}` : '已取消'); resolve();
+          }));
           // 標籤
           const retag = (next) => { store.updateRecord(r.id, { tags: next }); close(); resolve(); };
           $$('[data-rm]', sr).forEach(b => b.addEventListener('click', () =>

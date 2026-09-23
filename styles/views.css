@@ -1011,3 +1011,27 @@ body.cer-open { overflow: hidden; }
 /* 牌組清單：選中的那一副標「使用中」 */
 .tmpl .dk-cur { display: none; color: var(--accent); }
 .tmpl[aria-pressed="true"] .dk-cur { display: inline; }
+
+/* 應驗回顧卡 */
+.review { position: relative; overflow: hidden; }
+.review::before {                                   /* 左側一道金線，跟其他卡片分開 */
+  content: ""; position: absolute; left: 0; top: 14px; bottom: 14px; width: 3px; border-radius: 3px;
+  background: var(--accent); opacity: .8;
+}
+.review__q { font-family: var(--font-display); font-size: var(--step-1); letter-spacing: .04em; margin-top: 6px; line-height: 1.5; }
+.review__btns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: var(--sp-3); }
+.review__open { display: inline-block; margin-top: var(--sp-3); }
+.review.is-done { animation: review-out 420ms var(--ease) forwards; }
+@keyframes review-out { to { opacity: 0; transform: translateX(24px) scale(.98); } }
+:root[data-motion="off"] .review.is-done { animation: none; opacity: 0; }
+
+/* 紀錄頁：準不準 */
+.vbadge { font-size: var(--step--2); padding: 1px 8px; border-radius: var(--r-full); border: 1px solid var(--line-2); color: var(--ink-3); }
+.vbadge--hit { background: var(--invert-bg); color: var(--invert-ink); border-color: var(--invert-bg); }
+.vbadge--partial { border-style: dashed; color: var(--ink-2); }
+.vstats { display: grid; grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); gap: var(--sp-2); }
+.vstat { padding: var(--sp-3); border-radius: var(--r-2); background: var(--bg-2); }
+.vstat b { display: block; font-family: var(--font-num); font-size: var(--step-2); }
+.vstat small { color: var(--ink-3); font-size: var(--step--2); }
+.vstat__bar { height: 4px; border-radius: 4px; background: var(--line); margin-top: 6px; overflow: hidden; }
+.vstat__bar i { display: block; height: 100%; background: var(--accent); width: var(--w, 0%); transition: width 700ms var(--ease-out); }

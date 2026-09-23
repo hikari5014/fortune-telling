@@ -1,10 +1,10 @@
 /* 玄鑑 Service Worker：應用程式外殼快取 + 執行期快取 */
-const VERSION = 'xj-0.32.0';   // 與 src/data/changelog.js 的 APP_VERSION 同步
+const VERSION = 'xj-0.33.0';   // 與 src/data/changelog.js 的 APP_VERSION 同步
 const SHELL = [
   './', './index.html', './manifest.webmanifest',
   './styles/tokens.css', './styles/base.css', './styles/motion.css',
   './styles/components.css', './styles/views.css',
-  './src/app.js', './src/router.js', './src/store.js', './src/ui.js', './src/palette.js', './src/platform.js', './src/install.js', './src/onboarding.js', './src/qrcode.js', './src/starfield.js', './src/tarotdraw.js', './src/orbcast.js', './src/decks.js', './src/relics.js', './src/llm.js', './src/sharelink.js', './src/privacy.js', './src/navmenu.js', './src/quickadd.js', './src/share.js', './src/sharecards.js', './src/motion.js', './src/icons.js',
+  './src/app.js', './src/router.js', './src/store.js', './src/ui.js', './src/palette.js', './src/platform.js', './src/install.js', './src/onboarding.js', './src/qrcode.js', './src/starfield.js', './src/tarotdraw.js', './src/orbcast.js', './src/decks.js', './src/relics.js', './src/llm.js', './src/verify.js', './src/sharelink.js', './src/privacy.js', './src/navmenu.js', './src/quickadd.js', './src/share.js', './src/sharecards.js', './src/motion.js', './src/icons.js',
   './src/engines/calendar.js', './src/engines/planets.js', './src/engines/bazi.js', './src/engines/unknown.js', './src/engines/astro.js', './src/engines/ziwei.js',
   './src/engines/naming.js', './src/engines/numbers.js', './src/engines/fortune.js', './src/engines/synastry.js', './src/engines/iching.js', './src/engines/tarot.js', './src/engines/qian.js', './src/engines/daily.js', './src/engines/bagua.js', './src/engines/transit.js',
   './src/data/strokes.js', './src/data/kangxi.js', './src/data/lucky81.js', './src/data/magnetic.js', './src/data/changelog.js', './src/data/wenyan.js', './src/data/hexagrams.js', './src/data/tarot.js', './src/data/qian.js', './src/data/cities.js', './src/data/nav.js',

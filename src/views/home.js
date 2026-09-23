@@ -12,6 +12,7 @@ import { dayInfo, rateDay, purposeName } from '../engines/daily.js';
 import { DISCLAIMER, sectionHead, pad } from './_shared.js';
 import { transits } from '../engines/transit.js';
 import { isHourUnknown } from '../engines/unknown.js';
+import { due, askedOf, daysAgo, setVerdict, snooze, VERDICTS, KINDS, kindOf, daysSetting } from '../verify.js';
 
 /* 首頁可自訂：哪些卡片要出現、工具區要放哪幾個 */
 export const HOME_CARDS = [
@@ -77,6 +78,28 @@ function todayCard(all, settings, t) {
           <span class="tags__k">忌</span>${j.bad.length ? j.bad.slice(0, 5).map(k => html`<span class="tag">${purposeName(k)}</span>`) : html`<span class="tag">—</span>`}
         </div>
       </a>
+    </section>`;
+}
+
+/* 回顧：之前存下來的占卜到期了，問一句「後來怎麼樣」。一次只問一筆，答完換下一筆 */
+function reviewCard() {
+  const list = due();
+  if (!list.length) return '';
+  const r = list[0];
+  const q = askedOf(r);
+  return html`
+    <section class="section" id="review">
+      ${raw(sectionHead('回顧', list.length > 1 ? `<span class="hint">還有 ${list.length - 1} 筆</span>` : ''))}
+      <div class="card review reveal" data-id="${r.id}">
+        <p class="card__label">${daysAgo(r)} 天前的${KINDS[kindOf(r)]}${r.who ? `　·　${r.who}` : ''}</p>
+        <p class="review__q">${q ? `「${q}」` : r.templateName}</p>
+        <p class="hint" style="margin-top:4px">後來怎麼樣了？</p>
+        <div class="review__btns">
+          ${VERDICTS.map(v => html`<button class="chip press" data-v="${v.k}">${v.t}</button>`)}
+          <button class="chip press" data-v="later">還沒發生</button>
+        </div>
+        <a class="hint review__open" href="#/records?id=${r.id}">看當時的內容 →</a>
+      </div>
     </section>`;
 }
 
@@ -193,6 +216,7 @@ export default {
         </div>
       </section>
 
+      ${raw(reviewCard())}
       ${shown(settings, 'today') ? raw(todayCard(all, settings, t)) : ''}
       ${shown(settings, 'transit') ? raw(transitCard(all, settings, profile, t)) : ''}
       ${shown(settings, 'luck') ? raw(luckCard(all, settings, t)) : ''}
@@ -246,6 +270,15 @@ export default {
   },
 
   mount(root, { settings }) {
+    // 回顧卡：答完讓卡片收起來，再換下一筆（或整塊消失）
+    $$('#review [data-v]', root).forEach(b => b.addEventListener('click', () => {
+      const card = b.closest('.review');
+      const id = card.dataset.id, v = b.dataset.v;
+      if (v === 'later') { snooze(id); toast(`好，${daysSetting() || 7} 天後再問一次`); }
+      else { setVerdict(id, v); toast(`記下了：${VERDICTS.find(x => x.k === v).t}`); }
+      card.classList.add('is-done');
+      setTimeout(() => resolve(), 420);
+    }));
     $$('#home-edit', root).forEach(b => b.addEventListener('click', () => openCustomise(settings)));
     // 臨時要幫人看一下，不必先跑到檔案頁填十幾個欄位
     $('#home-add', root)?.addEventListener('click', () => quickAdd({ settings, onSaved: () => resolve() }));

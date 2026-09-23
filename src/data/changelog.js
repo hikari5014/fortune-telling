@@ -2,11 +2,19 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.32.0';
+export const APP_VERSION = '0.33.0';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.33.0', date: '2026-09-23', title: '應驗追蹤：問過的事，之後回頭看準不準',
+    items: [
+      { kind: 'add', text: '卜卦、塔羅、求籤的結果頁多了「記下來」：不用先問 LLM，直接存一筆' },
+      { kind: 'add', text: '存下來幾天後（預設 7 天，設定頁可改或關掉），首頁會跳一張「回顧」卡問你後來怎麼樣：準、部分準、不準、還沒發生' },
+      { kind: 'add', text: '紀錄頁最上面多了應驗率，依卜卦、塔羅、求籤分開算；每筆紀錄也能自己標' },
+    ],
+  },
   {
     v: '0.32.0', date: '2026-09-23', title: '行運：今天的天空疊到你的本命盤',
     items: [

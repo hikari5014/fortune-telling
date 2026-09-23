@@ -4,6 +4,7 @@ import { store, uid } from '../store.js';
 import { tossCoins, reading, timeHexagram, numberHexagram, hexText, yaoName, YAO_POS } from '../engines/iching.js';
 import { observeReveal } from '../motion.js';
 import { DISCLAIMER, sectionHead, kv, askPrompt } from './_shared.js';
+import { trackBtn, bindTrack } from '../verify.js';
 import { coin } from '../relics.js';
 
 const hexSVG = (h, moving = [], title = '') => html`
@@ -93,6 +94,7 @@ export default {
           <button class="btn btn--primary press" id="ask">${raw(icon('prompt'))} 請 LLM 解卦</button>
           <button class="btn btn--ghost press" id="copy-hex">${raw(icon('copy'))} 複製卦象</button>
           <button class="btn btn--ghost press" id="again">${raw(icon('refresh'))} 重新起卦</button>
+          ${trackBtn()}
         </div>`;
       observeReveal(result);
 
@@ -108,6 +110,8 @@ export default {
       ].filter(Boolean).join('\n');
 
       $('#copy-hex', result).addEventListener('click', () => copyText(plain, '卦象已複製'));
+      bindTrack(result, () => ({ kind: 'iching', question: $('#q', root).value.trim(),
+        text: plain.replace(/^問題：.*\n/, ''), profile: all?.profile || null }));
       $('#again', result).addEventListener('click', () => { result.innerHTML = ''; stage.innerHTML = ''; scrollTo({ top: 0, behavior: 'smooth' }); });
       $('#ask', result).addEventListener('click', () => {
         store.setDraft('ichingResult', plain);

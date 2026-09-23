@@ -16,6 +16,7 @@ import { draw, fromPicks, pickSpread, shuffle, toText, SPREADS, DECK, birthCard,
 import { observeReveal } from '../motion.js';
 import { nameOf } from '../privacy.js';
 import { DISCLAIMER, sectionHead, needProfile, askPrompt } from './_shared.js';
+import { trackBtn, bindTrack } from '../verify.js';
 import { castHTML, mountCast, castRite } from '../orbcast.js';
 import * as decks from '../decks.js';
 
@@ -475,10 +476,12 @@ export default {
           <button class="btn btn--primary press" id="ask">${raw(icon('prompt'))} 請 LLM 解牌</button>
           <button class="btn btn--ghost press" id="copy-cards">${raw(icon('copy'))} 複製牌面</button>
           <button class="btn btn--ghost press" id="redraw">${raw(icon('refresh'))} 重抽</button>
+          ${trackBtn()}
         </div>`;
       observeReveal(table);
 
       $('#copy-cards', table).addEventListener('click', () => copyText(plain, '牌面已複製'));
+      bindTrack(table, () => ({ kind: 'tarot', question, text: plain, profile }));
       $('#redraw', table).addEventListener('click', () => { table.innerHTML = ''; scrollTo({ top: 0, behavior: 'smooth' }); });
       $('#ask', table).addEventListener('click', () => {
         store.setDraft('tarotResult', plain);
