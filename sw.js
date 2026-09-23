@@ -1,5 +1,5 @@
 /* 玄鑑 Service Worker：應用程式外殼快取 + 執行期快取 */
-const VERSION = 'xj-0.21.0';   // 與 src/data/changelog.js 的 APP_VERSION 同步
+const VERSION = 'xj-0.21.1';   // 與 src/data/changelog.js 的 APP_VERSION 同步
 const SHELL = [
   './', './index.html', './manifest.webmanifest',
   './styles/tokens.css', './styles/base.css', './styles/motion.css',
@@ -20,7 +20,7 @@ self.addEventListener('install', (e) => {
 });
 // 換版時清掉舊快取，但 KEEP 裡的不動 —— 那些東西的內容不隨版本改變，
 // 重抓只是浪費使用者的流量（塔羅牌圖有 2.3 MB）。
-const KEEP = (k) => k === VERSION || k === 'xj-tarot';
+const KEEP = (k) => k === VERSION || k === 'xj-tarot' || k === 'xj-art';
 self.addEventListener('activate', (e) => {
   e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => !KEEP(k)).map(k => caches.delete(k))))
     .then(() => self.clients.claim()));
@@ -49,6 +49,18 @@ self.addEventListener('fetch', (e) => {
   // 放在跟版號無關的快取，改版時不用重抓 —— 圖片內容不會跟著版本變。
   if (url.pathname.includes('/assets/tarot/')) {
     e.respondWith(caches.open('xj-tarot').then(async (c) => {
+      const hit = await c.match(req);
+      if (hit) return hit;
+      return fetch(req).then(r => { if (r.ok) c.put(req, r.clone()); return r; });
+    }));
+    return;
+  }
+
+  // 起卦那一段的插圖：跟塔羅牌圖一樣，內容不隨版本改變，
+  // 放在跟版號無關的快取，改版時不用重抓。不進安裝外殼 ——
+  // 圖還沒放進去的時候，addAll 遇到 404 會讓整個 Service Worker 裝不起來。
+  if (url.pathname.includes('/assets/ceremony/')) {
+    e.respondWith(caches.open('xj-art').then(async (c) => {
       const hit = await c.match(req);
       if (hit) return hit;
       return fetch(req).then(r => { if (r.ok) c.put(req, r.clone()); return r; });

@@ -95,3 +95,38 @@ test('主題色的 meta 跟著換了，不然開 App 時上下會出現一條舊
   const store = readFileSync('src/store.js', 'utf8');
   assert.match(store, /'#060810' : '#fbfaf5'/);
 });
+
+/* ── 起卦那一段 ─────────────────────────────── */
+const draw = readFileSync('src/tarotdraw.js', 'utf8');
+const swjs = readFileSync('sw.js', 'utf8');
+
+test('插圖沒放進去的時候，整段安靜地跳過而不是卡住', () => {
+  assert.match(draw, /if \(!art \|\| done\) return;/);
+  // 少了必要的那幾張就不播
+  assert.match(draw, /NEEDED\.every\(k => ok\[k\]\)/);
+  // 載圖失敗不能讓 Promise 炸掉
+  assert.match(draw, /\.catch\(\(\) => false\)/);
+});
+
+test('右手是選配 —— 沒有就拿左手鏡射，不會因此整段不播', () => {
+  assert.match(draw, /NEEDED = \['orb', 'aura', 'handL'\]/);
+  assert.match(draw, /ok\.handR \? ART\.handR : ART\.handL/);
+  assert.match(views, /\.cer__hand--r[^}]*scaleX\(-1\)/);
+});
+
+test('插圖不進安裝外殼 —— 一個 404 會讓整個 Service Worker 裝不起來', () => {
+  assert.ok(!swjs.slice(0, swjs.indexOf("self.addEventListener('install'")).includes('ceremony'),
+    '起卦插圖被放進 SHELL 了');
+  assert.match(swjs, /assets\/ceremony\//);
+  assert.match(swjs, /caches\.open\('xj-art'\)/);
+  assert.match(swjs, /k === 'xj-art'/);   // 改版時不要清掉，不然每次都重抓
+});
+
+test('起卦是可以跳過的，而且跳過之後會自然收尾', () => {
+  assert.match(draw, /輕點一下可以跳過/);
+  assert.match(draw, /skipped \|\| done \? 60 : ms/);
+});
+
+test('光暈那張靠 screen 吃掉白底，所以不必先去背', () => {
+  assert.match(views, /\.cer__aura[\s\S]*?mix-blend-mode: screen/);
+});

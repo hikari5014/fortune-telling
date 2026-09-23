@@ -2,11 +2,19 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.21.0';
+export const APP_VERSION = '0.21.1';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.21.1', date: '2026-09-23', title: '抽牌前多一段「起卦」',
+    items: [
+      { kind: 'add', text: '洗牌之前先起卦：水晶球浮上來、光暈在背後綻開、兩隻手從左右合圍，球亮起來炸出一把星屑，手才收回、牌才浮上來' },
+      { kind: 'add', text: '整段輕點一下就跳過，跳過之後會自然收尾而不是硬切' },
+      { kind: 'change', text: '插圖還沒放進 assets/ceremony/ 之前，這一段會安靜地跳過，抽牌直接從聚牌開始' },
+    ],
+  },
   {
     v: '0.21.0', date: '2026-09-23', title: '鎏金：換上新外觀，背景換成星空',
     items: [
