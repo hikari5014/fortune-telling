@@ -7,6 +7,7 @@ import { dictSize } from '../data/strokes.js';
 import { APP_VERSION, APP_STAGE, CHANGELOG } from '../data/changelog.js';
 import { DISCLAIMER } from './_shared.js';
 import { detect } from '../platform.js';
+import { SERVICES } from '../llm.js';
 
 
 const row = (title, desc, control) => html`
@@ -120,6 +121,15 @@ export default {
 
         <section class="setgroup reveal">
           <div class="setgroup__head">提示詞預設</div>
+          ${raw(row('外部 LLM',
+            '按下「去貼給 LLM」時預設開哪一個。ChatGPT、Claude、Perplexity 在瀏覽器裡開會把提示詞一起帶進輸入框；'
+            + 'Gemini 沒有可以帶提示詞的官方網址參數，只能開起來自己貼。'
+            + '手機 App 一律帶不動 —— 點連結雖然會被 App 接走，但那個參數 App 不會讀。'
+            + '提示詞太長塞不進網址時也會改成只開首頁（反正已經複製好了）。',
+            select('set-llm', SERVICES.map(x => x.name), (SERVICES.find(x => x.id === s.llmService) || SERVICES[0]).name)))}
+          ${raw(row('複製後自動開啟',
+            '按下「請 LLM 解讀」複製完，順手把上面那個服務開起來。關著的話只複製，要不要開自己決定。',
+            sw('set-llmauto', s.llmAutoOpen === true)))}
           ${raw(row('進階提示詞',
             '關著的時候（預設）：占卜、命盤頁上的「請 LLM 解讀」按一下就把整份提示詞複製好，'
             + '直接跳到貼回頁，可以馬上去外部 LLM 貼上。'
@@ -200,7 +210,7 @@ export default {
     bindSeg('set-stardensity', 'starDensity');
     bindSeg('set-zi', 'lateZiRule');
     bindSeg('set-wai', 'wageWaiRule');
-    ['set-swipe|swipeNav', 'set-haptics|haptics', 'set-glow|pointerGlow', 'set-scorecolor|scoreColor', 'set-tst|trueSolarTime', 'set-pdisc|promptDisclaimer', 'set-numeral|numeralRule', 'set-tarotimg|tarotImages', 'set-tarotlink|tarotChartLink', 'set-tarotcer|tarotCeremony', 'set-advprompt|advancedPrompt', 'set-sky|starfield']
+    ['set-swipe|swipeNav', 'set-haptics|haptics', 'set-glow|pointerGlow', 'set-scorecolor|scoreColor', 'set-tst|trueSolarTime', 'set-pdisc|promptDisclaimer', 'set-numeral|numeralRule', 'set-tarotimg|tarotImages', 'set-tarotlink|tarotChartLink', 'set-tarotcer|tarotCeremony', 'set-advprompt|advancedPrompt', 'set-sky|starfield', 'set-llmauto|llmAutoOpen']
       .forEach(x => { const [id, key] = x.split('|'); bindSw(id, key); });
     bindVal('set-tz', 'tzOffset', Number);
     bindVal('set-city', 'city');
@@ -212,6 +222,11 @@ export default {
     bindVal('set-pformat', 'promptFormat');
     bindVal('set-prefix', 'promptPrefix');
     bindVal('set-suffix', 'promptSuffix');
+    // 下拉選的是名字，存的是 id
+    $('#set-llm', root)?.addEventListener('change', (e) => {
+      const hit = SERVICES.find(x => x.name === e.target.value);
+      if (hit) save({ llmService: hit.id });
+    });
 
     const fontEl = $('#set-font', root);
     fontEl.addEventListener('input', (e) => {

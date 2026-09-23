@@ -5,6 +5,7 @@ import { resolve } from '../router.js';
 import { shakeQian, castJiao, toText, BUILTIN_SET, normalizeSet, SET_SCHEMA, luckScore } from '../engines/qian.js';
 import { observeReveal } from '../motion.js';
 import { DISCLAIMER, sectionHead, kv, shareBtn, doShare, askPrompt } from './_shared.js';
+import { tube as tubeArt, stick as stickArt, slip as slipArt } from '../relics.js';
 
 const luckCls = (l) => ['大吉', '上吉', '吉'].includes(l) ? 'luck--good' : l === '中吉' || l === '中平' ? 'luck--half' : 'luck--bad';
 const allSets = () => [BUILTIN_SET, ...store.qianSets];
@@ -76,8 +77,8 @@ export default {
         ${raw(sectionHead('搖籤'))}
         <div class="qstep reveal is-in">
           <p class="qstep__hint">默念姓名、出生年月日與要問的事，然後搖籤筒。</p>
-          <div class="qtube" id="tube">
-            ${Array.from({ length: 7 }, (_, i) => html`<span class="qstick" style="--d:${[0, 6, 2, 10, 4, 8, 1][i]}"></span>`)}
+          <div class="qtubewrap" id="tubewrap">
+            <div class="qtube" id="tube">${raw(tubeArt(9))}</div>
           </div>
           <button class="btn btn--primary press" id="shake" style="margin-top:var(--sp-5)">
             ${raw(icon('dice'))} 搖出一支籤
@@ -95,10 +96,12 @@ export default {
       await sleep(1120);
       tube.classList.remove('is-shaking');
       poem = shakeQian(set);
-      const sticks = $$('.qstick', tube);
-      sticks[3].classList.add('qstick--out');
+      // 搖完才知道是哪一支 —— 籤號刻在升起來的那支上面，
+      // 不然使用者看到的只是「一根棍子」，跟接下來的籤詩接不起來
+      $('#tubewrap', stage).insertAdjacentHTML('beforeend',
+        `<div class="qdrawn is-rising" id="drawn">${stickArt(poem.n)}</div>`);
       haptic(10);
-      await sleep(760);
+      await sleep(1180);
       toJiao();
     }
 
@@ -165,17 +168,22 @@ export default {
       const plain = toText({ poem, rounds: log, confirmed: true, set }, q);
       stage.innerHTML = html`
         ${raw(sectionHead('籤詩'))}
-        <div class="qcard reveal">
-          <div class="qcard__head">
-            <span class="qcard__no">第 ${poem.n} 首</span>
-            <span class="badge badge--dash">${poem.gz}籤</span>
-            <span class="luck ${luckCls(poem.luck)}">${poem.luck}</span>
-          </div>
-          <div class="qpoem ${store.settings.qianVertical ? 'qpoem--v' : ''}" id="qpoem">
-            ${poem.lines.map((l, i) => html`<p style="--i:${i}">${l}</p>`)}
-          </div>
-          <div class="row" style="justify-content:center;margin-top:var(--sp-3)">
-            <button class="chip press" id="qdir" aria-pressed="${!!store.settings.qianVertical}">直書</button>
+        <!-- 籤詩紙：紙是畫的（毛邊與摺痕），字疊在上面 ——
+             中文直書要交給 CSS 的 writing-mode，塞進 SVG 只會更難排 -->
+        <div class="qslip reveal">
+          ${raw(slipArt())}
+          <div class="qslip__in">
+            <div class="qcard__head">
+              <span class="qcard__no">第 ${poem.n} 首</span>
+              <span class="badge badge--dash">${poem.gz}籤</span>
+              <span class="luck ${luckCls(poem.luck)}">${poem.luck}</span>
+            </div>
+            <div class="qpoem ${store.settings.qianVertical ? 'qpoem--v' : ''}" id="qpoem">
+              ${poem.lines.map((l, i) => html`<p style="--i:${i}">${l}</p>`)}
+            </div>
+            <div class="row" style="justify-content:center;margin-top:var(--sp-3)">
+              <button class="chip press" id="qdir" aria-pressed="${!!store.settings.qianVertical}">直書</button>
+            </div>
           </div>
         </div>
 

@@ -2,6 +2,7 @@ import { html, raw, copyText } from '../ui.js';
 import { icon } from '../icons.js';
 import { store } from '../store.js';
 import { quickBuild, parseQuery } from '../prompt/quick.js';
+import { openLLM } from '../llm.js';
 import { isHourUnknown, affected, LEVEL_TEXT } from '../engines/unknown.js';
 
 export const DISCLAIMER = html`<p class="disclaimer">
@@ -56,6 +57,9 @@ export function askPrompt(target, all = null) {
   if (!built) { go(); return false; }
 
   copyText(built.text, '提示詞已複製，貼到 LLM 問問看');
+  /* 開新視窗一定要在點擊那個事件裡同步做，晚一步就會被當成彈出視窗擋掉。
+     所以這裡不能等剪貼簿的 Promise。 */
+  if (store.settings.llmAutoOpen) openLLM(built.text, store.settings.llmService);
   store.setDraft('pending', {
     t: built.template.id, name: built.template.name,
     text: built.text, q: q.q || '', at: Date.now(),
