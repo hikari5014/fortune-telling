@@ -2,11 +2,21 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.25.1';
+export const APP_VERSION = '0.26.0';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.26.0', date: '2026-09-23', title: '求籤與卜卦換上法器，外部 LLM 可以一鍵開啟',
+    items: [
+      { kind: 'change', text: '銅錢改成真的方孔錢（正面鑄字、背面鑄記），會翻面、有厚度' },
+      { kind: 'change', text: '籤筒改成竹筒配一把木籤，搖的時候籤會跳動；搖出來那一支會從筒口升起來，籤號刻在上面' },
+      { kind: 'add', text: '籤詩改印在一張紙上：毛邊、摺痕，深色主題下也是淺色的紙 —— 那是一個物件，不是介面的一塊面板' },
+      { kind: 'add', text: '設定 →「外部 LLM」與「複製後自動開啟」：複製完可以直接把 ChatGPT、Gemini、Claude、Perplexity 開起來' },
+      { kind: 'change', text: '在瀏覽器裡開 ChatGPT／Claude／Perplexity，短一點的提示詞會直接帶進輸入框；Gemini 與手機 App 帶不動，按鈕上有寫' },
+    ],
+  },
   {
     v: '0.25.1', date: '2026-09-23', title: '手機長按不會再選到字',
     items: [

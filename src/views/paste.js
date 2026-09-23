@@ -3,17 +3,11 @@
    提示詞在上一頁就已經複製好了，這裡只負責三件事：
    告訴你複製好了、讓你一步去外部 LLM、把回覆收回來存成紀錄。
    要調語氣換模板的人不會來這頁 —— 他們在設定裡開「進階提示詞」，走產生器。 */
-import { html, raw, $, toast, copyText } from '../ui.js';
+import { html, raw, $, $$, toast, copyText } from '../ui.js';
 import { icon } from '../icons.js';
 import { store, uid } from '../store.js';
 import { DISCLAIMER, sectionHead } from './_shared.js';
-
-/* 常見的外部 LLM。只是開新分頁，App 不會替你送出任何東西。 */
-const SITES = [
-  { name: 'ChatGPT', url: 'https://chatgpt.com/' },
-  { name: 'Claude', url: 'https://claude.ai/new' },
-  { name: 'Gemini', url: 'https://gemini.google.com/app' },
-];
+import { SERVICES, plan, openLLM } from '../llm.js';
 
 export default {
   title: '貼回結果', eyebrow: 'PASTE BACK',
@@ -50,13 +44,18 @@ export default {
         <section class="reveal">
           ${raw(sectionHead('去貼給 LLM'))}
           <p class="hint" style="margin-bottom:var(--sp-3)">
-            開新分頁，在輸入框貼上（長按貼上／Ctrl+V），送出，再把回覆整段複製回來。
-            App 不會替你連線，也不會把任何東西送出去。
+            提示詞已經在剪貼簿裡了。標著「直接帶過去」的那幾個，
+            在<b>瀏覽器</b>裡開會連提示詞一起帶進輸入框；其餘的開起來自己貼上。
+            手機 App 一律帶不動 —— 那是對方 App 的限制，不是這裡沒做。
           </p>
-          <div class="row" style="gap:var(--sp-2)">
-            ${raw(SITES.map(s => html`
-              <a class="btn btn--ghost press" href="${s.url}" target="_blank" rel="noopener noreferrer">
-                ${raw(icon('share'))} ${s.name}</a>`).join(''))}
+          <div class="grid grid--2" style="gap:var(--sp-2)">
+            ${raw(SERVICES.map((s) => {
+              const p2 = plan(p.text, s.id);
+              return html`<button class="btn btn--ghost press llmbtn" data-llm="${s.id}">
+                ${raw(icon('share'))}
+                <span>${s.name}<small>${p2.carried ? '直接帶過去' : '開起來自己貼'}</small></span>
+              </button>`;
+            }).join(''))}
           </div>
         </section>
 
@@ -85,6 +84,12 @@ export default {
     if (!p?.text) return;
 
     $('#recopy', root).addEventListener('click', () => copyText(p.text, '又複製了一次'));
+
+    // 開新視窗要在點擊事件裡同步做，不然會被當成彈出視窗擋掉
+    $$('[data-llm]', root).forEach(b => b.addEventListener('click', () => {
+      const r = openLLM(p.text, b.dataset.llm);
+      toast(r.carried ? `已開啟 ${r.name}，提示詞帶過去了` : `已開啟 ${r.name} —— ${r.why}`);
+    }));
 
     $('#save-rec', root).addEventListener('click', () => {
       const content = $('#paste-back', root).value.trim();

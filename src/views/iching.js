@@ -4,6 +4,7 @@ import { store, uid } from '../store.js';
 import { tossCoins, reading, timeHexagram, numberHexagram, hexText, yaoName, YAO_POS } from '../engines/iching.js';
 import { observeReveal } from '../motion.js';
 import { DISCLAIMER, sectionHead, kv, askPrompt } from './_shared.js';
+import { coin } from '../relics.js';
 
 const hexSVG = (h, moving = [], title = '') => html`
   <div>
@@ -122,7 +123,13 @@ export default {
         const y = yao[i];
         const row = document.createElement('div');
         row.className = 'tossrow reveal is-in';
-        row.innerHTML = `<div class="coins">${y.coins.map(c => `<span class="coin is-spin ${c === 3 ? 'is-yang' : ''}">${c === 3 ? '字' : '花'}</span>`).join('')}</div>
+        // 每枚錢都是一張正面加一張背面疊起來的，翻到哪一面由 CSS 決定 ——
+        // 換字比較省事，但那樣就沒有「翻過來」的厚度感了
+        row.innerHTML = `<div class="coins">${y.coins.map(c => `
+            <span class="coin is-spin ${c === 3 ? 'is-yang' : 'is-yin'}" title="${c === 3 ? '字' : '花'}">
+              <span class="coin__f">${coin(true)}</span>
+              <span class="coin__f coin__f--b">${coin(false)}</span>
+            </span>`).join('')}</div>
           <small>第 ${i + 1} 爻　${y.sum} ${y.name}${y.moving ? '（動）' : ''}</small>`;
         box.appendChild(row);
         haptic(8);

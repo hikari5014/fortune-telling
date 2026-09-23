@@ -218,21 +218,6 @@
 .hex__label b { font-family: var(--font-display); font-size: var(--step-1); letter-spacing: .1em; }
 .hex__label small { font-size: var(--step--2); color: var(--ink-3); }
 
-/* 銅錢 */
-.coins { display: flex; gap: var(--sp-3); justify-content: center; }
-.coin {
-  width: 46px; height: 46px; border-radius: 50%; border: 2px solid var(--ink);
-  display: grid; place-items: center; font-family: var(--font-display); font-size: var(--step-0);
-  background: var(--surface); transform-style: preserve-3d;
-}
-.coin.is-yang { background: var(--invert-bg); color: var(--invert-ink); }
-.coin.is-spin { animation: coin-spin 620ms cubic-bezier(.3,.1,.3,1) both; }
-@keyframes coin-spin {
-  0% { transform: rotateY(0) translateY(0); }
-  45% { transform: rotateY(900deg) translateY(-34px); }
-  100% { transform: rotateY(1800deg) translateY(0); }
-}
-.tossrow { display: grid; gap: 4px; justify-items: center; }
 .tossrow small { font-family: var(--font-num); font-size: var(--step--2); color: var(--ink-3); }
 
 /* 塔羅 */
@@ -342,40 +327,6 @@
 /* ── 求籤 ──────────────────────────────────────────── */
 .qstep { display: grid; gap: var(--sp-4); justify-items: center; text-align: center; }
 .qstep__hint { font-size: var(--step--1); color: var(--ink-3); max-width: 34ch; line-height: 1.8; }
-
-/* 籤筒 */
-.qtube {
-  position: relative; width: 116px; height: 158px; margin-top: var(--sp-5);
-  border: 2px solid var(--ink); border-radius: 10px 10px 16px 16px;
-  background: var(--surface); display: flex; align-items: flex-start; justify-content: center;
-  gap: 5px; padding-top: 0; overflow: visible; transform-origin: 50% 100%;
-}
-.qtube::before {
-  content: ""; position: absolute; left: -6px; right: -6px; top: -2px; height: 12px;
-  border: 2px solid var(--ink); border-radius: 4px; background: var(--bg);
-}
-.qtube.is-shaking { animation: tube-shake 560ms cubic-bezier(.36,.07,.19,.97) 2; }
-@keyframes tube-shake {
-  0%, 100% { transform: rotate(0) translateY(0); }
-  15% { transform: rotate(-7deg) translateY(-4px); }
-  35% { transform: rotate(6deg) translateY(2px); }
-  55% { transform: rotate(-5deg) translateY(-3px); }
-  75% { transform: rotate(4deg) translateY(1px); }
-}
-.qstick {
-  width: 9px; border-radius: 3px 3px 0 0; background: var(--ink-4);
-  margin-top: calc(var(--d, 0) * 1px);
-  transition: transform var(--dur-4) var(--ease-out), background var(--dur-3) var(--ease);
-}
-.qstick--out {
-  background: var(--ink);
-  animation: stick-out 720ms var(--ease-out) both;
-}
-@keyframes stick-out {
-  0% { transform: translateY(0); }
-  60% { transform: translateY(-64px); }
-  100% { transform: translateY(-52px); }
-}
 
 /* 擲筊 */
 .jiaos { display: flex; gap: var(--sp-5); justify-content: center; margin: var(--sp-4) 0; perspective: 700px; }
@@ -890,3 +841,114 @@ body.cer-open { overflow: hidden; }
 .dkcell span { font-size: 10px; letter-spacing: .04em; color: var(--ink-3); line-height: 1.3;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dkcell.is-own span { color: var(--ink-2); }
+
+/* ── 法器：銅錢、籤筒、木籤、籤詩紙 ────────────────────
+   都是自己畫的 SVG（見 src/relics.js）。共用這一組規則：
+   rl-body 是器物本體的底色、rl-rim 是線、rl-band 是箍或摺痕。
+   線一律吃 currentColor，所以放到哪個主題都對。 */
+.rl { display: block; overflow: visible; }
+.rl-body { fill: var(--surface-2); }
+.rl-rim { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.rl-rim--in { stroke-width: 1.1; opacity: .5; }
+.rl-band { fill: none; stroke: currentColor; stroke-width: 2; opacity: .55; stroke-linecap: round; }
+.rl-grain { fill: none; stroke: currentColor; stroke-width: 1; opacity: .2; }
+.rl-hole { fill: var(--bg); }
+
+/* 銅錢 */
+.rl--coin { width: 100%; height: 100%; color: var(--accent); }
+.rl--coin .rl-body { fill: var(--surface-2); }
+.rl-glyph text, .rl-num {
+  fill: currentColor; font-family: var(--font-display); font-weight: 600;
+  text-anchor: middle; dominant-baseline: middle;
+}
+.rl-glyph text { font-size: 15px; }
+.rl-mark { fill: none; stroke: currentColor; stroke-width: 2; opacity: .6; stroke-linecap: round; }
+
+.coins { display: flex; gap: var(--sp-4); justify-content: center; perspective: 900px; }
+.coin {
+  width: 54px; height: 54px; flex: none;
+  transform-style: preserve-3d; position: relative;
+  filter: drop-shadow(0 6px 10px rgba(0,0,0,.45));
+}
+/* 正反兩面各一張，靠翻轉決定看到哪一面 —— 換字比較快，但那樣就沒有厚度了 */
+.coin__f { position: absolute; inset: 0; backface-visibility: hidden; }
+.coin__f--b { transform: rotateY(180deg); }
+.coin.is-yang { transform: rotateY(0deg); }
+.coin.is-yin  { transform: rotateY(180deg); }
+.coin.is-spin { animation: coin-spin 720ms cubic-bezier(.3,.05,.25,1) both; }
+.coin.is-yin.is-spin { animation-name: coin-spin-b; }
+@keyframes coin-spin {
+  0%   { transform: rotateY(0) translateY(0) scale(1); }
+  45%  { transform: rotateY(1080deg) translateY(-44px) scale(1.1); }
+  100% { transform: rotateY(2160deg) translateY(0) scale(1); }
+}
+@keyframes coin-spin-b {
+  0%   { transform: rotateY(180deg) translateY(0) scale(1); }
+  45%  { transform: rotateY(1260deg) translateY(-44px) scale(1.1); }
+  100% { transform: rotateY(2340deg) translateY(0) scale(1); }
+}
+.tossrow { display: grid; gap: var(--sp-2); justify-items: center; }
+
+/* 籤筒 */
+/* 籤筒與「抽出來那一支」疊在同一個位置上：
+   籤要從筒口升起來，不是掉到籤筒下面去。 */
+.qtubewrap { position: relative; width: min(46vw, 158px); margin-top: var(--sp-6); }
+.qtube { color: var(--accent); transform-origin: 50% 96%; }
+.rl--tube { width: 100%; height: auto; }
+.rl--tube .rl-body { fill: var(--surface-2); }
+.rl--tube .rl-mouth { fill: var(--bg); }
+.rl-stick rect { fill: var(--surface); stroke: currentColor; stroke-width: 1.6; opacity: .92; }
+.qtube.is-shaking { animation: tube-shake 520ms cubic-bezier(.36,.07,.19,.97) 3; }
+.qtube.is-shaking .rl-stick { animation: stick-jitter 260ms var(--ease) infinite; animation-delay: calc(var(--i) * 26ms); }
+@keyframes tube-shake {
+  0%, 100% { transform: rotate(0) translateY(0); }
+  15% { transform: rotate(-8deg) translateY(-5px); }
+  35% { transform: rotate(7deg) translateY(3px); }
+  55% { transform: rotate(-6deg) translateY(-4px); }
+  75% { transform: rotate(5deg) translateY(2px); }
+}
+@keyframes stick-jitter { 0%, 100% { translate: 0 0; } 50% { translate: 0 -5px; } }
+
+/* 抽出來的那一支：從筒口慢慢升上來，停住，再落到旁邊 */
+.qdrawn { position: absolute; left: 50%; bottom: 34%; translate: -50% 0; z-index: 2; }
+.rl--stick { height: min(30vh, 216px); width: auto; color: var(--accent); }
+.rl--stick .rl-body { fill: var(--surface); }
+.rl--stick .rl-num { font-size: 15px; letter-spacing: .1em; }
+.qdrawn.is-rising .rl--stick { animation: stick-rise 1200ms var(--ease-out) both; }
+@keyframes stick-rise {
+  0%   { transform: translateY(46%) scale(.92); opacity: 0; }
+  55%  { transform: translateY(-14%) scale(1); opacity: 1; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+/* 籤詩紙 */
+.qslip { position: relative; margin-inline: auto; width: min(100%, 340px); color: var(--ink-4);
+  filter: drop-shadow(0 10px 26px rgba(0,0,0,.45)); }
+.rl--slip { position: absolute; inset: 0; width: 100%; height: 100%; }
+.rl-paper { fill: var(--paper); }
+.rl-fold { fill: none; stroke: currentColor; stroke-width: 1; opacity: .3; stroke-dasharray: 2 5; }
+/* 籤詩紙在深色主題下也是**淺色的紙**，不是一塊深色面板。
+   理由跟塔羅牌面一樣：那是一個「物件」，不是介面的一部分 ——
+   在夜裡拿著一張籤詩紙，紙本來就是亮的。
+   整組代幣在紙裡面重新定義，所以裡面的徽章、吉凶、按鈕都會自動變成紙上的樣子，
+   不用一個一個去改顏色。 */
+.qslip__in {
+  position: relative; padding: var(--sp-6) var(--sp-5);
+  --ink: #201d16; --ink-2: #4a4334; --ink-3: #7a705a; --ink-4: #a9a08a;
+  --accent: #8a6d2f; --invert-bg: #8a6d2f; --invert-ink: #fdfaf0;
+  --line: #d8cfb4; --line-2: #bfb392; --surface: #f6efdd; --surface-2: #e9e0c7;
+  --edge: transparent; --lift: 0 1px 2px rgba(60,50,20,.12);
+  color: var(--ink);
+}
+:root { --paper: #efe6d2; }
+.qslip { color: rgba(120,104,66,.55); }
+
+:root[data-motion="off"] .coin.is-spin,
+:root[data-motion="off"] .qtube.is-shaking,
+:root[data-motion="off"] .qtube.is-shaking .rl-stick,
+:root[data-motion="off"] .qdrawn.is-rising .rl--stick { animation: none; }
+
+/* 去貼給 LLM 的那幾顆：名字底下一行說明「帶不帶得動提示詞」 */
+.llmbtn { justify-content: flex-start; text-align: left; padding-inline: var(--sp-4); }
+.llmbtn span { display: grid; line-height: 1.25; }
+.llmbtn small { font-size: var(--step--2); color: var(--ink-3); letter-spacing: .04em; }

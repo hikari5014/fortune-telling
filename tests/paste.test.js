@@ -27,15 +27,30 @@ test('複製過之後，該有的都在', () => {
   }
 });
 
-test('去外部 LLM 的連結開新分頁，而且不外洩來源網址', () => {
-  store.setDraft('pending', { t: 'iching', name: '解卦', text: 'x', q: '', at: 1 });
+test('去外部 LLM 的按鈕：開新分頁、不外洩來源網址，而且誠實標示帶不帶得動', () => {
+  store.setDraft('pending', { t: 'iching', name: '解卦', text: 'x'.repeat(40), q: '', at: 1 });
   const out = String(view.render({}));
-  const links = [...out.matchAll(/<a[^>]+href="(https:[^"]+)"[^>]*>/g)];
-  assert.ok(links.length >= 3, '外部 LLM 的捷徑不見了');
-  for (const [tag] of links) {
-    assert.match(tag, /target="_blank"/);
-    assert.match(tag, /rel="noopener noreferrer"/);
-  }
+  const btns = [...out.matchAll(/data-llm="([a-z]+)"/g)].map(m => m[1]);
+  assert.deepEqual(btns, ['chatgpt', 'gemini', 'claude', 'perplexity']);
+  // 短提示詞：三家帶得動、Gemini 帶不動 —— 按鈕上就要寫清楚
+  // （只數按鈕裡的 <small>，上面說明文字也提到同一句話）
+  assert.equal(out.split('<small>直接帶過去</small>').length - 1, 3);
+  assert.equal(out.split('<small>開起來自己貼</small>').length - 1, 1);
+  // 用 window.open 而不是 <a>，因為要先算「這次帶不帶得動」
+  const paste = readFileSync('src/views/paste.js', 'utf8');
+  assert.match(paste, /openLLM\(p\.text, b\.dataset\.llm\)/);
+  assert.match(readFileSync('src/llm.js', 'utf8'), /'noopener,noreferrer'/);
+});
+
+test('提示詞太長就不塞進網址 —— 寧可少一個便利，也不要給人切一半的提示詞', async () => {
+  const { plan } = await import('../src/llm.js');
+  const short = plan('今天運勢如何', 'chatgpt');
+  assert.equal(short.carried, true);
+  const long = plan('字'.repeat(1200), 'chatgpt');
+  assert.equal(long.carried, false);
+  assert.ok(long.url.length < 60, '太長的時候應該只開首頁');
+  // Gemini 沒有官方的網址參數，任何長度都帶不動
+  assert.equal(plan('短', 'gemini').carried, false);
 });
 
 test('「改一下再問」要真的進得了產生器，不會又被攔回來', () => {
