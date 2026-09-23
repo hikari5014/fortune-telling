@@ -81,7 +81,7 @@ export function ceremony({ spread, order, question = '', allowReversed = true, r
     const stepEl = root.querySelector('.cer__step');
     const tipEl = root.querySelector('.cer__tip');
     const goBtn = root.querySelector('.cer__go');
-    const sky = starfield(root.querySelector('.cer__sky'), { density: 1.15 });
+    const sky = starfield(root.querySelector('.cer__sky'), { density: 1.15, parallax: 0 });
 
     for (let i = 0; i < need; i++) {
       const s = document.createElement('span');

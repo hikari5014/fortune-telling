@@ -61,6 +61,8 @@ const DEFAULT_SETTINGS = {
   tarotImages: true,         // 塔羅顯示偉特牌圖（關掉就用線稿卡，省流量）
   tarotChartLink: true,      // 塔羅牌面對照本命盤（大牌對行星星座、小牌對三十六旬）
   tarotCeremony: true,       // 抽牌儀式：洗牌、攤扇、自己挑、翻開
+  starfield: true,           // 背景星空：會閃、會極慢自轉、跟著捲動有視差、偶爾來一顆流星
+  starDensity: 1,            // 星點密度倍率（0.5 稀疏 / 1 標準 / 1.6 濃密）
 };
 
 const listeners = new Set();
@@ -232,9 +234,10 @@ export function applyChrome(s = store.settings) {
   root.dataset.theme = dark ? 'dark' : 'light';
   root.dataset.motion = s.motion;
   root.dataset.density = s.density;
+  root.dataset.sky = s.starfield === false ? 'off' : 'on';
   root.style.setProperty('--font-scale', s.fontScale);
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute('content', dark ? '#0a0a0a' : '#ffffff');
+  if (meta) meta.setAttribute('content', dark ? '#060810' : '#fbfaf5');
 }
 
 export const uid = (p = 'id') => `${p}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;

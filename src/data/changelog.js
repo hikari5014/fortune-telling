@@ -2,11 +2,21 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.20.0';
+export const APP_VERSION = '0.21.0';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.21.0', date: '2026-09-23', title: '鎏金：換上新外觀，背景換成星空',
+    items: [
+      { kind: 'change', text: '整個 App 換成「鎏金」：深色是靛黑底配象牙白，淺色是米白紙配墨黑，重點一律上金' },
+      { kind: 'change', text: '區塊不再畫框 —— 深色靠底色深淺分層，淺色靠陰影分層' },
+      { kind: 'add', text: '背景星空：星點會閃、整片會極慢自轉，捲動時近處的大星走得比遠處的小星多，偶爾來一顆流星' },
+      { kind: 'add', text: '設定 → 動態：「背景星空」開關與「星點密度」三段可調；動畫強度關掉時星空還在，只是不動了' },
+      { kind: 'change', text: '原本「只有黑白」那條規矩到此為止 —— 彩度就只有這一個金，不會再加第二個顏色' },
+    ],
+  },
   {
     v: '0.20.0', date: '2026-09-23', title: '按一下就複製好提示詞',
     items: [

@@ -1,4 +1,13 @@
-/* ── 設計代幣：純黑白單色系統 ───────────────────────────── */
+/* ── 設計代幣：鎏金（靛黑 × 一個金）──────────────────────
+   原本是純黑白。v0.21.0 起改成「黑白＋一個金」：
+   底是靛藍近黑、字是象牙白，重點（啟用狀態、主要按鈕、圖示、分數環）上金。
+   這是刻意破掉「只有黑白」那條規矩 —— 星辰主題配金，
+   跟塔羅牌背與抽牌儀式是同一個世界。彩度只有這一個，不再多加第二個顏色。
+
+   區塊一律不畫框（--edge 永遠透明）：
+   ・深色靠底色深淺分層（bg → surface → surface-2 三階）
+   ・淺色靠陰影分層（--lift / --lift-sm；深色下兩者皆為 none）
+   --line 只留給「分隔線」用 —— 區段標題後的那一條、表格線、格線間隙。 */
 :root {
   --font-scale: 1;
 
@@ -30,41 +39,56 @@
   --shell-max: 1180px;
 }
 
-/* 深色（預設）：黑底白字 */
+/* 深色（預設）：靛黑底、象牙白字、淡金重點 */
 :root[data-theme="dark"] {
-  --bg:      #0a0a0a;
-  --bg-2:    #101011;
-  --surface: #141415;
-  --surface-2:#1b1b1d;
-  --line:    #2a2a2d;
-  --line-2:  #3d3d42;
-  --ink:     #fafafa;
-  --ink-2:   #b6b6ba;
-  --ink-3:   #78787e;
-  --ink-4:   #4c4c52;
-  --invert-bg: #fafafa;
-  --invert-ink:#0a0a0a;
-  --glow:    rgba(255,255,255,.085);
-  --shadow:  0 1px 0 rgba(255,255,255,.05), 0 18px 40px -22px rgba(0,0,0,.9);
-  --grain-op: .045;
+  --bg:      #060810;
+  --bg-2:    #0a0e1a;
+  --surface: #0d1120f0;      /* 帶一點透明：星空從區塊底下若隱若現 */
+  --surface-2:#151b2ef2;
+  --field:   #151b2e;
+  --line:    #1d2337;
+  --line-2:  #2a3350;
+  --edge:    transparent;
+  --ink:     #f0ecdf;
+  --ink-2:   #a6a293;
+  --ink-3:   #6d6a5e;
+  --ink-4:   #464438;
+  --accent:  #e8d9a8;
+  --accent-ink: #0d1120;
+  --invert-bg: var(--accent);
+  --invert-ink: var(--accent-ink);
+  --star:    232 217 168;
+  --glow:    rgba(232,217,168,.075);
+  --lift:    none;
+  --lift-sm: none;
+  --shadow:  0 1px 0 rgba(232,217,168,.06), 0 18px 40px -22px rgba(0,0,0,.95);
+  --grain-op: .05;
 }
 
-/* 淺色：白底黑字 */
+/* 淺色：米白紙、墨黑字、深金重點。
+   淺色背景上的明度差太微弱，所以這裡改用陰影把區塊抬起來。 */
 :root[data-theme="light"] {
-  --bg:      #ffffff;
-  --bg-2:    #f6f6f5;
+  --bg:      #fbfaf5;
+  --bg-2:    #f3f0e6;
   --surface: #ffffff;
-  --surface-2:#f2f2f1;
-  --line:    #e3e3e1;
-  --line-2:  #c9c9c6;
-  --ink:     #0a0a0a;
-  --ink-2:   #434345;
-  --ink-3:   #78787e;
-  --ink-4:   #a8a8ac;
-  --invert-bg: #0a0a0a;
-  --invert-ink:#fafafa;
-  --glow:    rgba(0,0,0,.055);
-  --shadow:  0 1px 0 rgba(0,0,0,.03), 0 18px 36px -24px rgba(0,0,0,.35);
+  --surface-2:#f3f0e6;
+  --field:   #f6f4ec;
+  --line:    #e7e3d5;
+  --line-2:  #cfc8b2;
+  --edge:    transparent;
+  --ink:     #14161f;
+  --ink-2:   #4d4f5c;
+  --ink-3:   #83826f;
+  --ink-4:   #b0af9c;
+  --accent:  #8a6d2f;
+  --accent-ink: #fbfaf5;
+  --invert-bg: var(--accent);
+  --invert-ink: var(--accent-ink);
+  --star:    160 132 70;
+  --glow:    rgba(138,109,47,.07);
+  --lift:    0 1px 2px rgba(30,28,15,.05), 0 12px 30px -16px rgba(30,28,15,.28);
+  --lift-sm: 0 1px 2px rgba(30,28,15,.07);
+  --shadow:  0 1px 2px rgba(30,28,15,.06), 0 18px 36px -24px rgba(30,28,15,.35);
   --grain-op: .03;
 }
 

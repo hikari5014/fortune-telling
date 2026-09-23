@@ -155,6 +155,38 @@ async function paint(view, p) {
   syncNav(p);
 }
 
+/* ── 背景星空 ───────────────────────────── */
+/* 一層固定的 canvas 墊在所有內容底下。會閃、會極慢自轉，
+   捲動時近景的大星走得比遠景的小星多，所以有前後層次；偶爾來一顆流星。
+
+   什麼時候不畫：設定關掉、動畫強度設為「關閉」、或系統要求減少動態。
+   後兩者不是整片拿掉，而是留一張靜止的星圖 —— 星辰是這個 App 的主題，
+   該消失的是「動」，不是星空本身。 */
+let sky = null;
+export function paintSky() {
+  const s = store.settings;
+  sky?.stop();
+  sky = null;
+  if (s.starfield === false) return;
+  const still = s.motion === 'off' || matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const dark = document.documentElement.dataset.theme === 'dark';
+  import('./starfield.js').then(({ starfield }) => {
+    const cv = $('#sky');
+    // 沒有 canvas（測試環境、極舊瀏覽器）就安靜地不畫，不要讓整個 App 掛掉
+    if (typeof cv?.getContext !== 'function' || store.settings.starfield === false) return;
+    sky?.stop();
+    sky = starfield(cv, {
+      density: Number(s.starDensity) || 1,
+      reduced: still,
+      // 淺色主題下星星要反過來畫成深色，不然米白紙上根本看不見
+      tint: dark ? [232, 217, 168] : [150, 122, 62],
+      dust: dark ? [255, 255, 255] : [120, 118, 105],
+      drift: 2.2,
+      parallax: 0.28,
+    });
+  });
+}
+
 /* ── 啟動 ──────────────────────────────── */
 /** 以 visualViewport 追蹤虛擬鍵盤高度，寫進 --kb 供抽屜使用 */
 function trackKeyboard() {
@@ -185,6 +217,7 @@ function boot() {
   import('./onboarding.js').then(m => m.maybeStartTour());
   buildNav();
   syncThemeBtn();
+  paintSky();
   initFeedback();
 
   $('#btn-back').innerHTML = icon('back');
@@ -223,7 +256,7 @@ function boot() {
   }, { passive: true });
 
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-    if (store.settings.theme === 'system') { applyChrome(); syncThemeBtn(); }
+    if (store.settings.theme === 'system') { applyChrome(); syncThemeBtn(); paintSky(); }
   });
 
   initSwipe((dir) => {
@@ -235,6 +268,7 @@ function boot() {
 
   onStore((kind) => {
     if (kind === 'settings' || kind === 'profiles' || kind === 'all') { invalidate(); syncThemeBtn(); }
+    if (kind === 'settings' || kind === 'all') paintSky();   // 主題、密度、開關都會換掉整片星空
   });
 
   addEventListener('keydown', (e) => {
