@@ -268,6 +268,39 @@ export function toLunar(y, m, d, tz = 8) {
   };
 }
 
+/** 某個農曆年有哪幾個月（含閏月），以及各有幾天。
+    給輸入介面用：月份的選項、以及「這個月有 29 還是 30 天」。
+
+    一個「歲」是從冬至所在的那個朔（十一月）到下一個，
+    所以農曆某一年的正月到十月在 buildSui(年-1) 裡，
+    十一月與十二月在 buildSui(年) 裡 —— 要翻兩本才湊得齊一年。 */
+export function lunarMonthsOf(lunarYear, tz = 8) {
+  const pick = (g) => buildSui(g, tz).months
+    .filter(x => x.lunarYear === lunarYear)
+    .map(x => ({ num: x.num, leap: x.leap, days: x.endDay - x.startDay + 1,
+      name: lunarMonthName(x.num, x.leap) }));
+  return [...pick(lunarYear - 1), ...pick(lunarYear)]
+    // 正月排到十月，然後才是十一、十二；閏月緊跟在本月後面
+    .sort((a, b) => (a.num - b.num) || (a.leap ? 1 : -1));
+}
+
+/**
+ * 農曆 → 國曆。跟 toLunar 走同一套定朔定氣，不是查表，
+ * 所以來回換算一定對得起來，年份也沒有表格的上下限。
+ * @returns {{y,m,d}|null} 這個農曆日期不存在（例如那年沒有閏四月、
+ *   或那個月只有 29 天卻要第 30 天）時回傳 null
+ */
+export function fromLunar(lunarYear, month, day, leap = false, tz = 8) {
+  const sui = buildSui(month >= 11 ? lunarYear : lunarYear - 1, tz);
+  const mo = sui.months.find(x => x.lunarYear === lunarYear && x.num === month && x.leap === !!leap);
+  if (!mo) return null;
+  const days = mo.endDay - mo.startDay + 1;
+  if (!(day >= 1 && day <= days)) return null;
+  // dayNumOf 是 floor(JD(00:00 UT) + 0.5)，所以反推就是減掉那 0.5
+  const { y, m, d } = dateFromJD(mo.startDay + day - 1 - 0.5);
+  return { y, m, d };
+}
+
 /* ── 干支 ───────────────────────────────────────────── */
 export const gzName = (i) => STEMS[((i % 60) + 60) % 60 % 10] + BRANCHES[((i % 60) + 60) % 60 % 12];
 export const gzStem = (i) => ((i % 60) + 60) % 60 % 10;

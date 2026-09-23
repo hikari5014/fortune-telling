@@ -8,6 +8,12 @@ import { profileLink, linkCode, canSystemShare, systemShare, chatLinks } from '.
 import { isPrivate, nameOf, birthLine } from '../privacy.js';
 import { CITIES } from '../data/cities.js';
 import { DISCLAIMER, sectionHead, pad } from './_shared.js';
+import { toLunar, fromLunar, lunarMonthsOf, lunarDayName, gzName } from '../engines/calendar.js';
+
+/* 表單裡的小分段切換（設定頁那顆的簡版） */
+const seg = (id, items, value) => `<div class="seg" id="${id}">${items
+  .map(([v, label]) => `<button type="button" class="press" data-v="${v}" aria-pressed="${v === value}">${label}</button>`)
+  .join('')}</div>`;
 
 /* 分享碼只帶推算需要的欄位，不含紀錄、標籤或其他個人資料 */
 const PROFILE_FIELDS = ['surname', 'givenName', 'label', 'gender', 'birth', 'city', 'lat', 'lon', 'tz'];
@@ -29,11 +35,23 @@ function form(p = {}) {
           ${raw(['女', '男', '不設定'].map(g => html`<button class="chip press" data-g="${g}" aria-pressed="${(p.gender || '女') === g}">${g}</button>`).join(''))}
         </div>
       </div>
-      <div class="grid grid--3">
+      <!-- 生日可以用國曆或農曆輸入，兩邊即時互換。
+           存起來的永遠是國曆 —— 所有推算都從那個時刻出發，
+           農曆只是輸入的方便，不是另一套資料。 -->
+      <div class="field"><label>生日輸入方式</label>
+        ${raw(seg('f-cal', [['solar', '國曆'], ['lunar', '農曆']], b.cal === 'lunar' ? 'lunar' : 'solar'))}
+      </div>
+      <div class="grid grid--3" id="f-solar">
         <div class="field"><label for="f-y">西元年</label><input class="input num" id="f-y" type="number" inputmode="numeric" min="1900" max="2100" value="${b.y ?? now.getFullYear() - 30}"></div>
         <div class="field"><label for="f-m">月</label><input class="input num" id="f-m" type="number" inputmode="numeric" min="1" max="12" value="${b.m ?? 1}"></div>
         <div class="field"><label for="f-d">日</label><input class="input num" id="f-d" type="number" inputmode="numeric" min="1" max="31" value="${b.d ?? 1}"></div>
       </div>
+      <div class="grid grid--3" id="f-lunar" hidden>
+        <div class="field"><label for="f-ly">農曆年</label><input class="input num" id="f-ly" type="number" inputmode="numeric" min="1901" max="2099" value="${b.y ?? now.getFullYear() - 30}"></div>
+        <div class="field"><label for="f-lm">月</label><select class="select" id="f-lm"></select></div>
+        <div class="field"><label for="f-ld">日</label><select class="select" id="f-ld"></select></div>
+      </div>
+      <p class="hint" id="f-calnote"></p>
       <label class="switch" style="margin-top:var(--sp-2)">
         <span>不知道出生時辰</span>
         <input type="checkbox" id="f-hu" ${b.hourUnknown ? 'checked' : ''}>
@@ -78,6 +96,9 @@ function readForm(root, base = {}) {
       h: $('#f-hu', root)?.checked ? 12 : num('f-h', 12),
       minute: $('#f-hu', root)?.checked ? 0 : num('f-min', 0),
       ...($('#f-hu', root)?.checked ? { hourUnknown: true } : {}),
+      // 只記「當初是用哪種曆法輸入的」，下次打開才會停在同一個模式。
+      // 日期本身永遠存國曆。
+      ...(calMode(root) === 'lunar' ? { cal: 'lunar' } : {}),
     },
     city: city === '__custom' ? '自訂' : city,
     lat: num('f-lat', 25.033), lon: num('f-lon', 121.5654), tz: num('f-tz', 8),
@@ -85,6 +106,104 @@ function readForm(root, base = {}) {
     strokeOverrides: base.strokeOverrides || {},
     updatedAt: new Date().toISOString(),
   };
+}
+
+const calMode = (root) => ($('#f-cal button[aria-pressed="true"]', root)?.dataset.v || 'solar');
+
+/* ── 國曆 ⇄ 農曆 ────────────────────────────────────
+   兩邊走的是同一套定朔定氣（見 engines/calendar.js），不是查表，
+   所以來回換算一定對得起來，也沒有表格的上下限。
+
+   有兩件事是農曆特有的，介面上不能假裝沒有：
+   ・**閏月**。有些年有閏四月，有些年沒有 —— 月份選單得照那一年實際有的月份長出來。
+   ・**大小月**。農曆月不是 29 就是 30 天，日期選單得跟著那個月變。
+   這兩件事都得從曆算問出來，不能寫死。 */
+function bindCalendar(root) {
+  const seg2 = $('#f-cal', root);
+  if (!seg2) return;
+  const solar = $('#f-solar', root), lunar = $('#f-lunar', root), note = $('#f-calnote', root);
+  const g = { y: $('#f-y', root), m: $('#f-m', root), d: $('#f-d', root) };
+  const l = { y: $('#f-ly', root), m: $('#f-lm', root), d: $('#f-ld', root) };
+  const int = (el, dflt) => n(el?.value, dflt);
+  const n = (v, dflt) => { const x = parseInt(v, 10); return Number.isFinite(x) ? x : dflt; };
+  /** 月份選單的值是「月號|是不是閏月」 */
+  const parseMonth = (v) => ({ num: n(String(v).split('|')[0], 1), leap: String(v).endsWith('|1') });
+
+  /** 依農曆年重建月份選單（含閏月），再依那個月重建日期選單 */
+  function rebuildLunar(keep = null) {
+    const ly = int(l.y, 1990);
+    let months = [];
+    try { months = lunarMonthsOf(ly); } catch { months = []; }
+    if (!months.length) { note.textContent = '這一年算不出來，換一個年份試試。'; return; }
+    const want = keep || parseMonth(l.m.value);
+    const hit = months.find(x => x.num === want.num && x.leap === !!want.leap)
+      || months.find(x => x.num === want.num) || months[0];
+    l.m.innerHTML = months.map(x =>
+      `<option value="${x.num}|${x.leap ? 1 : 0}" ${x === hit ? 'selected' : ''}>${x.name}</option>`).join('');
+    const days = hit.days;
+    const keepD = Math.min(keep?.day || n(l.d.value, 1) || 1, days);
+    l.d.innerHTML = Array.from({ length: days }, (_, i) =>
+      `<option value="${i + 1}" ${i + 1 === keepD ? 'selected' : ''}>${lunarDayName(i + 1)}</option>`).join('');
+  }
+
+  /** 讀出農曆欄位現在選的是哪一天 */
+  const readLunar = () => ({ y: int(l.y, 1990), ...parseMonth(l.m.value), day: int(l.d, 1) });
+
+  /** 農曆欄位 → 國曆欄位（農曆是輸入，國曆是存檔用的那一份） */
+  function lunarToSolar() {
+    const v = readLunar();
+    const got = fromLunar(v.y, v.num, v.day, v.leap);
+    if (!got) { note.textContent = '這一天不存在，請換一個。'; return false; }
+    g.y.value = got.y; g.m.value = got.m; g.d.value = got.d;
+    return true;
+  }
+
+  /** 國曆欄位 → 農曆欄位 */
+  function solarToLunar() {
+    const y = int(g.y, 1990), m = int(g.m, 1), d = int(g.d, 1);
+    try {
+      const lu = toLunar(y, m, d);
+      l.y.value = lu.year;
+      rebuildLunar({ num: lu.month, leap: lu.leap, day: lu.day });
+    } catch { /* 算不出來就不動農曆那一邊 */ }
+  }
+
+  /** 不管現在用哪一邊輸入，下面那行都把「另一邊是什麼」寫出來 */
+  function syncNote() {
+    const y = int(g.y, 1990), m = int(g.m, 1), d = int(g.d, 1);
+    try {
+      const lu = toLunar(y, m, d);
+      /* 干支年用**農曆年**算，不是用西元年硬湊。
+         （八字的年柱是以立春為界，跟農曆年在正月初一到立春之間會差一年 ——
+           那是另一回事，由 fourPillars 負責，這裡只是在講這一天農曆怎麼唸。） */
+      note.innerHTML = calMode(root) === 'lunar'
+        ? `＝ 國曆 <b>${y}-${pad(m)}-${pad(d)}</b>`
+        : `＝ 農曆 <b>${gzName(((lu.year - 4) % 60 + 60) % 60)}年　${lu.monthName}${lu.dayName}</b>`;
+    } catch { note.textContent = ''; }
+  }
+
+  function paint(mode) {
+    solar.hidden = mode === 'lunar';
+    lunar.hidden = mode !== 'lunar';
+    syncNote();
+  }
+
+  $$('#f-cal button', root).forEach(b => b.addEventListener('click', () => {
+    $$('#f-cal button', root).forEach(x => x.setAttribute('aria-pressed', 'false'));
+    b.setAttribute('aria-pressed', 'true');
+    // 換模式不要把已經填的日期丟掉 —— 換算過去就好
+    if (b.dataset.v === 'lunar') solarToLunar(); else syncNote();
+    paint(b.dataset.v);
+    haptic();
+  }));
+
+  [g.y, g.m, g.d].forEach(el => el.addEventListener('input', () => { if (calMode(root) === 'solar') syncNote(); }));
+  l.y.addEventListener('input', () => { rebuildLunar(); if (lunarToSolar()) syncNote(); });
+  l.m.addEventListener('change', () => { rebuildLunar(); if (lunarToSolar()) syncNote(); });
+  l.d.addEventListener('change', () => { if (lunarToSolar()) syncNote(); });
+
+  solarToLunar();                      // 一開始先把農曆那一邊對到現在的國曆
+  paint(calMode(root));
 }
 
 function bindForm(root) {
@@ -106,6 +225,7 @@ function bindForm(root) {
   };
   hu?.addEventListener('change', syncHour);
   if (hu) { $('#f-hour-note', root).hidden = !hu.checked; $('#f-hour-row', root).hidden = hu.checked; }
+  bindCalendar(root);
 }
 
 function editSheet(p) {

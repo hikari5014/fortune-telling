@@ -57,8 +57,8 @@ export function quickForm(settings, { idp = 'q', label = '' } = {}) {
         <select class="select" id="${idp}-city">
           ${raw(CITIES.map(c => html`<option value="${c[0]}" ${c[0] === city ? 'selected' : ''}>${c[0]}</option>`).join(''))}
         </select></div>
-      <p class="hint">只要這幾項就算得出來。要精確到分鐘、或改成自訂座標，
-        存完之後到「檔案」頁編輯。</p>
+      <p class="hint">只要這幾項就算得出來。要精確到分鐘、改成自訂座標，
+        或<b>用農曆輸入生日</b>，存完之後到「檔案」頁編輯。</p>
     </div>`;
 }
 

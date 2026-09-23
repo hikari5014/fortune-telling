@@ -2,11 +2,19 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.27.0';
+export const APP_VERSION = '0.28.0';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.28.0', date: '2026-09-23', title: '生日可以用農曆輸入',
+    items: [
+      { kind: 'add', text: '檔案頁的生日多了「國曆／農曆」切換，兩邊即時互換算，換模式不會把填好的日期丟掉' },
+      { kind: 'add', text: '農曆的月份選單照那一年實際有的月份長出來（有閏月就有閏月），日期也跟著大小月變成 29 或 30 天' },
+      { kind: 'change', text: '不管用哪種輸入，存起來的都是國曆 —— 所有推算都從那個時刻出發，農曆只是輸入方式' },
+    ],
+  },
   {
     v: '0.27.0', date: '2026-09-23', title: '筊杯換成自繪，備份可以挑要帶哪幾項',
     items: [
