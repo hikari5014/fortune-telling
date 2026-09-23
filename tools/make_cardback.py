@@ -8,10 +8,15 @@
 補的方式是左右加邊，不是裁切：裁下去會切到外框的金線。
 補的顏色取自四個角落的實際像素，接起來看不出接縫。
 
-用法：python3 tools/make_cardback.py <來源圖>
+有些圖本身就是圓角卡片、角落外面是一塊純白（例如鎏金太陽那張）。
+那塊白跟卡片底色差一點點，補完邊會在四個角留下白色小三角 ——
+所以先從四個角把「跟卡片底色不一樣的那塊」填成底色。
+
+用法：python3 tools/make_cardback.py <來源圖> [輸出路徑]
+      不給輸出路徑就是覆蓋內建的 assets/tarot/back.webp
 """
 import pathlib, sys
-from PIL import Image
+from PIL import Image, ImageDraw
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 DEST = ROOT / 'assets/tarot/back.webp'
@@ -27,11 +32,24 @@ def corner_color(im, k=14):
     return tuple(sum(c[i] for c in px) // len(px) for i in range(3))
 
 
+def unround(im, k=10):
+    """圓角外面那一塊填成卡片底色。底色取左右兩邊中段（那裡一定是卡片本身）。"""
+    y = im.height // 2
+    boxes = [(k, y - k, 2 * k, y + k), (im.width - 2 * k, y - k, im.width - k, y + k)]
+    px = [im.crop(b).resize((1, 1), Image.LANCZOS).getpixel((0, 0)) for b in boxes]
+    bg = tuple(sum(c[i] for c in px) // len(px) for i in range(3))
+    for xy in [(0, 0), (im.width - 1, 0), (0, im.height - 1), (im.width - 1, im.height - 1)]:
+        if max(abs(a - b) for a, b in zip(im.getpixel(xy), bg)) > 6:
+            ImageDraw.floodfill(im, xy, bg, thresh=10)
+    return im
+
+
 def main():
     src = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else None
     if not src or not src.exists():
         sys.exit(f'找不到來源圖：{src}')
-    im = Image.open(src).convert('RGB')
+    dest = pathlib.Path(sys.argv[2]).resolve() if len(sys.argv) > 2 else DEST
+    im = unround(Image.open(src).convert('RGB'))
 
     face = Image.open(FACE)
     ratio = face.width / face.height
@@ -47,9 +65,9 @@ def main():
         im = pad
 
     im = im.resize((WIDTH, round(WIDTH / ratio)), Image.LANCZOS)
-    DEST.parent.mkdir(parents=True, exist_ok=True)
-    im.save(DEST, 'WEBP', quality=QUALITY, method=6)
-    print(f'{DEST.relative_to(ROOT)}  {im.size}  {DEST.stat().st_size // 1024} KB')
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    im.save(dest, 'WEBP', quality=QUALITY, method=6)
+    print(f'{dest.relative_to(ROOT)}  {im.size}  {dest.stat().st_size // 1024} KB')
 
 
 if __name__ == '__main__':

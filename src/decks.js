@@ -27,6 +27,16 @@ export const BUILTIN = 'waite';
 /** 背面在資料裡跟其他牌一樣是一個 id，只是它不是一張牌 */
 export const BACK = 'back';
 
+/** 內建的幾副。牌面都是偉特牌，差在背面 —— 所以只記背面的網址，不進 IndexedDB。 */
+const BUILTINS = [
+  { id: BUILTIN, name: '偉特牌（內建）', builtin: true, note: '公有領域掃描，已轉成灰階配合黑白調性' },
+  { id: 'waite-sun', name: '鎏金太陽（內建）', builtin: true, back: 'assets/tarot/backs/sun.webp',
+    note: '鎏金星圖牌背，牌面沿用偉特牌' },
+];
+/** 是不是內建的那幾副之一（內建的不能編輯、不能刪） */
+export const isBuiltin = (id) => !id || BUILTINS.some(d => d.id === id);
+const builtinBack = (id) => (BUILTINS.find(d => d.id === id) || {}).back || null;
+
 let dbp = null;
 function open() {
   if (dbp) return dbp;
@@ -100,7 +110,7 @@ export async function loadDeck(deckId, force = false) {
   if (live.id === deckId && !force) return live.urls;
   for (const u of live.urls.values()) URL.revokeObjectURL(u);   // 上一副收乾淨
   live = { id: deckId, urls: new Map() };
-  if (!deckId || deckId === BUILTIN) return live.urls;
+  if (isBuiltin(deckId)) return live.urls;
   try {
     const ids = await idsOf(deckId);
     const got = new Map();
@@ -117,8 +127,10 @@ export async function loadDeck(deckId, force = false) {
   return live.urls;
 }
 
-/** 這個 id 該用哪張圖。自訂牌組沒有的就退回內建那一張。 */
-export const srcOf = (imgId) => live.urls.get(imgId) || `assets/tarot/${imgId}.webp`;
+/** 這個 id 該用哪張圖。自訂牌組沒有的就退回內建那一張（內建牌組的背面各自不同）。 */
+export const srcOf = (imgId) => live.urls.get(imgId)
+  || (imgId === BACK && builtinBack(live.id))
+  || `assets/tarot/${imgId}.webp`;
 /** 目前載進來的那一副有沒有這一張 */
 export const hasOwn = (imgId) => live.urls.has(imgId);
 export const liveId = () => live.id;
@@ -126,7 +138,10 @@ export const liveId = () => live.id;
 /** 把背面寫進 CSS 變數 —— 牌背是 background，不是 <img> */
 export function applyBack() {
   const el = document.documentElement;
-  const u = live.urls.get(BACK);
+  /* 內建背面是相對路徑：放進 CSS 變數後，Chrome 會拿「用到它的那支 CSS」的位置去解，
+     變成 styles/assets/⋯ 而 404。先轉成完整網址。 */
+  const rel = builtinBack(live.id);
+  const u = live.urls.get(BACK) || (rel && new URL(rel, document.baseURI).href);
   if (u) el.style.setProperty('--card-back', `url("${u}")`);
   else el.style.removeProperty('--card-back');
 }
@@ -189,9 +204,6 @@ export function guessId(filename, cards) {
 
 /* ── 牌組名冊（小東西，留在 localStorage）─────────────── */
 
-/** 內建那一副永遠排在最前面，而且刪不掉 */
-export const allDecks = () => [
-  { id: BUILTIN, name: '偉特牌（內建）', builtin: true },
-  ...store.decks,
-];
+/** 內建的永遠排在最前面，而且刪不掉 */
+export const allDecks = () => [...BUILTINS, ...store.decks];
 export const deckName = (id) => (allDecks().find(d => d.id === id) || {}).name || '偉特牌（內建）';

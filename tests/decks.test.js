@@ -3,7 +3,7 @@
    檔名怎麼對位、缺的牌怎麼退回內建、圖到底有沒有真的走牌組。 */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { installDOM } from './_dom.js';
 installDOM();
 
@@ -15,6 +15,27 @@ test('預設是內建的偉特牌', () => {
   assert.equal(DEFAULT_SETTINGS.tarotDeck, 'waite');
   assert.equal(decks.BUILTIN, 'waite');
   assert.equal(decks.allDecks()[0].builtin, true);
+});
+
+test('內建第二副：鎏金太陽只換背面，牌面走偉特', async () => {
+  const sun = decks.allDecks().find(d => d.id === 'waite-sun');
+  assert.ok(sun && sun.builtin, '少了內建的鎏金太陽');
+  assert.ok(existsSync(sun.back), `牌背圖不在：${sun.back}`);
+  assert.ok(decks.isBuiltin('waite-sun') && decks.isBuiltin('waite') && decks.isBuiltin(undefined));
+  assert.equal(decks.isBuiltin('my-deck'), false);
+  await decks.useDeck('waite-sun');
+  assert.equal(decks.srcOf(decks.BACK), sun.back);
+  assert.equal(decks.srcOf('major-19'), 'assets/tarot/major-19.webp', '牌面要沿用內建');
+  // 放進 CSS 變數的要是完整網址 —— 相對路徑會被 Chrome 拿 styles/ 當基準去解而 404
+  assert.match(readFileSync('src/decks.js', 'utf8'), /new URL\(rel, document\.baseURI\)/);
+  await decks.useDeck('waite');
+  assert.equal(decks.srcOf(decks.BACK), 'assets/tarot/back.webp');
+});
+
+test('內建牌背跟牌面同一個比例', () => {
+  const b = readFileSync('assets/tarot/backs/sun.webp');
+  const w = b.readUInt16LE(26) & 0x3fff, h = b.readUInt16LE(28) & 0x3fff;
+  assert.ok(Math.abs(w / h - 280 / 470) < 0.005, `鎏金太陽 ${w}×${h} 比例不對，翻牌會抽動`);
 });
 
 test('檔名對位：同一張牌的各種寫法都要認得', () => {

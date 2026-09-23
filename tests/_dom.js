@@ -3,7 +3,7 @@
    「模組載入就炸掉」這一類問題（重複匯出、import 路徑錯、頂層存取 DOM）。 */
 const noop = () => {};
 const el = () => ({
-  dataset: {}, style: { setProperty: noop }, classList: { add: noop, remove: noop, toggle: noop, contains: () => false },
+  dataset: {}, style: { setProperty: noop, removeProperty: noop }, classList: { add: noop, remove: noop, toggle: noop, contains: () => false },
   addEventListener: noop, removeEventListener: noop, setAttribute: noop, getAttribute: () => null,
   appendChild: noop, remove: noop, querySelector: () => el(), querySelectorAll: () => [],
   insertAdjacentHTML: noop, focus: noop, click: noop, animate: noop,
@@ -16,7 +16,7 @@ export function installDOM() {
   // querySelector 一律回傳存根而不是 null：這裡的目的是攔住「載入就炸掉」，
   // 不是驗 DOM 邏輯（那是瀏覽器煙霧測試的事），回 null 只會製造假失敗
   globalThis.document = {
-    documentElement: el(), body: el(), head: el(),
+    documentElement: el(), body: el(), head: el(), baseURI: 'http://localhost/',
     createElement: el, createTextNode: el,
     querySelector: el, querySelectorAll: () => [], getElementById: el, getElementsByTagName: () => [],
     addEventListener: noop, removeEventListener: noop,

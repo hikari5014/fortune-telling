@@ -307,7 +307,7 @@ function deckTab(settings) {
         ${list.map(d => html`
           <button class="tmpl press" data-dk="${d.id}" aria-pressed="${d.id === cur}">
             <b>${d.name}</b>
-            <small>${d.builtin ? '公有領域掃描，已轉成灰階配合黑白調性' : '自訂牌組'}</small>
+            <small>${d.builtin ? d.note : '自訂牌組'}</small>
           </button>`)}
       </div>
       <p class="hint" style="margin-top:var(--sp-3)">
@@ -495,7 +495,7 @@ const fmtKB = (n) => (n < 1024 * 1024 ? `${Math.round(n / 1024)} KB` : `${(n / 1
 
 function mountDeck(root, settings) {
   let cur = settings.tarotDeck || decks.BUILTIN;
-  let editing = cur === decks.BUILTIN ? null : cur;
+  let editing = decks.isBuiltin(cur) ? null : cur;
   const editBox = $('#dk-edit', root);
   const grid = $('#dk-grid', root);
 
@@ -505,7 +505,7 @@ function mountDeck(root, settings) {
     store.setSettings({ tarotDeck: id });
     await decks.useDeck(id);
     $$('#dk-list .tmpl', root).forEach(b => b.setAttribute('aria-pressed', String(b.dataset.dk === id)));
-    editing = id === decks.BUILTIN ? null : id;
+    editing = decks.isBuiltin(id) ? null : id;
     await paint();
     haptic(8);
   }
