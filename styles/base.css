@@ -7,15 +7,37 @@
 }
 * { margin: 0; -webkit-tap-highlight-color: transparent; }
 
-/* iOS：互動元件不要出現長按選取、放大鏡與雙擊縮放 */
-button, a, .tile, .card, .profile, .rec, .tmpl, .chip, .tab,
-.zw__cell, .pair, .digit, .luckstep, .yearstrip__y, .tcard, .hex__yao, .signcard, .pillar, .month {
+/* 長按不要選字。
+   ──────────────────────────────────────────────────────────
+   這是一個 App，不是一份文件：長按一張牌、一個標籤、一顆按鈕，
+   跳出選取框與「拷貝／查詢／翻譯」那一排，從來都不是使用者要的。
+
+   原本是「列出哪些元件不給選」。那種寫法永遠會漏 ——
+   每加一個新畫面就要記得回來補一次，漏掉的地方就出包
+   （抽牌儀式就是這樣漏掉的）。改成反過來：
+   **整頁預設不給選，真的需要選起來複製的才開回來。**
+
+   iOS 的長按選取只有 `-webkit-touch-callout` 與 `-webkit-user-select` 擋得住；
+   在 `contextmenu` 上 `preventDefault()` 對它沒有用 —— 那是桌機右鍵的事件。 */
+body {
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   user-select: none;
+}
+/* 這幾個地方是「內容」，要讓人選起來複製：
+   輸入框、提示詞預覽、LLM 回覆的內文、聚焦項目的原文。 */
+input, textarea, select, .preview, .md, .rec__body, .focus__text, [data-selectable] {
+  -webkit-touch-callout: default;
+  -webkit-user-select: text;
+  user-select: text;
+}
+/* 雙擊縮放：互動元件一律關掉，不然每次點兩下都要等 300ms */
+button, a, .tile, .card, .profile, .rec, .tmpl, .chip, .tab,
+.zw__cell, .pair, .digit, .luckstep, .yearstrip__y, .tcard, .hex__yao, .signcard, .pillar, .month {
   touch-action: manipulation;
 }
-input, textarea, select, .preview, .md, .rec__body { -webkit-user-select: text; user-select: text; }
+/* 圖片長按會跳出「儲存影像」，而且可以被拖走 */
+img { -webkit-user-drag: none; user-drag: none; }
 
 html {
   -webkit-text-size-adjust: 100%;
