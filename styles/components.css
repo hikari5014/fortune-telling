@@ -32,18 +32,13 @@
 
 /* 底部 Tab（手機） */
 /* 底部導覽（手機）─────────────────────────────────
-   四個分類排成扇形：中間最高、兩端往下沉，按鈕跟著微微外傾。
-   弧度由 data/nav.js 的 arcShape() 算成 --dy / --rot 兩個變數丟進來，
-   不量容器寬度，所以轉螢幕、換字級都自己會跟上。
-
-   正中央下面那顆圓的是首頁 —— 它不是分類而是「回到原點」的鍵，
-   形狀不一樣才一眼分得出來，而且拇指最好按的位置留給最常按的東西。 */
+   就是一條橫條：四個分類平均排開，首頁擺正中間。
+   點一下分類會叫出停在畫面上的選單（見 navmenu.js）。 */
 .dock {
-  /* 疊在分類選單之上（30 < 45），選單開著時還看得到是哪一類被點開；
-     但抽屜（50/51）仍然蓋得住它。 */
-  position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 8px); z-index: 45;
+  position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 10px); z-index: 45;
   transform: translateX(-50%) translateZ(0);
-  padding: 8px 10px 10px; border: 1px solid var(--line); border-radius: var(--r-4);
+  display: flex; align-items: center; gap: 2px;
+  padding: 5px; border: 1px solid var(--line); border-radius: var(--r-full);
   background: color-mix(in srgb, var(--bg) 96%, transparent);
   box-shadow: var(--shadow);
   max-width: calc(100vw - 20px);
@@ -51,39 +46,21 @@
 @media (hover: hover) and (pointer: fine) {
   .dock { background: color-mix(in srgb, var(--bg) 80%, transparent); backdrop-filter: blur(18px) saturate(1.3); }
 }
-/* 一排就好：首頁鍵用絕對定位卡進中間的缺口，不另外佔一列 ——
-   疊成兩列的話導覽列會高到吃掉一截畫面。 */
-.dock__arc { display: flex; align-items: flex-start; gap: 5px; height: calc(46px + var(--arc-rise, 22px)); }
-.dock__notch { width: 70px; flex: none; }
-.dock__cat { transform: translateY(var(--dy, 0)) rotate(var(--rot, 0)); }
-.dock__cat:active { transform: translateY(var(--dy, 0)) rotate(var(--rot, 0)) scale(.92); }
 .dock .tab { color: var(--ink-3); }
 /* 「你在這一類」跟「這一類的選單開著」要分得出來：
    前者亮起來但仍是底色，後者整顆反白 —— 兩個都反白會分不清楚。 */
-.dock__cat[aria-current="page"] { background: var(--surface-2); color: var(--ink); }
+.dock__cat[aria-current="page"],
+.dock__home[aria-current="page"] { background: var(--surface-2); color: var(--ink); }
 .dock__cat[aria-expanded="true"] { background: var(--invert-bg); color: var(--invert-ink); }
 .dock__cat[aria-expanded="true"] span { color: var(--invert-ink); }
-/* 兩個 class 疊出優先權：通則的 .tab 也在改圓角與尺寸 */
-.dock .tab.dock__home {
-  position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%);
-  width: 52px; height: 52px; min-width: 0; padding: 0;
-  border-radius: 50%; place-items: center;
-  border: 1px solid var(--line-2); background: var(--surface-2); color: var(--ink);
-  box-shadow: var(--shadow);
-}
-.dock .tab.dock__home svg { width: 23px; height: 23px; }
-.dock .tab.dock__home[aria-current="page"] {
-  background: var(--invert-bg); color: var(--invert-ink); border-color: var(--invert-bg);
-}
-.dock .tab.dock__home:active { transform: translateX(-50%) scale(.9); }
 .tab {
   position: relative; z-index: 1; isolation: isolate; display: grid; place-items: center; gap: 1px;
-  min-width: 54px; height: 46px; padding-inline: 7px; border-radius: var(--r-3);
+  min-width: 56px; height: 50px; padding-inline: 8px; border-radius: var(--r-full);
   color: var(--ink-3);
   transition: color var(--dur-3) var(--ease), background var(--dur-3) var(--ease), transform var(--dur-2) var(--spring);
 }
 .tab:active { transform: scale(.92); }
-.tab svg { width: 20px; height: 20px; }
+.tab svg { width: 21px; height: 21px; }
 .tab span { font-size: 10px; letter-spacing: .12em; }
 @media (min-width: 900px) { .dock { display: none; } }
 
@@ -252,7 +229,7 @@
 .sheet__body { padding: var(--sp-5); overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
 
 /* 吐司 */
-.toast-root { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 106px); z-index: 60; transform: translateX(-50%); display: grid; gap: var(--sp-2); pointer-events: none; width: max-content; max-width: calc(100vw - 32px); }
+.toast-root { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 80px); z-index: 60; transform: translateX(-50%); display: grid; gap: var(--sp-2); pointer-events: none; width: max-content; max-width: calc(100vw - 32px); }
 @media (min-width: 900px) { .toast-root { bottom: var(--sp-5); } }
 .toast {
   padding: 11px var(--sp-5); border-radius: var(--r-full);
@@ -271,7 +248,7 @@
    用 :has() 判斷，不必在 JS 那邊記得加減 class。 */
 .fabbar {
   position: fixed; left: 50%; z-index: 28;
-  bottom: calc(env(safe-area-inset-bottom) + 106px);
+  bottom: calc(env(safe-area-inset-bottom) + 80px);
   transform: translateX(-50%) translateZ(0);
   display: flex; align-items: center; gap: 6px;
   padding: 6px; border: 1px solid var(--line); border-radius: var(--r-full);
@@ -291,8 +268,8 @@
 @media (min-width: 900px) { .fabbar { bottom: var(--sp-5); } }
 
 /* 讓位：頁面底部留白、Toast 都要避開這條列 */
-body:has(.fabbar) { padding-bottom: calc(182px + env(safe-area-inset-bottom)); }
-body:has(.fabbar) .toast-root { bottom: calc(env(safe-area-inset-bottom) + 176px); }
+body:has(.fabbar) { padding-bottom: calc(156px + env(safe-area-inset-bottom)); }
+body:has(.fabbar) .toast-root { bottom: calc(env(safe-area-inset-bottom) + 150px); }
 @media (min-width: 900px) {
   body:has(.fabbar) { padding-bottom: calc(var(--sp-6) + 74px); }
   body:has(.fabbar) .toast-root { bottom: calc(var(--sp-5) + 66px); }

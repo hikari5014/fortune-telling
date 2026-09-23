@@ -2,11 +2,19 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.19.1';
+export const APP_VERSION = '0.19.2';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.19.2', date: '2026-09-23', title: '導覽列改回橫條',
+    items: [
+      { kind: 'change', text: '扇形排法拿掉，回到一般的橫條：工具、命盤、首頁、占卜、人際，首頁在正中間' },
+      { kind: 'change', text: '點一下分類叫出選單這件事不變 —— 好用的是選單，不是扇形' },
+      { kind: 'change', text: '導覽列高度回到 62px，頁尾留白與各種浮動元件的位置跟著還原' },
+    ],
+  },
   {
     v: '0.19.1', date: '2026-09-23', title: '導覽列不再擠成一坨',
     items: [
