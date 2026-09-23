@@ -138,6 +138,8 @@
 
 /* 表單 */
 .field { display: grid; gap: 6px; }
+/* 分段切換放進欄位裡不要被撐滿 —— .field 是 grid，子元素預設會拉到整列寬 */
+.field > .seg { justify-self: start; }
 .field > label { font-size: var(--step--2); letter-spacing: .2em; text-transform: uppercase; color: var(--ink-3); }
 .input, .select, .textarea {
   width: 100%; min-height: var(--tap); padding: 10px var(--sp-4);

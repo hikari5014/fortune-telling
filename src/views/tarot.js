@@ -307,11 +307,11 @@ function deckTab(settings) {
         ${list.map(d => html`
           <button class="tmpl press" data-dk="${d.id}" aria-pressed="${d.id === cur}">
             <b>${d.name}</b>
-            <small>${d.builtin ? d.note : '自訂牌組'}</small>
+            <small>${d.builtin ? d.note : '自訂牌組'}<span class="dk-cur">　·　使用中</span></small>
           </button>`)}
       </div>
       <p class="hint" style="margin-top:var(--sp-3)">
-        選起來的那一副會用在抽牌、今日一張、本命牌所有地方。
+        點一下就換成預設 —— 選起來的那一副會用在抽牌、今日一張、本命牌所有地方（設定頁也能換）。
         自訂牌組<b>沒換到的牌會自動補內建的偉特牌</b> —— 只換背面、或只換大牌都成立。
       </p>
     </section>
