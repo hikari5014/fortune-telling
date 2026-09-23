@@ -2,11 +2,19 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.33.0';
+export const APP_VERSION = '0.34.0';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.34.0', date: '2026-09-23', title: '今日推薦',
+    items: [
+      { kind: 'add', text: '每天第一次打開首頁，會有一顆流星劃下來、展開成一張推薦卡，帶你去一個今天可以玩玩看的功能' },
+      { kind: 'add', text: '還沒建檔案就推建檔案；建好第一份檔案後先推塔羅，之後輪流推你還沒用過、或最久沒用的功能' },
+      { kind: 'add', text: '卡片上可以「今天先不要」或「不要再推薦」，設定 → 外觀也能開關' },
+    ],
+  },
   {
     v: '0.33.0', date: '2026-09-23', title: '應驗追蹤：問過的事，之後回頭看準不準',
     items: [
