@@ -6,7 +6,12 @@ import { shakeQian, castJiao, toText, BUILTIN_SET, normalizeSet, SET_SCHEMA, luc
 import { observeReveal } from '../motion.js';
 import { DISCLAIMER, sectionHead, kv, shareBtn, doShare, askPrompt } from './_shared.js';
 import { trackBtn, bindTrack } from '../verify.js';
-import { tube as tubeArt, stick as stickArt, slip as slipArt, jiao as jiaoArt } from '../relics.js';
+import { tube as tubeLine, stick as stickLine, slip as slipArt, jiao as jiaoLine, tubePhoto, stickPhoto, jiaoPhoto, usePhoto } from '../relics.js';
+
+/* 法器：照片或線稿，看設定 */
+const tubeArt = (n) => (usePhoto(store.settings) ? tubePhoto() : tubeLine(n));
+const stickArt = (label) => (usePhoto(store.settings) ? stickPhoto(label) : stickLine(label));
+const jiaoArt = (flat) => (usePhoto(store.settings) ? jiaoPhoto(flat) : jiaoLine(flat));
 
 const luckCls = (l) => ['大吉', '上吉', '吉'].includes(l) ? 'luck--good' : l === '中吉' || l === '中平' ? 'luck--half' : 'luck--bad';
 const allSets = () => [BUILTIN_SET, ...store.qianSets];

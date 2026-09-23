@@ -1,5 +1,5 @@
 /* 玄鑑 Service Worker：應用程式外殼快取 + 執行期快取 */
-const VERSION = 'xj-0.34.0';   // 與 src/data/changelog.js 的 APP_VERSION 同步
+const VERSION = 'xj-0.35.0';   // 與 src/data/changelog.js 的 APP_VERSION 同步
 const SHELL = [
   './', './index.html', './manifest.webmanifest',
   './styles/tokens.css', './styles/base.css', './styles/motion.css',
@@ -59,7 +59,8 @@ self.addEventListener('fetch', (e) => {
   // 起卦那一段的插圖：跟塔羅牌圖一樣，內容不隨版本改變，
   // 放在跟版號無關的快取，改版時不用重抓。不進安裝外殼 ——
   // 圖還沒放進去的時候，addAll 遇到 404 會讓整個 Service Worker 裝不起來。
-  if (url.pathname.includes('/assets/ceremony/')) {
+  // 求籤的法器照片（籤筒、籤枝、筊杯）也一樣。
+  if (url.pathname.includes('/assets/ceremony/') || url.pathname.includes('/assets/relics/')) {
     e.respondWith(caches.open('xj-art').then(async (c) => {
       const hit = await c.match(req);
       if (hit) return hit;

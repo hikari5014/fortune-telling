@@ -128,3 +128,37 @@ export function slip() {
     <path class="rl-fold" d="M8 74h224M8 266h224"/>
   </svg>`;
 }
+
+/* ── 照片版（預設）─────────────────────────────────
+   籤筒、籤枝、筊杯改用實物照片去背（來源與授權見 assets/relics/CREDITS.md，
+   處理流程見 tools/make_relics.py）。上面的線稿版保留下來，
+   設定 → 外觀 →「法器樣式」可以換回來。
+
+   籤枝照片原本寫著「第十二籤」，已經抹掉；抽到幾號由這裡疊上去。 */
+const R = 'assets/relics/';
+const img = (file, cls) => `<img class="rp ${cls}" src="${R}${file}" alt="" draggable="false" decoding="async">`;
+
+export const tubePhoto = () => img('tube.webp', 'rp--tube');
+
+/** 籤號寫成國字（二十三），跟廟裡的籤一樣；直書時阿拉伯數字會橫躺，不好看 */
+export function zhNum(n) {
+  const D = '〇一二三四五六七八九';
+  n = Math.floor(Number(n));
+  if (!(n > 0 && n < 1000)) return String(n);
+  const h = Math.floor(n / 100), t = Math.floor((n % 100) / 10), u = n % 10;
+  let s = h ? `${D[h]}百` : '';
+  if (t) s += (h || t > 1 ? D[t] : '') + '十';
+  else if (h && u) s += '〇';
+  if (u) s += D[u];
+  return s;
+}
+
+export const stickPhoto = (label = '') => `<span class="rp rp--stick">${img('stick.webp', 'rp-stick__img')}${
+  // 一個字一行，不用 writing-mode —— 絕對定位的直書在 Chrome 會被算成幾像素高、字疊成一團
+  label ? `<b class="rp-num">${[...`第${zhNum(label)}籤`].map(c => `<i>${c}</i>`).join('')}</b>` : ''}</span>`;
+
+/** @param {boolean} flat true 是平面（陽） */
+export const jiaoPhoto = (flat = true) => img(flat ? 'jiao-flat.webp' : 'jiao-convex.webp', 'rp--jiao');
+
+/** 設定決定用照片還是線稿 */
+export const usePhoto = (settings) => settings?.relicStyle !== 'line';

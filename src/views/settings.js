@@ -46,7 +46,7 @@ const select = (id, list, value) => html`<select class="select" id="${id}" style
    各分類的內容照樣全部 render，只是不是這一類的先 hidden ——
    mount 裡的綁定不用跟著拆，也不會漏綁。 */
 const GROUPS = [
-  { k: 'look',   t: '外觀',       icon: 'moon',    d: '主題、字級、介面密度、今日推薦、語調' },
+  { k: 'look',   t: '外觀',       icon: 'moon',    d: '主題、字級、介面密度、法器樣式、今日推薦、語調' },
   { k: 'motion', t: '動態',       icon: 'spark',   d: '動畫強度、滑動切頁、觸覺回饋、背景星空、命盤特效' },
   { k: 'calc',   t: '命理參數',   icon: 'compass', d: '時區與城市、真太陽時、子時換日、姓名學算法' },
   { k: 'tarot',  t: '塔羅',       icon: 'star',    d: '預設牌組、牌面圖像、抽牌儀式、對照本命盤' },
@@ -83,6 +83,9 @@ export default {
           ${raw(rowStack('字級', `目前 ${Math.round(s.fontScale * 100)}%`,
             `<input type="range" id="set-font" min="0.85" max="1.3" step="0.05" value="${s.fontScale}" style="width:100%">`))}
           ${raw(row('介面密度', '影響區塊之間的留白。', seg('set-density', [['compact', '緊湊'], ['normal', '標準'], ['roomy', '寬鬆']], s.density)))}
+          ${raw(row('法器樣式',
+            '求籤的籤筒、籤枝與筊杯要用實物照片還是線稿。照片取自 Wikimedia Commons（授權見「關於」頁）。',
+            seg('set-relic', [['photo', '照片'], ['line', '線稿']], s.relicStyle || 'photo')))}
           ${raw(row('今日推薦',
             '每天第一次打開首頁時，推薦一個可以玩玩看的功能：還沒建檔案就推建檔案，建好之後先推塔羅，再輪流推你還沒用過的。',
             sw('set-reco', s.dailyReco !== false)))}
@@ -242,6 +245,7 @@ export default {
 
     bindSeg('set-theme', 'theme');
     bindSeg('set-density', 'density');
+    bindSeg('set-relic', 'relicStyle');
     bindSeg('set-register', 'register');
     bindSeg('set-fx', 'chartEffects');
     bindSeg('set-motion', 'motion');
