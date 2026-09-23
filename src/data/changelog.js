@@ -2,11 +2,19 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.25.0';
+export const APP_VERSION = '0.25.1';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.25.1', date: '2026-09-23', title: '手機長按不會再選到字',
+    items: [
+      { kind: 'fix', text: '抽牌儀式裡長按會跳出選取框與「拷貝／查詢／翻譯」那一排，修好了' },
+      { kind: 'change', text: '不選字改成整頁預設關閉、需要複製的地方才開回來 —— 原本是一個一個元件去關，每加一個新畫面就會漏一次' },
+      { kind: 'fix', text: '圖片長按不會再跳出「儲存影像」，也不會被拖走' },
+    ],
+  },
   {
     v: '0.25.0', date: '2026-09-23', title: '手指選牌改回「滑過去看，停住才抽」',
     items: [

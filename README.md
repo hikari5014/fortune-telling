@@ -110,7 +110,7 @@ src/
     quick.js              一鍵組裝（功能頁按一下就複製走）
   decks.js                自訂牌組（圖存 IndexedDB，缺的補內建）
   views/                  19 個頁面
-tests/                    382 個測試（零相依，node:test）
+tests/                    387 個測試（零相依，node:test）
 tools/
   gen_kangxi.py           由 Unicode Unihan 產生康熙筆畫字典
   make_icons.py           產生 App 圖示 PNG（自寫光柵化與 alpha 合成，不需影像函式庫）
@@ -412,7 +412,7 @@ node --test --test-reporter=spec tests/*.test.js
 ```
 
 零相依，用 Node 內建的 `node:test`，不需要 npm install。CI 在每次推送與 PR 時跑，
-部署前再跑一次，沒過就不上線。382 個測試涵蓋十一個引擎、提示詞組裝、外觀規矩、星空行為與全部 19 個頁面的繪製。
+部署前再跑一次，沒過就不上線。387 個測試涵蓋十一個引擎、提示詞組裝、外觀規矩、星空行為與全部 19 個頁面的繪製。
 
 細節見 `tests/README.md`。幾個比較有意思的：
 

@@ -126,9 +126,11 @@ test('滑鼠靠 hover 閃，觸控靠按住閃 —— 手指沒有 hover', () =>
 });
 
 test('觸控長按不會跳出選取與放大鏡', () => {
+  // 桌機的右鍵選單擋在事件上
   assert.match(cast, /orb\.addEventListener\('contextmenu', \(e\) => e\.preventDefault\(\)\)/);
   assert.match(draw, /root\.addEventListener\('contextmenu', \(e\) => e\.preventDefault\(\)\)/);
-  assert.match(views, /\.cast__orb \{[\s\S]*?-webkit-touch-callout: none/);
+  // iOS 的長按選取擋在 CSS 上，而且是整頁一起擋（見 base.css）
+  assert.match(base, /body \{[\s\S]*?-webkit-touch-callout: none/);
   assert.match(views, /\.cast__ball \{[\s\S]*?-webkit-user-drag: none/);
 });
 
@@ -221,4 +223,36 @@ test('拖曳選牌：往上丟收下、放回扇面當沒發生、已選的可�
   // 已選的牌飛到舞台外緣的牌位排，事件只掛舞台的話就摸不到它
   assert.match(draw, /root\.addEventListener\('pointerdown'/);
   assert.match(draw, /if \(i < 0\) return;/);   // 沒抓到牌就別吃掉事件，不然關閉鍵會壞
+});
+
+/* ── 長按不要選字 ───────────────────────────────── */
+
+test('整頁預設不給選，不是一個一個元件去關', () => {
+  // 列舉式的寫法永遠會漏 —— 每加一個新畫面就要記得回來補，
+  // 漏掉的地方就出包（抽牌儀式就是這樣漏掉的）
+  assert.match(base, /body \{[\s\S]*?-webkit-touch-callout: none;[\s\S]*?user-select: none;[\s\S]*?\}/);
+});
+
+test('真的需要複製的地方要開回來', () => {
+  const allow = base.slice(base.indexOf('input, textarea, select, .preview'));
+  for (const sel of ['input', 'textarea', 'select', '.preview', '.md', '.rec__body']) {
+    assert.ok(allow.slice(0, allow.indexOf('}')).includes(sel), `${sel} 應該可以選起來複製`);
+  }
+  assert.match(allow.slice(0, allow.indexOf('}')), /user-select: text/);
+});
+
+test('iOS 的長按選取只有 CSS 擋得住，preventDefault 沒用', () => {
+  // -webkit-touch-callout 才是關鍵；contextmenu 是桌機右鍵的事件
+  assert.match(base, /-webkit-touch-callout: none/);
+  assert.match(base, /contextmenu.*沒有用|對它沒有用/);
+});
+
+test('圖片長按不要跳出「儲存影像」，也不要被拖走', () => {
+  assert.match(base, /img \{ -webkit-user-drag: none/);
+});
+
+test('雙擊縮放還是要關掉 —— 那是另一件事', () => {
+  // user-select 管選字，touch-action 管雙擊縮放的 300ms 延遲，兩者不能混為一談
+  const block = base.slice(base.indexOf('/* 雙擊縮放'));
+  assert.match(block.slice(0, block.indexOf('}')), /touch-action: manipulation/);
 });

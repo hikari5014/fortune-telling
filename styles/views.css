@@ -724,9 +724,7 @@ body.cer-open { overflow: hidden; }
 .cast__orb {
   position: relative; width: min(58vw, 216px); aspect-ratio: 456 / 621;
   display: block; padding: 0; border: 0; background: none; cursor: pointer;
-  /* 觸控長按預設會跳出選取與放大鏡，圖片也會被拖走 */
-  -webkit-touch-callout: none; -webkit-user-select: none; user-select: none;
-  touch-action: manipulation;
+  touch-action: manipulation;   /* 不選字那件事由 base.css 統一管 */
   transition: transform var(--dur-3) var(--spring), opacity var(--dur-2) var(--ease);
 }
 .cast__orb.is-gone { opacity: 0; }
@@ -878,7 +876,6 @@ body.cer-open { overflow: hidden; }
 .dkgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: var(--sp-2); }
 .dkcell {
   display: grid; gap: 4px; padding: 0; background: none; border: 0; text-align: center; cursor: pointer;
-  -webkit-touch-callout: none; -webkit-user-select: none; user-select: none;
   transition: transform var(--dur-2) var(--spring);
 }
 .dkcell:active { transform: scale(.94); }
