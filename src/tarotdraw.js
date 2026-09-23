@@ -245,7 +245,10 @@ export function ceremony({ spread, order, question = '', allowReversed = true, r
 
     function setHot(i) {
       if (hot === i) return;
-      if (hot >= 0 && !taken.has(hot)) put(cards[hot], { ...fanPos(hot), ms: 220, z: hot });
+      if (hot >= 0 && !taken.has(hot)) {
+        cards[hot].el.classList.remove('is-hold');
+        put(cards[hot], { ...fanPos(hot), ms: 220, z: hot });
+      }
       hot = i;
       if (i >= 0) {
         const p = fanPos(i);
@@ -264,7 +267,7 @@ export function ceremony({ spread, order, question = '', allowReversed = true, r
       taken.add(i);
       picks.push(i);
       hot = -1;
-      cards[i].el.classList.remove('is-drag');
+      cards[i].el.classList.remove('is-drag', 'is-hold');
       // 這時候才去載正面那張圖，翻牌前還有好幾百毫秒，來得及
       const face = cards[i].el.querySelector('.tc__face');
       if (!face.firstChild) {
@@ -336,9 +339,29 @@ export function ceremony({ spread, order, question = '', allowReversed = true, r
     const DROP_DOWN = 110;                // 已選的牌往下拉超過這麼多就算放回去
     let drag = null;
 
-    const pickTip = (left) => left
-      ? `按住一張牌往上丟就收下，放回扇面就當沒發生　（還要 ${left} 張）`
-      : '';
+    /* ── 觸控：滑過去看，停住才抽 ──────────────────────
+       手指滑過扇面，底下那張會跳起來 —— 那是「看」，不是「選」。
+       停在同一張上面超過 DWELL 才真的抽出來。
+
+       為什麼不是一碰就抽：扇面只露出每張牌五、六個像素，
+       手指又比牌寬，滑到哪張根本看不準。要先看得到才選得到，
+       所以「移動」與「決定」得分成兩個動作。
+       停住的那 0.6 秒，牌邊的金光會一路長到滿 —— 讓人知道它在充能，
+       不是卡住，也不是無緣無故就被抽走了。 */
+    const DWELL = 600;                    // 停住多久算「決定了」
+    const JITTER = 14;                    // 手指本來就會抖，這個範圍內都算沒動
+    const PULL_UP = 44;                   // 從按下的地方往上拉這麼多，就轉成「拖著丟」
+    let scrub = null;
+
+    /* 提示要跟著輸入方式換 —— 對滑鼠講「停住一下」、對手指講「點一下」，
+       兩邊都會覺得這個 App 在講別人的事。 */
+    let touchMode = (() => {
+      try { return matchMedia('(pointer: coarse)').matches; } catch { return false; }
+    })();
+    const pickTip = (left) => !left ? ''
+      : touchMode
+        ? `滑過扇面看牌，停在想要的那張約半秒就抽出　（還要 ${left} 張）`
+        : `點一下就收下，按住往上丟也可以　（還要 ${left} 張）`;
 
     /** 這個座標上有沒有一張「已經選走」的牌 */
     function slotAt(px, py) {
@@ -401,24 +424,82 @@ export function ceremony({ spread, order, question = '', allowReversed = true, r
        只聽舞台的話，那幾張牌根本摸不到，也就拖不回來。
        代價是要自己判斷「有沒有抓到東西」，沒抓到就什麼都不做，
        不然關閉鍵會被 preventDefault 吃掉。 */
+    /** 開始「刷」扇面：跟著手指換預覽，停住夠久就抽 */
+    function startScrub(i, e) {
+      scrub = { x: e.clientX, y: e.clientY, y0: e.clientY, timer: 0 };
+      setHot(i);
+      arm();
+    }
+    function arm() {
+      clearTimeout(scrub.timer);
+      if (hot < 0) return;
+      cards[hot].el.classList.add('is-hold');
+      scrub.timer = setTimeout(() => {
+        const i = hot;
+        stopScrub(false);
+        take(i);
+      }, DWELL);
+    }
+    function moveScrub(e) {
+      // 往上拉開扇面 → 改成拖著丟，跟滑鼠那條路會合
+      if (e.clientY - scrub.y0 < -PULL_UP && hot >= 0) {
+        const i = hot;
+        stopScrub(true);
+        startDrag(i, e, 'fan');
+        moveDrag(e);
+        return;
+      }
+      const i = hitAt(e.clientX, e.clientY);
+      const moved = Math.hypot(e.clientX - scrub.x, e.clientY - scrub.y) > JITTER;
+      if (i !== hot) {                    // 換了一張：預覽跟著換，重新計時
+        setHot(i);
+        scrub.x = e.clientX; scrub.y = e.clientY;
+        arm();
+      } else if (moved) {                 // 同一張但手指在游移：也重新計時
+        scrub.x = e.clientX; scrub.y = e.clientY;
+        arm();
+      }
+    }
+    function stopScrub(keepHot) {
+      if (!scrub) return;
+      clearTimeout(scrub.timer);
+      scrub = null;
+      cards.forEach(c => c.el.classList.remove('is-hold'));
+      if (!keepHot) return;
+    }
+
+    /* 事件掛在整個儀式層上，不是只掛在舞台上：
+       已經選走的牌會飛到牌位那一排，那排在舞台上緣的外面 ——
+       只聽舞台的話，那幾張牌根本摸不到，也就拖不回來。
+       代價是要自己判斷「有沒有抓到東西」，沒抓到就什麼都不做，
+       不然關閉鍵會被 preventDefault 吃掉。 */
     root.addEventListener('pointerdown', (e) => {
       if (phase !== 'pick') return;
+      if (e.pointerType) touchMode = e.pointerType !== 'mouse';
       const s = slotAt(e.clientX, e.clientY);
       const i = s >= 0 ? s : hitAt(e.clientX, e.clientY);
       if (s < 0) setHot(i);
       if (i < 0) return;                  // 沒抓到牌：讓事件照常傳下去
       e.preventDefault();
       root.setPointerCapture(e.pointerId);
-      startDrag(i, e, s >= 0 ? 'slot' : 'fan');
+      // 已經選走的牌一律用拖的（要把它拖回牌組）；
+      // 扇面上的牌，手指是「刷」、滑鼠是直接抓著拖。
+      if (s >= 0 || !touchMode) startDrag(i, e, s >= 0 ? 'slot' : 'fan');
+      else startScrub(i, e);
     });
     root.addEventListener('pointermove', (e) => {
       if (phase !== 'pick') return;
       if (drag) { moveDrag(e); return; }
+      if (scrub) { moveScrub(e); return; }
       // 沒按著的時候（滑鼠移過去）照舊：底下那張跳起來當預覽
       if (e.buttons === 0) setHot(hitAt(e.clientX, e.clientY));
     });
-    root.addEventListener('pointerup', endDrag);
+    root.addEventListener('pointerup', (e) => {
+      if (scrub) { stopScrub(false); setHot(-1); return; }   // 沒停滿就放開＝沒選
+      endDrag(e);
+    });
     root.addEventListener('pointercancel', () => {
+      stopScrub(false);
       if (drag) { const { i, from } = drag; drag = null;
         cards[i].el.classList.remove('is-drag');
         if (from === 'fan') put(cards[i], { ...fanPos(i), ms: 300, z: i }); else relayoutSlots();

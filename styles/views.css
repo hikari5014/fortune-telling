@@ -693,6 +693,16 @@ body.cer-open { overflow: hidden; }
 .tc.is-rev.is-face .tc__face img { transform: rotate(180deg); }
 /* 被挑走、以及翻開後的那幾張，加一圈金邊讓它跟扇面分開 */
 .tc.is-taken .tc__back { box-shadow: 0 0 0 1px rgba(232,217,168,.55), 0 0 18px rgba(232,217,168,.22), 0 10px 22px -12px #000; }
+/* 手指停在上面的那張：金邊從淡到滿，一路長到 0.6 秒。
+   沒有這個，牌被抽走的那一刻會像是無緣無故發生的；
+   有了它，使用者看得到「再一下下就好了」，也知道移開就取消。 */
+.tc.is-hold .tc__back { animation: tc-hold 600ms linear both; }
+@keyframes tc-hold {
+  from { box-shadow: 0 0 0 1px rgba(232,217,168,.25); }
+  to   { box-shadow: 0 0 0 2px rgba(232,217,168,1), 0 0 26px rgba(232,217,168,.6); }
+}
+:root[data-motion="off"] .tc.is-hold .tc__back { animation: none; box-shadow: 0 0 0 2px rgba(232,217,168,.8); }
+
 /* 正在被拖著的那張：抬高一點、光暈強一點，看得出來「它在你手上」 */
 .tc.is-drag { z-index: 900; }
 .tc.is-drag .tc__back { box-shadow: 0 0 0 1px rgba(232,217,168,.8), 0 0 26px rgba(232,217,168,.4), 0 22px 40px -14px #000; }

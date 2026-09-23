@@ -2,11 +2,20 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.24.1';
+export const APP_VERSION = '0.25.0';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.25.0', date: '2026-09-23', title: '手指選牌改回「滑過去看，停住才抽」',
+    items: [
+      { kind: 'change', text: '手指滑過扇面時，底下那張牌會跳起來 —— 那是「看」，不是「選」' },
+      { kind: 'change', text: '停在同一張上面約半秒才真的抽出來，牌邊的金光會一路長到滿，看得出還差多久' },
+      { kind: 'change', text: '按著往上一甩照樣收下；沒停滿就放開，等於什麼都沒發生' },
+      { kind: 'change', text: '滑鼠不受影響：照舊點一下就收下，按住往上丟也可以' },
+    ],
+  },
   {
     v: '0.24.1', date: '2026-09-23', title: '選走的牌不再疊到標題，右手方向修正',
     items: [

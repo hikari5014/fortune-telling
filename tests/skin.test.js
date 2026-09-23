@@ -170,6 +170,36 @@ test('選走的牌停在牌位標籤下面，不會疊到標題', () => {
   assert.match(draw, /const slotPos = \(sr, st\)/);
 });
 
+test('觸控：滑過去是「看」，停住才是「選」', () => {
+  assert.match(draw, /const DWELL = 600;/);
+  // 手指本來就會抖，抖動範圍內不算移動，不然永遠停不滿
+  assert.match(draw, /const JITTER = 14;/);
+  // 換了一張、或手指在游移，都要重新計時
+  assert.match(draw, /if \(i !== hot\) \{[\s\S]*?arm\(\);/);
+  // 沒停滿就放開＝沒選
+  assert.match(draw, /if \(scrub\) \{ stopScrub\(false\); setHot\(-1\); return; \}/);
+  // 只有觸控走這條；滑鼠照舊點一下就收下
+  assert.match(draw, /if \(s >= 0 \|\| !touchMode\) startDrag\(/);
+  assert.match(draw, /else startScrub\(i, e\);/);
+});
+
+test('充能有畫面回饋，不然牌被抽走像是無緣無故發生的', () => {
+  assert.match(views, /\.tc\.is-hold \.tc__back \{ animation: tc-hold 600ms linear both; \}/);
+  // 動畫關掉時不能只剩「什麼都沒有」，要留一個靜態的已選中樣子
+  assert.match(views, /data-motion="off"\] \.tc\.is-hold \.tc__back/);
+  // CSS 的 600ms 與 JS 的 DWELL 要一致，不然金邊長滿了牌還沒被抽走
+  const ms = draw.match(/const DWELL = (\d+);/)[1];
+  assert.ok(views.includes(`tc-hold ${ms}ms`), `CSS 的充能時間與 DWELL(${ms}) 對不上`);
+});
+
+test('提示要跟著輸入方式換', () => {
+  // 對滑鼠講「停住一下」、對手指講「點一下」，兩邊都會覺得在講別人的事
+  assert.match(draw, /touchMode\s*\n?\s*\?/);
+  assert.match(draw, /滑過扇面看牌/);
+  assert.match(draw, /點一下就收下/);
+  assert.match(draw, /if \(e\.pointerType\) touchMode = e\.pointerType !== 'mouse';/);
+});
+
 test('起卦已經搬到抽牌頁，儀式裡不再有第二份', () => {
   assert.ok(!draw.includes('cer__rite'), '儀式裡還留著舊的起卦那一層');
   assert.ok(!views.includes('.cer__rite'), 'CSS 裡還留著舊的起卦樣式');
