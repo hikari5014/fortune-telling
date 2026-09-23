@@ -2,11 +2,17 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.30.1';
+export const APP_VERSION = '0.30.2';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.30.2', date: '2026-09-23', title: '圖示收邊加上立體感',
+    items: [
+      { kind: 'change', text: '主畫面圖示的邊緣改成「鎏金框」：上緣受光、下緣背光有厚度，內圈一道上亮下沉的金框，底板中央微微隆起' },
+    ],
+  },
   {
     v: '0.30.1', date: '2026-09-23', title: 'iPhone 主畫面圖示的白邊',
     items: [

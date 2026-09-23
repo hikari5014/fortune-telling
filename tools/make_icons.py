@@ -62,6 +62,7 @@ class Canvas:
 
     def paint(self, bbox, sdf, paint, alpha=1.0, ss=3):
         """在 bbox（使用者單位 x0,y0,x1,y1）內畫一個形狀。
+        paint 與 alpha 都可以是 (x, y) 的函式 —— 光影就是靠 alpha 隨位置變。
 
         sdf(x, y) 回傳有號距離（使用者單位，負的在裡面）。
         邊緣一個像素內用覆蓋率做反鋸齒；ss 是每軸的超取樣數。
@@ -90,7 +91,8 @@ class Canvas:
                 ux = (px + 0.5) / self.k
                 uy = (py + 0.5) / self.k
                 rgb = paint(ux, uy) if callable(paint) else paint
-                self.blend(px, py, rgb, cov * alpha)
+                a = alpha(ux, uy) if callable(alpha) else alpha
+                self.blend(px, py, rgb, cov * a)
 
     def png(self, path):
         rows = []
@@ -187,7 +189,49 @@ def sd_star_fill(cx, cy, r):
 C = 256.0          # 中心
 
 
-def draw(size, scale=1.0, squircle=True):
+WHITE, BLACK = (255, 255, 255), (0, 0, 0)
+
+
+def smooth(a, b, t):
+    t = min(1.0, max(0.0, (t - a) / (b - a)))
+    return t * t * (3 - 2 * t)
+
+
+def shade(cv, full):
+    """底板的光：上方一層很淡的亮面、下方一層暗面 —— 像一塊微微隆起的琺瑯片。
+       畫在圖案之前，金線不會被染暗。"""
+    hw, r = (256, 115) if full else (240, 108)
+    body = sd_rrect(C, C, hw, hw, r)
+    cv.paint((0, 0, 512, 512), body, WHITE, lambda x, y: 0.085 * (1 - smooth(0, 250, y)), ss=1)
+    cv.paint((0, 0, 512, 512), body, BLACK, lambda x, y: 0.34 * smooth(260, 512, y) ** 1.4, ss=1)
+    # 四周往內收一點暗角，中央自然浮起來
+    cv.paint((0, 0, 512, 512), body, BLACK,
+             lambda x, y: 0.22 * smooth(170, 330, math.hypot(x - C, y - C)), ss=1)
+
+
+def bevel(cv, full, style):
+    """收邊。iOS 自己會裁圓角（約邊長的 22.4%），full=True 時這裡的圓角就對著它畫。
+       style：
+         soft  —— 只有邊上一道受光、一道背光，像玻璃的厚度
+         frame —— 再加一圈鎏金內框，框的上緣亮、下緣暗，外側壓一道細槽
+    """
+    hw, r = (256, 115) if full else (240, 108)
+    body = sd_rrect(C, C, hw, hw, r)
+    gold = diagonal(GOLD_STOPS)
+    # 邊緣的厚度：上緣一道亮、下緣一道暗（受光從上方來）
+    lip = lambda k, w: (lambda x, y: abs(body(x, y) + k) - w / 2)
+    cv.paint((0, 0, 512, 512), lip(2.2, 3.2), WHITE, lambda x, y: 0.30 * (1 - smooth(40, 300, y)))
+    cv.paint((0, 0, 512, 512), lip(2.2, 3.2), BLACK, lambda x, y: 0.45 * smooth(250, 500, y))
+    if style == 'frame':
+        k = 15
+        cv.paint((0, 0, 512, 512), lip(k + 3.2, 2.2), BLACK, 0.40)            # 框外側的細槽
+        cv.paint((0, 0, 512, 512), lip(k, 3.0), gold,
+                 lambda x, y: 0.95 - 0.50 * smooth(60, 480, y))              # 鎏金框：上亮下沉
+        cv.paint((0, 0, 512, 512), lip(k - 1.0, 1.0), WHITE,
+                 lambda x, y: 0.35 * (1 - smooth(30, 260, y)))                # 框上緣的反光
+
+
+def draw(size, scale=1.0, squircle=True, style=None):
     """scale < 1 會把整個圖案往中間縮（maskable 的安全區要留邊）。"""
     cv = Canvas(size)
     gold = diagonal(GOLD_STOPS)
@@ -202,12 +246,17 @@ def draw(size, scale=1.0, squircle=True):
     # 底：圓角方塊。maskable 要整片鋪滿，不留圓角也不留透明。
     if squircle:
         cv.paint((0, 0, 512, 512), sd_rrect(C, C, 240, 240, 108), diagonal(BG_STOPS))
-        cv.paint((0, 0, 512, 512),
-                 lambda x, y, f=sd_rrect(C, C, 240, 240, 108): abs(f(x, y)) - 1.0, gold, 0.30)
+        if not style:   # 有收邊時邊緣交給 bevel()，這道細金線就不重複畫
+            cv.paint((0, 0, 512, 512),
+                     lambda x, y, f=sd_rrect(C, C, 240, 240, 108): abs(f(x, y)) - 1.0, gold, 0.30)
     else:
         # 距離要給「非常裡面」：給 -1 的話，小尺寸（180px）時半個像素 > 1 個單位，
         # 整片都被當成邊緣做反鋸齒，alpha 只剩 85% —— iOS 又會把那 15% 補成白。
         cv.paint((0, 0, 512, 512), lambda x, y: -1e9, diagonal(BG_STOPS))
+
+    if style:
+        shade(cv, not squircle)
+
 
     # 中央的環境光暈
     for i in range(22):
@@ -269,17 +318,20 @@ def draw(size, scale=1.0, squircle=True):
         cv.paint((cx - 7, cy - 7, cx + 7, cy + 7), sd_circle(cx, cy, W(3.5)), gold)
     cv.paint((C - 9, C - 9, C + 9, C + 9), sd_circle(C, C, W(6)), gold)
 
+    if style:
+        bevel(cv, not squircle, style)
     return cv
 
 
 if __name__ == "__main__":
     out = os.path.join(os.path.dirname(__file__), "..", "assets", "icons")
     os.makedirs(out, exist_ok=True)
-    draw(512).png(os.path.join(out, "icon-512.png"))
-    draw(192).png(os.path.join(out, "icon-192.png"))
+    # 收邊用「鎏金框」：上亮下沉的厚度＋一圈內框（使用者從三種收邊裡選的）
+    draw(512, style='frame').png(os.path.join(out, "icon-512.png"))
+    draw(192, style='frame').png(os.path.join(out, "icon-192.png"))
     # iOS 主畫面：iOS 會自己裁圓角，而且會把透明的地方填成白色。
     # 自己先畫圓角＋留透明角 → 兩種圓角對不齊，邊緣就露出一圈白邊。
-    # 所以跟 maskable 一樣整片鋪滿、不畫圓角也不畫金邊，圓角交給 iOS。
-    draw(180, scale=0.86, squircle=False).png(os.path.join(out, "apple-touch-icon.png"))
+    # 所以底要整片鋪滿、不自己裁圓角；收邊的光影與金框照 iOS 的圓角（約 22.4%）對齊來畫。
+    draw(180, scale=0.84, squircle=False, style='frame').png(os.path.join(out, "apple-touch-icon.png"))
     # maskable：系統會裁成圓形或圓角，所以底要鋪滿、圖案縮進安全區
     draw(512, scale=0.72, squircle=False).png(os.path.join(out, "maskable-512.png"))
