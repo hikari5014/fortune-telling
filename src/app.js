@@ -88,7 +88,7 @@ function buildNav() {
   });
 
   // 桌機側欄：首頁在最上面，其餘照分類分段
-  $('#rail').innerHTML = `<div class="rail__logo">${icon('astro')}</div>`
+  $('#rail').innerHTML = `<div class="rail__logo" aria-label="玄鑑">${icon('mark')}</div>`
     + link(HOME)
     + CATS.map(c => `<span class="rail__sep" aria-hidden="true"></span>`
         + c.paths.map(p => link(NAV.find(n => n.p === p))).join('')).join('');

@@ -1,5 +1,13 @@
 /* 自繪線條圖示集（不使用 emoji）。24×24，stroke = currentColor。 */
 const P = {
+  /* App 的標誌。跟 assets/icons/icon.svg 是同一個設計，
+     只是簡化到 24 格、線稿、吃 currentColor —— 側欄與開機畫面都用這個。
+     外圈星軌、中圈子午線、中央四芒星、天心一點，到此為止；
+     原圖上的八方位刻度與八顆星點在 20px 下只會糊成一圈麻點。 */
+  mark: '<circle cx="12" cy="12" r="10.1" stroke-dasharray="1.1 2.3" stroke-opacity=".55"/>'
+      + '<circle cx="12" cy="12" r="6.1"/>'
+      + '<path d="M12 7.2Q12 12 16.8 12Q12 12 12 16.8Q12 12 7.2 12Q12 12 12 7.2Z"/>'
+      + '<circle cx="12" cy="12" r=".95" fill="currentColor" stroke="none"/>',
   home: '<path d="M4 11.2 12 4l8 7.2"/><path d="M6 10v10h12V10"/><path d="M10 20v-6h4v6"/>',
   profile: '<circle cx="12" cy="8" r="3.6"/><path d="M4.5 20c.9-3.8 3.9-5.8 7.5-5.8s6.6 2 7.5 5.8"/>',
   astro: '<circle cx="12" cy="12" r="8.4"/><path d="M12 3.6v2M12 18.4v2M3.6 12h2M18.4 12h2"/><path d="m12 7.4 1.6 3 3 1.6-3 1.6-1.6 3-1.6-3-3-1.6 3-1.6z"/>',

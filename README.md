@@ -109,10 +109,10 @@ src/
     builder.js            變數渲染與提示詞組裝
     quick.js              一鍵組裝（功能頁按一下就複製走）
   views/                  19 個頁面
-tests/                    354 個測試（零相依，node:test）
+tests/                    362 個測試（零相依，node:test）
 tools/
   gen_kangxi.py           由 Unicode Unihan 產生康熙筆畫字典
-  make_icons.py           產生 App 圖示 PNG（自寫光柵化，不需影像函式庫）
+  make_icons.py           產生 App 圖示 PNG（自寫光柵化與 alpha 合成，不需影像函式庫）
   make_ceremony.py        起卦插圖轉檔（含白底去背）
   check_version.py        檢查 changelog 與 sw.js 的版號一致
 docs/DESIGN.md            設計決策、實作陷阱、里程碑
@@ -147,7 +147,7 @@ docs/DESIGN.md            設計決策、實作陷阱、里程碑
   區塊一律不畫框 —— 深色靠底色深淺分層，淺色靠陰影分層
 - **星空背景**：整個 App 底下墊一層 canvas，星點會閃、整片會極慢自轉，
   捲動時近處的大星走得比遠處的小星多，偶爾來一顆流星
-- **圖示**：30 個自繪 SVG，滑過時線條加粗（等同字重變化）並依語意「演一下」自己的意思
+- **圖示**：38 個自繪 SVG，滑過時線條加粗（等同字重變化）並依語意「演一下」自己的意思
   —— 設定轉 60°、重新整理逆轉 120°、箭頭前進 4px、上傳往上、下載往下
 - **過場**：只有主內容區參與 View Transition，固定的側欄與吸頂列不跟著位移；
   `scrollbar-gutter: stable` 讓捲軸寬度恆定，切到較短的頁面不會左右跳
@@ -411,7 +411,7 @@ node --test --test-reporter=spec tests/*.test.js
 ```
 
 零相依，用 Node 內建的 `node:test`，不需要 npm install。CI 在每次推送與 PR 時跑，
-部署前再跑一次，沒過就不上線。354 個測試涵蓋十一個引擎、提示詞組裝、外觀規矩、星空行為與全部 19 個頁面的繪製。
+部署前再跑一次，沒過就不上線。362 個測試涵蓋十一個引擎、提示詞組裝、外觀規矩、星空行為與全部 19 個頁面的繪製。
 
 細節見 `tests/README.md`。幾個比較有意思的：
 

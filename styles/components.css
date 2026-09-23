@@ -76,7 +76,7 @@
     width: 88px; padding: var(--sp-5) 0; border-right: 1px solid var(--line);
     background: var(--bg-2);
   }
-  .rail__logo { width: 34px; height: 34px; margin-bottom: var(--sp-4); }
+  .rail__logo { width: 34px; height: 34px; margin-bottom: var(--sp-4); color: var(--accent); }
   .rail .tab {
     width: 62px; height: 58px; border-radius: var(--r-3); gap: 3px;
     transition: color var(--dur-3) var(--ease), background var(--dur-3) var(--ease), transform var(--dur-2) var(--spring);

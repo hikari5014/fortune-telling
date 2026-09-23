@@ -2,11 +2,20 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.21.1';
+export const APP_VERSION = '0.22.0';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.22.0', date: '2026-09-23', title: '新的標誌，起卦特效正式上線',
+    items: [
+      { kind: 'add', text: '起卦的插圖放進來了：水晶球、光暈、兩隻手都到位，抽牌前會完整演一次' },
+      { kind: 'change', text: '換上新的 App 圖示：靛黑底、鎏金線，外圈星軌、中圈子午線、中央四芒星、天心一點' },
+      { kind: 'change', text: '側欄與開機畫面改用同一個標誌 —— 開機時外圈星軌慢慢逆轉、四芒星在呼吸' },
+      { kind: 'change', text: '安裝到主畫面的底色與主題色跟著換成靛黑' },
+    ],
+  },
   {
     v: '0.21.1', date: '2026-09-23', title: '抽牌前多一段「起卦」',
     items: [
