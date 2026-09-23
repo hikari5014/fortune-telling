@@ -2,11 +2,20 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.22.0';
+export const APP_VERSION = '0.23.0';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.23.0', date: '2026-09-23', title: '水晶球搬到抽牌頁，選牌改成用丟的',
+    items: [
+      { kind: 'change', text: '「洗牌並抽牌」那顆按鈕換成水晶球本人 —— 滑鼠移上去會閃，手指按著的時候會閃' },
+      { kind: 'change', text: '起卦從儀式裡搬到抽牌頁：點下去之後右手伸進來搓球，球亮起來，整片白光蓋滿螢幕，洗牌的畫面在白光底下就位' },
+      { kind: 'add', text: '選牌可以用拖的：按住一張往上丟就收下，放回扇面就當沒發生；已經選走的牌往下拖可以放回牌組' },
+      { kind: 'fix', text: '觸控長按不再跳出選取框與放大鏡，圖片也不會被拖走' },
+    ],
+  },
   {
     v: '0.22.0', date: '2026-09-23', title: '新的標誌，起卦特效正式上線',
     items: [

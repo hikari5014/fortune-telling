@@ -96,22 +96,17 @@ test('主題色的 meta 跟著換了，不然開 App 時上下會出現一條舊
   assert.match(store, /'#060810' : '#fbfaf5'/);
 });
 
-/* ── 起卦那一段 ─────────────────────────────── */
+/* ── 起卦：抽牌頁上的水晶球 ─────────────────────── */
+const cast = readFileSync('src/orbcast.js', 'utf8');
 const draw = readFileSync('src/tarotdraw.js', 'utf8');
 const swjs = readFileSync('sw.js', 'utf8');
 
-test('插圖沒放進去的時候，整段安靜地跳過而不是卡住', () => {
-  assert.match(draw, /if \(!art \|\| done\) return;/);
-  // 少了必要的那幾張就不播
-  assert.match(draw, /NEEDED\.every\(k => ok\[k\]\)/);
-  // 載圖失敗不能讓 Promise 炸掉
-  assert.match(draw, /\.catch\(\(\) => false\)/);
-});
-
-test('右手是選配 —— 沒有就拿左手鏡射，不會因此整段不播', () => {
-  assert.match(draw, /NEEDED = \['orb', 'aura', 'handL'\]/);
-  assert.match(draw, /ok\.handR \? ART\.handR : ART\.handL/);
-  assert.match(views, /\.cer__hand--r[^}]*scaleX\(-1\)/);
+test('插圖沒放進去的時候，水晶球不畫，普通按鈕留著', () => {
+  assert.match(cast, /NEEDED\.every\(k => ok\[k\]\)|rs\.every\(Boolean\)/);
+  assert.match(cast, /\.catch\(\(\) => false\)/);   // 載圖失敗不能讓 Promise 炸掉
+  // 兩條路共用同一個入口，所以插圖不齊也一定按得下去
+  assert.match(cast, /btn\?\.addEventListener\('click', \(\) => onCast\(false\)\)/);
+  assert.match(cast, /cast\.hidden = false;\s*\n\s*btn\.hidden = true;/);
 });
 
 test('插圖不進安裝外殼 —— 一個 404 會讓整個 Service Worker 裝不起來', () => {
@@ -122,11 +117,50 @@ test('插圖不進安裝外殼 —— 一個 404 會讓整個 Service Worker 裝
   assert.match(swjs, /k === 'xj-art'/);   // 改版時不要清掉，不然每次都重抓
 });
 
-test('起卦是可以跳過的，而且跳過之後會自然收尾', () => {
-  assert.match(draw, /輕點一下可以跳過/);
-  assert.match(draw, /skipped \|\| done \? 60 : ms/);
+test('滑鼠靠 hover 閃，觸控靠按住閃 —— 手指沒有 hover', () => {
+  assert.match(views, /@media \(hover: hover\) and \(pointer: fine\) \{\s*\n\s*\.cast__orb:hover \.cast__shine/);
+  assert.match(views, /\.cast__orb\.is-press \.cast__shine/);
+  assert.match(cast, /orb\.addEventListener\('pointerdown'/);
+  // 放開、離開、被系統中斷都要收掉，不然手指滑走之後球會一直閃
+  assert.match(cast, /pointerup', 'pointercancel', 'pointerleave'/);
 });
 
-test('光暈那張靠 screen 吃掉白底，所以不必先去背', () => {
-  assert.match(views, /\.cer__aura[\s\S]*?mix-blend-mode: screen/);
+test('觸控長按不會跳出選取與放大鏡', () => {
+  assert.match(cast, /orb\.addEventListener\('contextmenu', \(e\) => e\.preventDefault\(\)\)/);
+  assert.match(draw, /root\.addEventListener\('contextmenu', \(e\) => e\.preventDefault\(\)\)/);
+  assert.match(views, /\.cast__orb \{[\s\S]*?-webkit-touch-callout: none/);
+  assert.match(views, /\.cast__ball \{[\s\S]*?-webkit-user-drag: none/);
+});
+
+test('白光是接力棒：儀式就位了才散，而且一定會散', () => {
+  // 儀式貼進 DOM、下一幀畫得出來之後才通知
+  assert.match(draw, /requestAnimationFrame\(\(\) => requestAnimationFrame\(onReady\)\)/);
+  // 沒人叫它散也要自己散 —— 不能把人卡在一片白裡面
+  assert.match(cast, /setTimeout\(fade, 3000\)/);
+  // 中途離開儀式也要散
+  const tarot = readFileSync('src/views/tarot.js', 'utf8');
+  assert.match(tarot, /if \(!got\) \{ fade\?\.\(\); return; \}/);
+});
+
+test('起卦已經搬到抽牌頁，儀式裡不再有第二份', () => {
+  assert.ok(!draw.includes('cer__rite'), '儀式裡還留著舊的起卦那一層');
+  assert.ok(!views.includes('.cer__rite'), 'CSS 裡還留著舊的起卦樣式');
+  assert.match(draw, /let phase = 'stack'/);   // 儀式從聚牌開始
+});
+
+test('拖曳選牌：往上丟收下、放回扇面當沒發生、已選的可以拖回去', () => {
+  // 判斷要看相對位移，不是畫面上的某一條絕對高度 ——
+  // 扇面本來就攤在中段，用絕對線的話隨便碰一下都算丟出去
+  assert.match(draw, /const THROW_UP/);
+  assert.match(draw, /const dy = y - y0;/);
+  assert.match(draw, /if \(dy < -THROW_UP \|\| vy < -0\.55\) take\(i\)/);
+  assert.match(draw, /if \(dy > DROP_DOWN \|\| vy > 0\.55\) untake\(i\)/);
+  assert.match(draw, /function untake\(i\)/);
+  // 沒真的拖動就當成點一下 —— 不該逼原本會用的人改學新手勢
+  assert.match(draw, /if \(!moved\) \{ take\(i\); return; \}/);
+  // 拔掉中間那一張之後，後面的牌位要往前遞補
+  assert.match(draw, /function relayoutSlots\(\)/);
+  // 已選的牌飛到舞台外緣的牌位排，事件只掛舞台的話就摸不到它
+  assert.match(draw, /root\.addEventListener\('pointerdown'/);
+  assert.match(draw, /if \(i < 0\) return;/);   // 沒抓到牌就別吃掉事件，不然關閉鍵會壞
 });

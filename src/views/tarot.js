@@ -16,6 +16,7 @@ import { draw, fromPicks, pickSpread, shuffle, toText, SPREADS, DECK, birthCard,
 import { observeReveal } from '../motion.js';
 import { nameOf } from '../privacy.js';
 import { DISCLAIMER, sectionHead, needProfile, askPrompt } from './_shared.js';
+import { castHTML, mountCast, castRite } from '../orbcast.js';
 
 /* ── 牌面 ─────────────────────────────────────────── */
 
@@ -168,9 +169,7 @@ function drawTab(d) {
       <div class="switch" id="allow-rev" role="switch" tabindex="0" aria-checked="${d.tarotRev !== false}" style="margin-top:var(--sp-2)">
         <span>允許逆位</span><span class="switch__box"></span>
       </div>
-      <button class="btn btn--primary btn--block press" id="shuffle" style="margin-top:var(--sp-4)">
-        ${raw(icon('dice'))} 洗牌並抽牌
-      </button>
+      ${raw(castHTML())}
     </section>
     <section id="table" class="section"></section>`;
 }
@@ -362,9 +361,24 @@ export default {
     sw.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
 
     const table = $('#table', root);
-    $('#shuffle', root).addEventListener('click', async () => {
+    let busy = false;
+    mountCast(root, async (fromOrb) => {
+      if (busy) return;                            // 連點兩下不要開兩場
+      busy = true;
+      try { await startDraw(fromOrb); } finally { busy = false; }
+    }, settings);
+
+    async function startDraw(fromOrb) {
       const allowReversed = sw.getAttribute('aria-checked') === 'true';
       const question = $('#tq', root).value.trim();
+
+      /* 起卦：右手搓水晶球，球亮起來，白光蓋滿螢幕。
+         白光是接力棒 —— 底下的抽牌儀式在那幾百毫秒裡就位，中間沒有接縫。 */
+      let fade = null;
+      if (fromOrb) {
+        const orb = $('#shuffle-orb', root);
+        if (orb) fade = await castRite(orb);
+      }
 
       /* 儀式：洗牌 → 攤成扇形 → 自己挑 → 翻開。
          牌在洗好的那一刻就定了，挑的是位置 —— 跟實體牌一樣。 */
@@ -373,10 +387,11 @@ export default {
       if (ceremonyOn(settings)) {
         const spread = pickSpread(sel.value, list);
         const order = shuffle(DECK);
-        const got = await ceremony({ spread, order, question, allowReversed });
-        if (!got) return;                          // 中途離開就什麼都不做
+        const got = await ceremony({ spread, order, question, allowReversed, onReady: fade });
+        if (!got) { fade?.(); return; }             // 中途離開就什麼都不做
         res = fromPicks({ spread: sel.value, order, picks: got.picks, reversed: got.reversed, spreads: list });
       } else {
+        fade?.();
         res = draw({ spread: sel.value, allowReversed, spreads: list });
       }
       const fast = document.documentElement.dataset.motion === 'off';
@@ -422,6 +437,6 @@ export default {
         askPrompt(`/prompt?t=tarot&q=${encodeURIComponent(question)}`, all);
       });
       setTimeout(() => $('#detail', table).scrollIntoView({ behavior: 'smooth', block: 'start' }), 200);
-    });
+    }
   },
 };

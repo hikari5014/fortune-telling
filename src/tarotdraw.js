@@ -18,10 +18,8 @@
    4. 動畫強度設成關閉、或系統要求減少動態時，整段直接跳過，
       不是播快一點 —— 會暈的人要的是不要動，不是動得比較快。
 
-   5. 最前面還有一段「起卦」：水晶球浮上來、光暈在背後綻開、
-      兩隻手從左右伸進來合圍，球亮起來炸出一把星屑，手才收回去、牌才浮上來。
-      這一段吃 assets/ceremony/ 底下的四張圖；**圖不在就整段跳過**，
-      直接從聚牌開始 —— 少一段特效沒關係，卡在黑畫面不行。 */
+   5. 起卦（水晶球）不在這裡 —— 那一段在抽牌頁上，見 orbcast.js。
+      這支只負責「白光散掉之後」的事：聚牌、洗牌、攤扇、挑牌、翻牌。 */
 
 import { icon } from './icons.js';
 import { starfield } from './starfield.js';
@@ -29,44 +27,6 @@ import { haptic } from './ui.js';
 
 
 const wait = (ms) => new Promise(r => setTimeout(r, ms));
-
-/* 起卦那一段用到的插圖，都在 assets/ceremony/ 底下（見那一層的 README）。
-   前三張缺任何一張就整段不播；hand-r 是選配 —— 沒有的話右手直接拿左手鏡射，
-   所以最少準備三張就能動。 */
-export const ART = {
-  orb:  'assets/ceremony/orb.webp',
-  aura: 'assets/ceremony/aura.webp',
-  handL: 'assets/ceremony/hand-l.webp',
-  handR: 'assets/ceremony/hand-r.webp',
-};
-const NEEDED = ['orb', 'aura', 'handL'];
-
-const loadOne = (src) => new Promise((res) => {
-  const im = new Image();
-  im.onload = () => res(true);
-  im.onerror = () => res(false);
-  im.src = src;
-});
-
-let artReady = null;
-/**
- * 預載插圖。
- * @returns {Promise<false|{handR: string}>} false 表示插圖不齊、這一段跳過；
- *   否則回傳右手要用哪一張（沒有 hand-r 就回左手那張，CSS 會鏡射）。
- */
-export function loadArt() {
-  if (artReady) return artReady;
-  if (typeof Image !== 'function') return (artReady = Promise.resolve(false));
-  const keys = Object.keys(ART);
-  artReady = Promise.all(keys.map(k => loadOne(ART[k])))
-    .then((rs) => {
-      const ok = Object.fromEntries(keys.map((k, i) => [k, rs[i]]));
-      if (!NEEDED.every(k => ok[k])) return false;
-      return { handR: ok.handR ? ART.handR : ART.handL };
-    })
-    .catch(() => false);
-  return artReady;
-}
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const RAD = Math.PI / 180;
 
@@ -86,13 +46,14 @@ export function ceremonyOn(settings) {
  * @param {string} o.question 問題（顯示用，可空）
  * @param {boolean} o.allowReversed
  * @param {function} o.rand
+ * @param {function} [o.onReady] 畫面就位之後叫一次 —— 起卦的白光等這一聲才散
  * @returns {Promise<null|{picks:number[], reversed:boolean[]}>} 中途離開回傳 null
  */
-export function ceremony({ spread, order, question = '', allowReversed = true, rand = Math.random }) {
+export function ceremony({ spread, order, question = '', allowReversed = true, rand = Math.random, onReady = null }) {
   return new Promise((resolve) => {
     const need = spread.n;
     const picks = [];
-    let phase = 'rite';
+    let phase = 'stack';
     let done = false;
 
     /* ── 版面 ── */
@@ -107,16 +68,10 @@ export function ceremony({ spread, order, question = '', allowReversed = true, r
       <div class="cer__top">
         <button class="cer__x" aria-label="離開抽牌">${icon('close')}</button>
         <div class="cer__meta">
-          <p class="cer__step" aria-live="polite">起卦</p>
+          <p class="cer__step" aria-live="polite">聚牌</p>
           ${question ? `<p class="cer__q">${question}</p>` : ''}
           <p class="cer__sp">${spread.name} · ${need} 張</p>
         </div>
-      </div>
-      <div class="cer__rite" aria-hidden="true">
-        <img class="cer__aura" alt="" src="${ART.aura}">
-        <img class="cer__orb" alt="" src="${ART.orb}">
-        <img class="cer__hand cer__hand--l" alt="" src="${ART.handL}">
-        <img class="cer__hand cer__hand--r" alt="">
       </div>
       <div class="cer__slots" aria-hidden="true"></div>
       <div class="cer__stage"></div>
@@ -124,6 +79,9 @@ export function ceremony({ spread, order, question = '', allowReversed = true, r
       <button class="cer__go" hidden>${icon('check')} 看解說</button>`;
     document.body.append(root);
     document.body.classList.add('cer-open');
+    /* 起卦的白光還蓋在上面。等這一層真的貼進 DOM、下一幀畫得出來之後才讓它散，
+       白光底下換掉的就是完成品，不會看到半成品。 */
+    if (onReady) requestAnimationFrame(() => requestAnimationFrame(onReady));
 
     const stage = root.querySelector('.cer__stage');
     const slotRow = root.querySelector('.cer__slots');
@@ -214,52 +172,6 @@ export function ceremony({ spread, order, question = '', allowReversed = true, r
       tipEl.textContent = tip;
     };
 
-    /* ── 起卦 ─────────────────────────────────────────
-       水晶球浮上來 → 光暈在背後綻開 → 兩隻手從左右合圍 →
-       球亮起來、炸出一把星屑 → 手收回去、球與光暈淡出。
-       全程可以點一下跳過；圖沒載成功就整段不播。 */
-    const rite = root.querySelector('.cer__rite');
-    async function invoke() {
-      const art = await loadArt();
-      if (!art || done) return;            // 插圖不齊就安靜地跳過
-      // 沒有右手那張就拿左手鏡射（鏡射是 CSS 做的）
-      root.querySelector('.cer__hand--r').src = art.handR;
-
-      let skipped = false;
-      const skip = () => { skipped = true; };
-      root.addEventListener('pointerdown', skip, { once: true });
-      // 快轉：跳過之後每一段都只等一瞬間，讓它自然收尾而不是硬切
-      const beat = async (ms) => { await wait(skipped || done ? 60 : ms); return !done; };
-
-      setPhase('rite', '起卦', '輕點一下可以跳過');
-      rite.classList.add('is-on');
-      await beat(260);
-
-      rite.classList.add('is-orb');            // 球浮上來
-      await beat(620);
-      rite.classList.add('is-aura');           // 光暈在背後綻開
-      haptic(8);
-      await beat(560);
-      rite.classList.add('is-hands');          // 兩隻手從左右合圍
-      await beat(900);
-      if (done) return;
-
-      // 球亮起來，從球心炸出一把星屑
-      rite.classList.add('is-flare');
-      const r = rite.getBoundingClientRect();
-      const b = root.querySelector('.cer__orb').getBoundingClientRect();
-      sky.burst(b.left + b.width / 2 - r.left, b.top + b.height / 2 - r.top, 46);
-      sky.shoot();
-      haptic(18);
-      await beat(420);
-
-      rite.classList.remove('is-hands');       // 手收回去
-      await beat(340);
-      rite.classList.remove('is-on', 'is-orb', 'is-aura', 'is-flare');
-      root.removeEventListener('pointerdown', skip);
-      await beat(320);
-    }
-
     async function run() {
       measure();
       // 先把整副牌藏到畫面下面 —— 起卦那一段不該看到牌
@@ -268,8 +180,6 @@ export function ceremony({ spread, order, question = '', allowReversed = true, r
         put(c, { x: p.x, y: H + 80, deg: p.deg, s: .9, ms: 0, o: 0 });
       });
       await wait(30);
-      await invoke();
-      if (done) return;
 
       // 1. 聚牌：從下面浮上來疊成一疊
       setPhase('stack', '聚牌');
@@ -302,7 +212,7 @@ export function ceremony({ spread, order, question = '', allowReversed = true, r
       }
 
       // 3. 展開：從中間往兩邊依序攤成扇形
-      setPhase('fan', '攤開', `在扇面上滑動，停在想要的那張再放開　（還要 ${need} 張）`);
+      setPhase('fan', '攤開', '');
       const mid = (order.length - 1) / 2;
       cards.forEach((c, i) => {
         const p = fanPos(i);
@@ -311,7 +221,7 @@ export function ceremony({ spread, order, question = '', allowReversed = true, r
       haptic(12);
       await wait(1000);
       if (done) return;
-      setPhase('pick', '請選牌', `滑過扇面，底下那張會跳起來　（還要 ${need} 張）`);
+      setPhase('pick', '請選牌', pickTip(need));
     }
 
     /* ── 選牌 ── */
@@ -353,6 +263,7 @@ export function ceremony({ spread, order, question = '', allowReversed = true, r
       taken.add(i);
       picks.push(i);
       hot = -1;
+      cards[i].el.classList.remove('is-drag');
       // 這時候才去載正面那張圖，翻牌前還有好幾百毫秒，來得及
       const face = cards[i].el.querySelector('.tc__face');
       if (!face.firstChild) {
@@ -375,28 +286,145 @@ export function ceremony({ spread, order, question = '', allowReversed = true, r
       haptic(14);
       sky.burst(sr.left - st.left + sr.width / 2, sr.top - st.top, 26);
       const left = need - picks.length;
-      tipEl.textContent = left ? `滑過扇面，底下那張會跳起來　（還要 ${left} 張）` : '';
+      tipEl.textContent = left ? pickTip(left) : '';
       if (!left) reveal();
     }
 
-    stage.addEventListener('pointerdown', (e) => {
+    /** 把一張已經選走的牌放回扇面 */
+    function untake(i) {
+      const at = picks.indexOf(i);
+      if (at < 0) return;
+      picks.splice(at, 1);
+      taken.delete(i);
+      cards[i].el.classList.remove('is-taken', 'is-drag');
+      put(cards[i], { ...fanPos(i), ms: 420, z: i });
+      // 牌位標籤要重排：拔掉中間那一張，後面的都要往前遞補
+      [...slotRow.children].forEach((sl, k) => sl.classList.toggle('is-on', k < picks.length));
+      relayoutSlots();
+      haptic(10);
+      tipEl.textContent = pickTip(need - picks.length);
+    }
+
+    /** 把還在手上的牌，重新對到它現在的牌位 */
+    function relayoutSlots() {
+      const st = stage.getBoundingClientRect();
+      picks.forEach((idx, k) => {
+        const sr = slotRow.children[k].getBoundingClientRect();
+        put(cards[idx], {
+          x: sr.left - st.left + sr.width / 2 - CW / 2,
+          y: sr.top - st.top - CW / 0.5957 - 8,
+          deg: 0, s: .72, ms: 360, z: 500 + k + 1,
+        });
+      });
+    }
+
+    /* ── 拖曳 ────────────────────────────────────────
+       按住一張牌之後它就跟著手指走。放開時看兩件事：
+       ・往上甩出去（越過投線，或放手時還在往上衝）→ 收下這張
+       ・放回扇面附近 → 它自己滑回原位，什麼都沒發生
+       已經選走的牌也可以往下拖回扇面，等於反悔。
+
+       「往上丟」比「點一下」多一個好處：手指在畫面下半部，
+       扇面也在下半部，點的時候手會擋住自己要看的東西；
+       拖出來就看得見了。 */
+    /* 判斷「有沒有丟出去」要看**相對位移**，不是畫面上的某一條絕對高度：
+       扇面本來就攤在畫面中段，很多牌一開始就已經在上半部，
+       用絕對線的話等於隨便碰一下都算丟出去。 */
+    const THROW_UP = 86;                  // 往上拉超過這麼多就算丟出去
+    const DROP_DOWN = 110;                // 已選的牌往下拉超過這麼多就算放回去
+    let drag = null;
+
+    const pickTip = (left) => left
+      ? `按住一張牌往上丟就收下，放回扇面就當沒發生　（還要 ${left} 張）`
+      : '';
+
+    /** 這個座標上有沒有一張「已經選走」的牌 */
+    function slotAt(px, py) {
+      for (let k = picks.length - 1; k >= 0; k--) {
+        const r = cards[picks[k]].el.getBoundingClientRect();
+        if (px >= r.left && px <= r.right && py >= r.top && py <= r.bottom) return picks[k];
+      }
+      return -1;
+    }
+
+    function startDrag(i, e, from) {
+      const st = stage.getBoundingClientRect();
+      const x0 = e.clientX - st.left, y0 = e.clientY - st.top;
+      drag = {
+        i, from, x0, y0, x: x0, y: y0,
+        lastY: e.clientY, vy: 0, t: performance.now(), moved: false,
+      };
+      cards[i].el.classList.add('is-drag');
+      haptic(8);
+    }
+
+    function moveDrag(e) {
+      const st = stage.getBoundingClientRect();
+      const now = performance.now();
+      const dt = Math.max(1, now - drag.t);
+      drag.vy = (e.clientY - drag.lastY) / dt;
+      drag.lastY = e.clientY; drag.t = now;
+      const nx = e.clientX - st.left, ny = e.clientY - st.top;
+      if (Math.abs(nx - drag.x) > 4 || Math.abs(ny - drag.y) > 4) drag.moved = true;
+      drag.x = nx; drag.y = ny;
+      // 牌心跟著指標，稍微往上提一點，手指才不會整個蓋住牌面
+      put(cards[drag.i], {
+        x: nx - CW / 2, y: ny - CW / 0.5957 * 0.62,
+        deg: Math.max(-14, Math.min(14, drag.vy * -22)), s: 1.3, ms: 0, z: 900,
+      });
+    }
+
+    function endDrag() {
+      if (!drag) return;
+      const { i, from, y, y0, vy, moved } = drag;
+      const dy = y - y0;
+      drag = null;
+      cards[i].el.classList.remove('is-drag');
+
+      if (from === 'fan') {
+        // 沒真的拖動就當成點一下 —— 點著選牌的人不該被迫學新手勢
+        if (!moved) { take(i); return; }
+        // 拉得夠高，或放手時還在往上衝（快速一甩）
+        if (dy < -THROW_UP || vy < -0.55) take(i);
+        else { setHot(-1); put(cards[i], { ...fanPos(i), ms: 300, z: i }); }
+      } else {
+        // 從牌位拖下來的：拉得夠低就放回牌組，否則回牌位
+        if (dy > DROP_DOWN || vy > 0.55) untake(i);
+        else relayoutSlots();
+      }
+    }
+
+    /* 事件掛在整個儀式層上，不是只掛在舞台上：
+       已經選走的牌會飛到牌位那一排，那排在舞台上緣的外面 ——
+       只聽舞台的話，那幾張牌根本摸不到，也就拖不回來。
+       代價是要自己判斷「有沒有抓到東西」，沒抓到就什麼都不做，
+       不然關閉鍵會被 preventDefault 吃掉。 */
+    root.addEventListener('pointerdown', (e) => {
       if (phase !== 'pick') return;
+      const s = slotAt(e.clientX, e.clientY);
+      const i = s >= 0 ? s : hitAt(e.clientX, e.clientY);
+      if (s < 0) setHot(i);
+      if (i < 0) return;                  // 沒抓到牌：讓事件照常傳下去
       e.preventDefault();
-      stage.setPointerCapture(e.pointerId);
-      setHot(hitAt(e.clientX, e.clientY));
+      root.setPointerCapture(e.pointerId);
+      startDrag(i, e, s >= 0 ? 'slot' : 'fan');
     });
-    stage.addEventListener('pointermove', (e) => {
+    root.addEventListener('pointermove', (e) => {
       if (phase !== 'pick') return;
-      setHot(hitAt(e.clientX, e.clientY));
+      if (drag) { moveDrag(e); return; }
+      // 沒按著的時候（滑鼠移過去）照舊：底下那張跳起來當預覽
+      if (e.buttons === 0) setHot(hitAt(e.clientX, e.clientY));
     });
-    const release = (e) => {
-      if (phase !== 'pick') return;
-      const i = hitAt(e.clientX, e.clientY);
-      if (i >= 0) take(i);
-      else setHot(-1);
-    };
-    stage.addEventListener('pointerup', release);
-    stage.addEventListener('pointercancel', () => setHot(-1));
+    root.addEventListener('pointerup', endDrag);
+    root.addEventListener('pointercancel', () => {
+      if (drag) { const { i, from } = drag; drag = null;
+        cards[i].el.classList.remove('is-drag');
+        if (from === 'fan') put(cards[i], { ...fanPos(i), ms: 300, z: i }); else relayoutSlots();
+      }
+      setHot(-1);
+    });
+    // 觸控長按預設會跳出選取與放大鏡，整個儀式都不要
+    root.addEventListener('contextmenu', (e) => e.preventDefault());
 
     /* ── 翻牌 ── */
     async function reveal() {
