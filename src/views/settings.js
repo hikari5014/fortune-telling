@@ -46,7 +46,7 @@ export default {
       <div class="stack">
         <section class="setgroup reveal">
           <div class="setgroup__head">外觀</div>
-          ${raw(row('主題', '黑白雙色系統，無彩度干擾。', seg('set-theme', [['system', '跟隨系統'], ['light', '白'], ['dark', '黑']], s.theme)))}
+          ${raw(row('主題', '靛黑或米白，重點上金。整個 App 只有這一個彩度。', seg('set-theme', [['system', '跟隨系統'], ['light', '白'], ['dark', '黑']], s.theme)))}
           ${raw(rowStack('字級', `目前 ${Math.round(s.fontScale * 100)}%`,
             `<input type="range" id="set-font" min="0.85" max="1.3" step="0.05" value="${s.fontScale}" style="width:100%">`))}
           ${raw(row('介面密度', '影響區塊之間的留白。', seg('set-density', [['compact', '緊湊'], ['normal', '標準'], ['roomy', '寬鬆']], s.density)))}
@@ -63,6 +63,14 @@ export default {
           ${raw(row('左右滑動切頁', '在觸控裝置上左右滑動切換分頁。方向鎖定後才會跟手，螢幕邊緣讓給系統返回手勢。', sw('set-swipe', s.swipeNav)))}
           ${raw(row('觸覺回饋', hapticNote(), sw('set-haptics', s.haptics)))}
           ${raw(row('指標光暈', '游標附近的漸層光暈。觸控裝置一律關閉，避免拖曳時畫面抖動。', sw('set-glow', s.pointerGlow)))}
+          ${raw(row('背景星空',
+            '整個 App 底下墊一層星空：星點會閃、整片會極慢地自轉，捲動時近處的大星走得比遠處的小星多，'
+            + '所以會有前後層次，偶爾還會有一顆流星劃過。'
+            + '動畫強度設為「關閉」或系統要求減少動態時，星空還在，只是不動了 —— '
+            + '星辰是這個 App 的主題，該停的是動作，不是星空本身。',
+            sw('set-sky', s.starfield !== false)))}
+          ${raw(row('星點密度', '星星要多還是少。濃密在大螢幕上比較有感，但也比較吃效能。',
+            seg('set-stardensity', [['0.5', '稀疏'], ['1', '標準'], ['1.6', '濃密']], s.starDensity ?? 1)))}
           ${raw(row('命盤特效',
             '完整：星盤畫出相位連線、星體有光暈、刻度環極慢自轉；紫微的宮格依序浮現、三方四正描邊。'
             + '輕量：只保留進場動畫。動畫強度設為「關閉」或系統要求減少動態時，這裡一律失效。',
@@ -189,9 +197,10 @@ export default {
     bindSeg('set-register', 'register');
     bindSeg('set-fx', 'chartEffects');
     bindSeg('set-motion', 'motion');
+    bindSeg('set-stardensity', 'starDensity');
     bindSeg('set-zi', 'lateZiRule');
     bindSeg('set-wai', 'wageWaiRule');
-    ['set-swipe|swipeNav', 'set-haptics|haptics', 'set-glow|pointerGlow', 'set-scorecolor|scoreColor', 'set-tst|trueSolarTime', 'set-pdisc|promptDisclaimer', 'set-numeral|numeralRule', 'set-tarotimg|tarotImages', 'set-tarotlink|tarotChartLink', 'set-tarotcer|tarotCeremony', 'set-advprompt|advancedPrompt']
+    ['set-swipe|swipeNav', 'set-haptics|haptics', 'set-glow|pointerGlow', 'set-scorecolor|scoreColor', 'set-tst|trueSolarTime', 'set-pdisc|promptDisclaimer', 'set-numeral|numeralRule', 'set-tarotimg|tarotImages', 'set-tarotlink|tarotChartLink', 'set-tarotcer|tarotCeremony', 'set-advprompt|advancedPrompt', 'set-sky|starfield']
       .forEach(x => { const [id, key] = x.split('|'); bindSw(id, key); });
     bindVal('set-tz', 'tzOffset', Number);
     bindVal('set-city', 'city');

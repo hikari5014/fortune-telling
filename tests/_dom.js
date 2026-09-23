@@ -30,6 +30,7 @@ export function installDOM() {
   globalThis.scrollTo = noop;
   globalThis.scrollBy = noop;
   globalThis.scrollY = 0;
+  globalThis.devicePixelRatio = 1;
   globalThis.innerWidth = 390;
   globalThis.innerHeight = 664;
   globalThis.getComputedStyle = () => ({ getPropertyValue: () => '' });
