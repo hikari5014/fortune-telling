@@ -2,11 +2,18 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.28.0';
+export const APP_VERSION = '0.29.0';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.29.0', date: '2026-09-23', title: '內建第二副牌背：鎏金太陽',
+    items: [
+      { kind: 'add', text: '塔羅牌組多了一副內建的「鎏金太陽」：換上金色星圖牌背，牌面沿用偉特牌' },
+      { kind: 'change', text: '內建牌組跟偉特牌一樣不能編輯、不能刪，想改內容就另外新增一副自訂牌組' },
+    ],
+  },
   {
     v: '0.28.0', date: '2026-09-23', title: '生日可以用農曆輸入',
     items: [

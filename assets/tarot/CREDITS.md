@@ -35,3 +35,9 @@ App 內也不用該商標當產品名稱 —— 只在說明來源時提到原�
 4. 存成 WebP（品質 66）
 
 重新產生：`python3 tools/fetch_tarot.py --force`
+
+## 另外的牌背（`backs/`）
+
+`backs/sun.webp`（鎏金太陽）是 App 作者提供的圖，原檔在 `backs/src/sun.jpg`，
+用 `python3 tools/make_cardback.py backs/src/sun.jpg backs/sun.webp` 補成牌面比例。
+這一副只換背面，牌面仍是上面的偉特牌。
