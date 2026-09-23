@@ -651,6 +651,70 @@ body.cer-open { overflow: hidden; }
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cer__sp { font-family: var(--font-num); font-size: var(--step--2); letter-spacing: .16em; color: rgba(242,236,220,.42); margin-top: 2px; }
 
+/* 起卦：水晶球 + 光暈 + 兩隻手。
+   整層絕對定位疊在舞台上，不占版面，也不吃點擊
+   —— 點任何地方都是「跳過」，那個監聽掛在最外層。 */
+.cer__rite {
+  position: absolute; inset: 0; z-index: 3; pointer-events: none;
+  display: grid; place-items: center;
+  opacity: 0; visibility: hidden;
+  transition: opacity 420ms var(--ease), visibility 0s linear 420ms;
+}
+.cer__rite.is-on { opacity: 1; visibility: visible; transition-delay: 0s; }
+.cer__rite > img { position: absolute; user-select: none; -webkit-user-drag: none; }
+
+/* 光暈已經去過背（見 tools/make_ceremony.py）。
+   這裡用 screen 疊加 —— 透明處不動，有顏色的地方會把底下的夜空「點亮」，
+   而不是蓋掉它，所以星星還看得見。 */
+.cer__aura {
+  width: min(132vw, 820px); margin-bottom: 18vh; mix-blend-mode: screen;
+  opacity: 0; transform: scale(.42) rotate(-14deg);
+  transition: opacity 900ms var(--ease-out), transform 1400ms var(--ease-out);
+}
+.cer__rite.is-aura .cer__aura {
+  opacity: .92; transform: scale(1) rotate(0deg);
+  animation: rite-turn 42s linear infinite 1.4s;
+}
+
+.cer__orb {
+  width: min(46vw, 210px); margin-bottom: 18vh;
+  opacity: 0; transform: translateY(38px) scale(.82);
+  filter: drop-shadow(0 22px 44px rgba(0,0,0,.6));
+  transition: opacity 620ms var(--ease-out), transform 820ms var(--spring), filter 380ms var(--ease);
+}
+.cer__rite.is-orb .cer__orb {
+  opacity: 1; transform: none;
+  animation: rite-float 5.5s var(--ease) infinite .9s;
+}
+/* 亮起來的那一下：球本身變亮，外面再加一圈金光 */
+.cer__rite.is-flare .cer__orb {
+  filter: drop-shadow(0 0 34px rgba(232,217,168,.85)) drop-shadow(0 22px 44px rgba(0,0,0,.6)) brightness(1.5);
+}
+.cer__rite.is-flare .cer__aura { opacity: 1; transform: scale(1.14); }
+
+/* 兩隻手：手腕在畫面外的左下與右下，指尖朝上朝內，
+   往上伸到球的兩側就停住 —— 不要蓋住球，球才是主角。
+   右手直接把左手水平鏡射，所以素材只要一隻就夠。 */
+.cer__hand {
+  /* 用高度定尺寸不是寬度：素材是「手腕在下、指尖在上」的長條，
+     照高度排才能保證指尖真的伸到球的旁邊。 */
+  height: min(60vh, 520px); width: auto; bottom: 0; opacity: 0;
+  transform-origin: bottom center;
+  transition: opacity 520ms var(--ease), transform 900ms var(--ease-out);
+  filter: drop-shadow(0 8px 24px rgba(0,0,0,.55));
+}
+.cer__hand--l { left: -4%;  transform: translate3d(-46%, 38%, 0) rotate(24deg); }
+.cer__hand--r { right: -4%; transform: translate3d(46%, 38%, 0) rotate(-24deg) scaleX(-1); }
+.cer__rite.is-hands .cer__hand { opacity: 1; }
+.cer__rite.is-hands .cer__hand--l { transform: translate3d(0, 2%, 0) rotate(7deg); }
+.cer__rite.is-hands .cer__hand--r { transform: translate3d(0, 2%, 0) rotate(-7deg) scaleX(-1); }
+
+@keyframes rite-float { 0%, 100% { translate: 0 0; } 50% { translate: 0 -10px; } }
+@keyframes rite-turn  { to { rotate: 360deg; } }
+
+/* 起卦的時候不需要看到牌位標籤，畫面留給球 */
+.cer[data-phase="rite"] .cer__slots { opacity: 0; }
+
 .cer__slots { position: relative; z-index: 2; display: flex; justify-content: center; flex-wrap: wrap;
   gap: 6px; padding: var(--sp-4) var(--sp-4) 0; transition: opacity var(--dur-3) var(--ease); }
 .cer__slots.is-dim { opacity: 0; }

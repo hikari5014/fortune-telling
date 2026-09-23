@@ -16,7 +16,12 @@
       放在白底上會很怪；而且抽牌本來就該像在夜裡進行。
 
    4. 動畫強度設成關閉、或系統要求減少動態時，整段直接跳過，
-      不是播快一點 —— 會暈的人要的是不要動，不是動得比較快。 */
+      不是播快一點 —— 會暈的人要的是不要動，不是動得比較快。
+
+   5. 最前面還有一段「起卦」：水晶球浮上來、光暈在背後綻開、
+      兩隻手從左右伸進來合圍，球亮起來炸出一把星屑，手才收回去、牌才浮上來。
+      這一段吃 assets/ceremony/ 底下的四張圖；**圖不在就整段跳過**，
+      直接從聚牌開始 —— 少一段特效沒關係，卡在黑畫面不行。 */
 
 import { icon } from './icons.js';
 import { starfield } from './starfield.js';
@@ -24,6 +29,44 @@ import { haptic } from './ui.js';
 
 
 const wait = (ms) => new Promise(r => setTimeout(r, ms));
+
+/* 起卦那一段用到的插圖，都在 assets/ceremony/ 底下（見那一層的 README）。
+   前三張缺任何一張就整段不播；hand-r 是選配 —— 沒有的話右手直接拿左手鏡射，
+   所以最少準備三張就能動。 */
+export const ART = {
+  orb:  'assets/ceremony/orb.webp',
+  aura: 'assets/ceremony/aura.webp',
+  handL: 'assets/ceremony/hand-l.webp',
+  handR: 'assets/ceremony/hand-r.webp',
+};
+const NEEDED = ['orb', 'aura', 'handL'];
+
+const loadOne = (src) => new Promise((res) => {
+  const im = new Image();
+  im.onload = () => res(true);
+  im.onerror = () => res(false);
+  im.src = src;
+});
+
+let artReady = null;
+/**
+ * 預載插圖。
+ * @returns {Promise<false|{handR: string}>} false 表示插圖不齊、這一段跳過；
+ *   否則回傳右手要用哪一張（沒有 hand-r 就回左手那張，CSS 會鏡射）。
+ */
+export function loadArt() {
+  if (artReady) return artReady;
+  if (typeof Image !== 'function') return (artReady = Promise.resolve(false));
+  const keys = Object.keys(ART);
+  artReady = Promise.all(keys.map(k => loadOne(ART[k])))
+    .then((rs) => {
+      const ok = Object.fromEntries(keys.map((k, i) => [k, rs[i]]));
+      if (!NEEDED.every(k => ok[k])) return false;
+      return { handR: ok.handR ? ART.handR : ART.handL };
+    })
+    .catch(() => false);
+  return artReady;
+}
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const RAD = Math.PI / 180;
 
@@ -49,7 +92,7 @@ export function ceremony({ spread, order, question = '', allowReversed = true, r
   return new Promise((resolve) => {
     const need = spread.n;
     const picks = [];
-    let phase = 'stack';
+    let phase = 'rite';
     let done = false;
 
     /* ── 版面 ── */
@@ -64,10 +107,16 @@ export function ceremony({ spread, order, question = '', allowReversed = true, r
       <div class="cer__top">
         <button class="cer__x" aria-label="離開抽牌">${icon('close')}</button>
         <div class="cer__meta">
-          <p class="cer__step" aria-live="polite">聚牌</p>
+          <p class="cer__step" aria-live="polite">起卦</p>
           ${question ? `<p class="cer__q">${question}</p>` : ''}
           <p class="cer__sp">${spread.name} · ${need} 張</p>
         </div>
+      </div>
+      <div class="cer__rite" aria-hidden="true">
+        <img class="cer__aura" alt="" src="${ART.aura}">
+        <img class="cer__orb" alt="" src="${ART.orb}">
+        <img class="cer__hand cer__hand--l" alt="" src="${ART.handL}">
+        <img class="cer__hand cer__hand--r" alt="">
       </div>
       <div class="cer__slots" aria-hidden="true"></div>
       <div class="cer__stage"></div>
@@ -165,14 +214,65 @@ export function ceremony({ spread, order, question = '', allowReversed = true, r
       tipEl.textContent = tip;
     };
 
+    /* ── 起卦 ─────────────────────────────────────────
+       水晶球浮上來 → 光暈在背後綻開 → 兩隻手從左右合圍 →
+       球亮起來、炸出一把星屑 → 手收回去、球與光暈淡出。
+       全程可以點一下跳過；圖沒載成功就整段不播。 */
+    const rite = root.querySelector('.cer__rite');
+    async function invoke() {
+      const art = await loadArt();
+      if (!art || done) return;            // 插圖不齊就安靜地跳過
+      // 沒有右手那張就拿左手鏡射（鏡射是 CSS 做的）
+      root.querySelector('.cer__hand--r').src = art.handR;
+
+      let skipped = false;
+      const skip = () => { skipped = true; };
+      root.addEventListener('pointerdown', skip, { once: true });
+      // 快轉：跳過之後每一段都只等一瞬間，讓它自然收尾而不是硬切
+      const beat = async (ms) => { await wait(skipped || done ? 60 : ms); return !done; };
+
+      setPhase('rite', '起卦', '輕點一下可以跳過');
+      rite.classList.add('is-on');
+      await beat(260);
+
+      rite.classList.add('is-orb');            // 球浮上來
+      await beat(620);
+      rite.classList.add('is-aura');           // 光暈在背後綻開
+      haptic(8);
+      await beat(560);
+      rite.classList.add('is-hands');          // 兩隻手從左右合圍
+      await beat(900);
+      if (done) return;
+
+      // 球亮起來，從球心炸出一把星屑
+      rite.classList.add('is-flare');
+      const r = rite.getBoundingClientRect();
+      const b = root.querySelector('.cer__orb').getBoundingClientRect();
+      sky.burst(b.left + b.width / 2 - r.left, b.top + b.height / 2 - r.top, 46);
+      sky.shoot();
+      haptic(18);
+      await beat(420);
+
+      rite.classList.remove('is-hands');       // 手收回去
+      await beat(340);
+      rite.classList.remove('is-on', 'is-orb', 'is-aura', 'is-flare');
+      root.removeEventListener('pointerdown', skip);
+      await beat(320);
+    }
+
     async function run() {
       measure();
-      // 1. 聚牌：從下面浮上來疊成一疊
+      // 先把整副牌藏到畫面下面 —— 起卦那一段不該看到牌
       cards.forEach((c, i) => {
         const p = stackPos(i);
         put(c, { x: p.x, y: H + 80, deg: p.deg, s: .9, ms: 0, o: 0 });
       });
       await wait(30);
+      await invoke();
+      if (done) return;
+
+      // 1. 聚牌：從下面浮上來疊成一疊
+      setPhase('stack', '聚牌');
       cards.forEach((c, i) => {
         const p = stackPos(i);
         put(c, { ...p, s: 1, ms: 520, delay: Math.min(i * 5, 260), o: 1 });
