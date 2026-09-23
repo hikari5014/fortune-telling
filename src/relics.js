@@ -86,6 +86,37 @@ export function stick(label = '') {
 }
 
 /**
+ * 筊杯。兩塊一對，從上面看是半月形：一面平、一面凸。
+ * 傳統上平面為陽、凸面為陰；一平一凸是聖筊，兩平是笑筊，兩凸是陰筊。
+ *
+ * 兩面畫的是「同一塊木頭的兩種樣子」，不是兩個形狀 ——
+ * 輪廓完全一樣，差別只在表面：平面看得到年輪的切面，
+ * 凸面看得到隆起的脊線與它落下的陰影。
+ * @param {boolean} flat true 畫平面（陽）
+ */
+export function jiao(flat = true) {
+  const face = flat
+    // 平面：木頭的切面，年輪是幾道同心弧
+    ? `<g class="rl-grain">
+         <path d="M22 60q4-30 38-36 34 6 38 36"/>
+         <path d="M34 61q3-21 26-26 23 5 26 26"/>
+         <path d="M46 62q2-12 14-15 12 3 14 15"/>
+       </g>`
+    // 凸面：一道脊線，加上它在左下投的影
+    : `<g>
+         <path class="rl-ridge" d="M60 16v46"/>
+         <path class="rl-shade" d="M60 16q-30 6-38 44 24 10 38 10Z"/>
+         <path class="rl-grain" d="M40 24q-14 14-16 36M80 24q14 14 16 36"/>
+       </g>`;
+  const body = 'M14 60q-2-34 46-44 48 10 46 44-24 12-46 12T14 60Z';
+  return `<svg class="rl rl--jiao" viewBox="0 0 120 84" aria-hidden="true" focusable="false">
+    <path class="rl-body" d="${body}"/>
+    ${face}
+    <path class="rl-rim" d="${body}"/>
+  </svg>`;
+}
+
+/**
  * 籤詩紙：一張長形的紙，上下有摺痕、邊緣不齊。
  * 只畫紙本身，字由 HTML 疊上去 —— SVG 裡排中文直書會是另一場災難。
  */

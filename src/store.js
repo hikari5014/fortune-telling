@@ -83,6 +83,34 @@ function write(key, value) {
   try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
 }
 
+/* 備份的內容清單。匯出、匯入、以及畫面上的勾選框都吃同一份 ——
+   分開寫的話，加一種資料就會有人忘記補其中一邊。 */
+export const EXPORT_PARTS = [
+  { key: 'settings', label: '設定', desc: '外觀、動態、命理參數、提示詞預設、塔羅與星空的開關',
+    get: (s) => s.settings, set: (s, v) => write(K.settings, v) },
+  { key: 'profiles', label: '出生資料', personal: true,
+    desc: '姓名、生日、出生時間與地點。這是整份備份裡最敏感的東西。',
+    get: (s, o) => (o.includePrivate ? s.profiles : s.profiles.filter(p => !p.private)),
+    set: (s, v, m) => write(K.profiles, m ? dedupe([...s.profiles, ...v]) : v) },
+  { key: 'orgs', label: '公司／團隊', personal: true, desc: '合盤與面談用的第二方檔案',
+    get: (s) => s.orgs, set: (s, v, m) => write(K.orgs, m ? dedupe([...s.orgs, ...v]) : v) },
+  { key: 'records', label: '解讀紀錄', personal: true,
+    desc: '貼回來的 LLM 回覆，連同當時送出去的提示詞。裡面通常含有出生資料。',
+    get: (s) => s.records, set: (s, v, m) => write(K.records, m ? dedupe([...s.records, ...v]) : v) },
+  { key: 'templates', label: '自訂模板', desc: '自己寫的提示詞模板',
+    get: (s) => s.templates, set: (s, v, m) => write(K.templates, m ? dedupe([...s.templates, ...v]) : v) },
+  { key: 'spreads', label: '自訂牌陣', desc: '塔羅的自訂牌陣',
+    get: (s) => s.spreads, set: (s, v, m) => write(K.spreads, m ? dedupe([...s.spreads, ...v]) : v) },
+  { key: 'qianSets', label: '籤詩集', desc: '匯入過的籤詩集',
+    get: (s) => s.qianSets, set: (s, v, m) => write(K.qianSets, m ? dedupe([...s.qianSets, ...v]) : v) },
+  { key: 'decks', label: '牌組名冊', desc: '自訂牌組的名字。**圖片不在裡面** —— 那些存在瀏覽器的資料庫裡，備份帶不走。',
+    get: (s) => s.decks, set: (s, v, m) => write(K.decks, m ? dedupe([...s.decks, ...v]) : v) },
+  { key: 'candidates', label: '候選名', personal: true, desc: '姓名頁收藏的候選名字',
+    get: (s) => s.candidates, set: (s, v, m) => write(K.candidates, m ? dedupe([...s.candidates, ...v]) : v) },
+  { key: 'dailyLog', label: '今日一張紀錄', desc: '每天抽的那張塔羅與你寫的筆記',
+    get: (s) => s.dailyLog, set: (s, v, m) => write(K.daily, m ? [...v, ...s.dailyLog].slice(0, 400) : v) },
+];
+
 export const store = {
   get settings() { return { ...DEFAULT_SETTINGS, ...read(K.settings, {}) }; },
   setSettings(patch) {
@@ -212,30 +240,44 @@ export const store = {
   setDraft(key, value) { const d = this.drafts; d[key] = value; write(K.drafts, d); },
 
   /** 備份匯出。保密檔案整份跳過 —— 那是它承諾過的事。 */
-  exportAll() {
-    const profiles = this.profiles.filter(p => !p.private);
-    return {
-      app: 'xuanjian', version: 1, exportedAt: new Date().toISOString(),
-      settings: this.settings, profiles, currentId: this.currentId,
-      templates: this.templates, records: this.records, candidates: this.candidates,
-      qianSets: this.qianSets, orgs: this.orgs, spreads: this.spreads, dailyLog: this.dailyLog,
-    };
+  /* ── 備份 ────────────────────────────────────────
+     一律 JSON。可以勾要帶哪幾項出去 —— 備份給自己、
+     跟把檔案傳給別人看，該帶的東西本來就不一樣。 */
+  exportAll({ parts = null, includePrivate = false } = {}) {
+    const want = (k) => !parts || parts.includes(k);
+    const out = { app: 'xuanjian', version: 2, exportedAt: new Date().toISOString(), parts: [] };
+    for (const p of EXPORT_PARTS) {
+      if (!want(p.key)) continue;
+      const v = p.get(this, { includePrivate });
+      if (v === undefined) continue;
+      out[p.key] = v;
+      out.parts.push(p.key);
+    }
+    // 目前選的是誰只有在檔案有跟著出去時才有意義
+    if (want('profiles')) out.currentId = this.currentId;
+    return out;
   },
-  importAll(data, { merge = false } = {}) {
+
+  importAll(data, { merge = false, parts = null } = {}) {
     if (!data || data.app !== 'xuanjian') throw new Error('檔案格式不符');
-    if (data.settings) write(K.settings, data.settings);
-    if (data.profiles) write(K.profiles, merge ? dedupe([...this.profiles, ...data.profiles]) : data.profiles);
-    if (data.templates) write(K.templates, merge ? dedupe([...this.templates, ...data.templates]) : data.templates);
-    if (data.records) write(K.records, merge ? dedupe([...this.records, ...data.records]) : data.records);
-    if (data.candidates) write(K.candidates, merge ? dedupe([...this.candidates, ...data.candidates]) : data.candidates);
-    if (data.qianSets) write(K.qianSets, merge ? dedupe([...this.qianSets, ...data.qianSets]) : data.qianSets);
-    if (data.orgs) write(K.orgs, merge ? dedupe([...this.orgs, ...data.orgs]) : data.orgs);
-    if (data.spreads) write(K.spreads, merge ? dedupe([...this.spreads, ...data.spreads]) : data.spreads);
-    if (data.dailyLog) write(K.daily, merge ? [...data.dailyLog, ...this.dailyLog].slice(0, 400) : data.dailyLog);
-    if (data.currentId) write(K.current, data.currentId);
+    const want = (k) => (!parts || parts.includes(k)) && data[k] !== undefined;
+    for (const p of EXPORT_PARTS) {
+      if (!want(p.key)) continue;
+      p.set(this, data[p.key], merge);
+    }
+    if (want('profiles') && data.currentId) write(K.current, data.currentId);
     applyChrome(this.settings);
     emit('all', null);
   },
+
+  /** 這個檔案裡有什麼、各有幾筆 —— 匯入前先讓人看清楚 */
+  inspect(data) {
+    if (!data || data.app !== 'xuanjian') throw new Error('檔案格式不符');
+    return EXPORT_PARTS
+      .filter(p => data[p.key] !== undefined)
+      .map(p => ({ ...p, n: Array.isArray(data[p.key]) ? data[p.key].length : 1 }));
+  },
+
   clearAll() { Object.values(K).forEach(k => localStorage.removeItem(k)); applyChrome(this.settings); emit('all', null); },
 };
 

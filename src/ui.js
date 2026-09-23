@@ -239,7 +239,12 @@ export function download(filename, text, type = 'application/json') {
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = filename;
+  /* 要先放進文件裡再按。沒接上 DOM 的 <a>，有些瀏覽器會忽略 download 屬性，
+     檔案就會存成「download」而不是我們給的名字。 */
+  a.style.display = 'none';
+  document.body.append(a);
   a.click();
+  a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
