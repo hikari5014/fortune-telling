@@ -136,10 +136,18 @@ test('白光是接力棒：儀式就位了才散，而且一定會散', () => {
   // 儀式貼進 DOM、下一幀畫得出來之後才通知
   assert.match(draw, /requestAnimationFrame\(\(\) => requestAnimationFrame\(onReady\)\)/);
   // 沒人叫它散也要自己散 —— 不能把人卡在一片白裡面
-  assert.match(cast, /setTimeout\(fade, 3000\)/);
+  assert.match(cast, /setTimeout\(fade, 2000\)/);
   // 中途離開儀式也要散
   const tarot = readFileSync('src/views/tarot.js', 'utf8');
   assert.match(tarot, /if \(!got\) \{ fade\?\.\(\); return; \}/);
+});
+
+test('兩隻手一起合圍，右手多一個搓的動作', () => {
+  assert.match(cast, /NEEDED = \['orb', 'aura', 'handL', 'handR'\]/);
+  assert.match(views, /\.rite\.is-rub \.rite__hand--l \{/);
+  // 搓只掛在右手上；左手負責捧著不動
+  assert.match(views, /\.rite\.is-rub \.rite__hand--r \{[\s\S]*?animation: rite-rub/);
+  assert.ok(!/\.rite\.is-rub \.rite__hand--l \{[^}]*animation/.test(views), '左手也在搓，兩隻一起動就看不懂了');
 });
 
 test('起卦已經搬到抽牌頁，儀式裡不再有第二份', () => {

@@ -2,11 +2,18 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.23.0';
+export const APP_VERSION = '0.23.1';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.23.1', date: '2026-09-23', title: '起卦：兩隻手回來了，白光縮短',
+    items: [
+      { kind: 'fix', text: '水晶球旁邊的左右手回來了 —— 兩隻一起合圍，右手多一個搓的動作' },
+      { kind: 'change', text: '白光快一半：它只是接力棒，蓋住就好，不是一段戲' },
+    ],
+  },
   {
     v: '0.23.0', date: '2026-09-23', title: '水晶球搬到抽牌頁，選牌改成用丟的',
     items: [

@@ -22,11 +22,12 @@ const wait = (ms) => new Promise(r => setTimeout(r, ms));
 export const ART = {
   orb: 'assets/ceremony/orb.webp',
   aura: 'assets/ceremony/aura.webp',
-  hand: 'assets/ceremony/hand-r.webp',
+  handL: 'assets/ceremony/hand-l.webp',
+  handR: 'assets/ceremony/hand-r.webp',
 };
-/* 搓球只用一隻手。原本兩隻手合圍是「捧著」，
-   一隻手才像「在摸」—— 動作要看得懂，不是愈多愈好。 */
-const NEEDED = ['orb', 'aura', 'hand'];
+/* 兩隻手一起從下面伸上來合圍水晶球，右手再多一個搓的動作。
+   左手負責「捧著」，右手負責「在摸」—— 兩件事分給兩隻手，看得比較懂。 */
+const NEEDED = ['orb', 'aura', 'handL', 'handR'];
 
 const loadOne = (src) => new Promise((res) => {
   const im = new Image();
@@ -127,7 +128,8 @@ export async function castRite(orb) {
     <div class="rite__stage">
       <img class="rite__aura" src="${ART.aura}" alt="" draggable="false">
       <img class="rite__orb" src="${ART.orb}" alt="" draggable="false">
-      <img class="rite__hand" src="${ART.hand}" alt="" draggable="false">
+      <img class="rite__hand rite__hand--l" src="${ART.handL}" alt="" draggable="false">
+      <img class="rite__hand rite__hand--r" src="${ART.handR}" alt="" draggable="false">
     </div>
     <div class="rite__flash"></div>`;
   document.body.append(layer);
@@ -156,7 +158,7 @@ export async function castRite(orb) {
 
   layer.classList.add('is-burst');       // 手收回、白光從球心炸開
   haptic(26);
-  await wait(560);
+  await wait(300);                       // 白光只是接力棒，不是一段戲 —— 蓋住就好
 
   let gone = false;
   const fade = () => {
@@ -167,8 +169,8 @@ export async function castRite(orb) {
       layer.remove();
       document.body.classList.remove('cer-open');
       orb.classList.remove('is-gone');
-    }, 620);
+    }, 360);
   };
-  setTimeout(fade, 3000);                // 保險：不能讓人卡在一片白裡面
+  setTimeout(fade, 2000);                // 保險：不能讓人卡在一片白裡面
   return fade;
 }
