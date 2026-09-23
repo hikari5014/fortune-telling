@@ -45,7 +45,8 @@ const DEFAULT_SETTINGS = {
   /* 進階提示詞：功能頁的「請 LLM 解讀」先進產生器，再自己按複製。
      預設關閉 —— 一般情況下按一下就把提示詞複製好，直接跳到貼回頁。 */
   advancedPrompt: false,
-  dailyReco: true,           // 首頁每天跳一次「今日推薦」
+  dailyReco: true,
+  relicStyle: 'photo',       // 求籤的籤筒、籤枝、筊杯：photo 照片 | line 線稿           // 首頁每天跳一次「今日推薦」
   verifyDays: 7,             // 卜卦／塔羅／求籤存下來幾天後回頭問準不準（0＝不提醒）
   /* 外部 LLM：複製完之後要不要順手把它開起來，以及開哪一個。
      網址帶不帶得動提示詞是對方決定的，見 src/llm.js。 */

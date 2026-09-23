@@ -354,14 +354,17 @@
 .jiaos { display: flex; gap: var(--sp-5); justify-content: center; margin: var(--sp-5) 0; perspective: 800px; }
 .jiao {
   width: 96px; flex: none; transform-style: preserve-3d; position: relative;
-  color: var(--accent); filter: drop-shadow(0 8px 12px rgba(0,0,0,.5));
+  color: var(--accent);
 }
 .rl--jiao { width: 100%; height: auto; }
 .rl--jiao .rl-body { fill: var(--surface-2); }
 .rl-ridge { fill: none; stroke: currentColor; stroke-width: 1.6; opacity: .45; stroke-linecap: round; }
 .rl-shade { fill: currentColor; opacity: .09; }
 /* 正反兩面各一張，靠翻轉決定看到哪一面 —— 有厚度才像丟出去翻過來 */
-.jiao__f { display: block; backface-visibility: hidden; }
+/* 落影放在「面」上，不能放在 .jiao 上：filter 會把 3D 壓平，
+   backface-visibility 就失效 —— 不管翻到哪一面，看到的永遠是平面那張（倒過來的）。 */
+.jiao__f { display: block; backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  filter: drop-shadow(0 8px 12px rgba(0,0,0,.5)); }
 .jiao__f--b { position: absolute; inset: 0; transform: rotateX(180deg); }
 /* 狀態本身就要對：動畫關掉時沒有 animation 收尾，
    只靠 is-cast 的最後一格決定看到哪一面是不行的。 */
@@ -1099,3 +1102,27 @@ body.cer-open { overflow: hidden; }
   .reco__meteor, .reco__burst { display: none; }
   .reco.is-in .reco__card { animation: none; opacity: 1; transform: none; }
 }
+
+/* 法器照片版（預設）。照片是物件，不跟主題換色；只加一層落影讓它「放在」畫面上 */
+.rp { display: block; -webkit-user-drag: none; user-select: none; }
+.rp--tube { width: 100%; height: auto; filter: drop-shadow(0 14px 18px rgba(0,0,0,.45)); }
+.qtubewrap:has(.rp--tube) { width: min(40vw, 132px); }
+.rp--stick { position: relative; height: min(30vh, 216px); filter: drop-shadow(0 8px 12px rgba(0,0,0,.5)); }
+.rp-stick__img { height: 100%; width: auto; }
+.rp-num {
+  position: absolute; left: 50%; top: 13%; translate: -50% 0;
+  display: flex; flex-direction: column; align-items: center;
+  font-family: var(--font-display); font-weight: 700; font-size: 11px; line-height: 1.08;
+  color: #a3261d;
+}
+.rp-num i { font-style: normal; }
+/* 抽出來的那支從籤筒「後面」升起來：下半截被筒身與那把籤擋住，只露出上面一段 ——
+   照片是立體的，浮在筒前面會很假。筒口要往下留出空間給它冒出來。 */
+.qtubewrap:has(.rp--tube) { margin-top: 128px; }
+.qtubewrap:has(.rp--tube) .qtube { position: relative; z-index: 1; }
+.qtubewrap:has(.rp--tube) .qdrawn { bottom: 70%; z-index: 0; }
+.qdrawn.is-rising .rp--stick { animation: stick-rise 1200ms var(--ease-out) both; }
+:root[data-motion="off"] .qdrawn.is-rising .rp--stick { animation: none; }
+.rp--jiao { width: 100%; height: auto; }
+.jiao:has(.rp--jiao) { width: 112px; }
+.jiao:nth-child(2) .rp--jiao { transform: scaleX(-1); }   /* 一對要左右對稱，不是兩塊一模一樣 */

@@ -76,6 +76,19 @@ export default {
       </section>
 
       <section class="section">
+        ${raw(sectionHead('圖片來源'))}
+        <div class="card reveal track">
+          ${raw(kv('塔羅牌面', 'Rider–Waite–Smith（1909），Pamela Colman Smith 繪，公有領域'))}
+          ${raw(kv('籤筒、籤枝', '<a href="https://commons.wikimedia.org/wiki/File:Qiantong.jpg" target="_blank" rel="noopener" style="text-decoration:underline">Fengshuimestari</a>，CC BY-SA 3.0'))}
+          ${raw(kv('筊杯', '<a href="https://commons.wikimedia.org/wiki/File:Poe_(Jiaobei)_at_Yokohama_Mazimiao.jpg" target="_blank" rel="noopener" style="text-decoration:underline">Yoshi Canopus</a>，CC BY-SA 4.0'))}
+          <p class="hint" style="margin-top:var(--sp-3)">
+            籤筒、籤枝、筊杯的照片經過去背、轉向與抹除籤上原有文字，
+            修改後的圖同樣以 <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh-hant" target="_blank" rel="noopener" style="text-decoration:underline">CC BY-SA 4.0</a> 釋出。
+          </p>
+        </div>
+      </section>
+
+      <section class="section">
         ${raw(sectionHead('關於這個 App'))}
         <div class="card reveal track">
           <p style="font-size:var(--step--1);color:var(--ink-2);line-height:1.9">

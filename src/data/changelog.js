@@ -2,11 +2,20 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.34.0';
+export const APP_VERSION = '0.35.0';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.35.0', date: '2026-09-23', title: '籤筒、籤枝、筊杯換成實物照片',
+    items: [
+      { kind: 'change', text: '求籤的籤筒、籤枝、筊杯改用 Wikimedia Commons 上的實物照片去背（CC BY-SA，作者列在「關於」頁）' },
+      { kind: 'change', text: '抽出來的籤從籤筒後面升起來，籤號用國字寫在籤上（第二十三籤）' },
+      { kind: 'fix', text: '擲筊翻到凸面時其實一直顯示平面（倒過來的）—— 線稿版也一起修好了' },
+      { kind: 'add', text: '設定 → 外觀 →「法器樣式」可以換回原本的線稿' },
+    ],
+  },
   {
     v: '0.34.0', date: '2026-09-23', title: '今日推薦',
     items: [
