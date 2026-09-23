@@ -113,14 +113,18 @@ input, select, textarea { font-size: max(16px, 1em); }
   transition: opacity var(--dur-4) var(--ease), visibility var(--dur-4);
 }
 .boot.is-done { opacity: 0; visibility: hidden; }
-.boot__mark { width: 74px; height: 74px; }
+/* 開機畫面就是標誌本身在動：外圈星軌極慢逆轉、中圈跑一段當進度、
+   四芒星呼吸。跟 assets/icons/icon.svg 是同一個圖案。 */
+.boot__mark { width: 82px; height: 82px; color: var(--accent); }
 .boot__mark svg { width: 100%; height: 100%; }
-.boot__ring {
-  fill: none; stroke: var(--ink); stroke-width: 3; stroke-linecap: round;
-  stroke-dasharray: 60 179; transform-origin: 50% 50%;
-  animation: bootspin 1.05s cubic-bezier(.6,.1,.4,.9) infinite;
-}
-@keyframes bootspin { to { transform: rotate(360deg); } }
+.boot__orbit, .boot__ring, .boot__star { transform-origin: 50% 50%; }
+.boot__orbit { stroke-opacity: .5; animation: boot-turn 9s linear infinite reverse; }
+.boot__ring { animation: boot-turn 1.05s cubic-bezier(.6,.1,.4,.9) infinite; }
+.boot__star { animation: boot-breathe 1.8s var(--ease) infinite; }
+@keyframes boot-turn { to { transform: rotate(360deg); } }
+@keyframes boot-breathe { 0%, 100% { opacity: .55; transform: scale(.94); } 50% { opacity: 1; transform: scale(1); } }
+:root[data-motion="off"] .boot__orbit,
+:root[data-motion="off"] .boot__star { animation: none; }
 .boot__text { font-family: var(--font-display); font-size: var(--step-2); letter-spacing: .6em; text-indent: .6em; color: var(--ink-2); }
 
 .sr-only {

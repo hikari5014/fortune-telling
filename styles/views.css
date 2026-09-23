@@ -668,6 +668,10 @@ body.cer-open { overflow: hidden; }
    而不是蓋掉它，所以星星還看得見。 */
 .cer__aura {
   width: min(132vw, 820px); margin-bottom: 18vh; mix-blend-mode: screen;
+  /* 光束本來就畫到圖的邊緣，不加遮罩的話會看到一條被切斷的直線。
+     用一圈徑向遮罩讓它自己淡掉，看起來才像光散進夜色裡。 */
+  -webkit-mask-image: radial-gradient(closest-side, #000 62%, transparent 100%);
+  mask-image: radial-gradient(closest-side, #000 62%, transparent 100%);
   opacity: 0; transform: scale(.42) rotate(-14deg);
   transition: opacity 900ms var(--ease-out), transform 1400ms var(--ease-out);
 }
@@ -698,16 +702,16 @@ body.cer-open { overflow: hidden; }
 .cer__hand {
   /* 用高度定尺寸不是寬度：素材是「手腕在下、指尖在上」的長條，
      照高度排才能保證指尖真的伸到球的旁邊。 */
-  height: min(60vh, 520px); width: auto; bottom: 0; opacity: 0;
+  height: min(54vh, 470px); width: auto; bottom: 0; opacity: 0;
   transform-origin: bottom center;
   transition: opacity 520ms var(--ease), transform 900ms var(--ease-out);
   filter: drop-shadow(0 8px 24px rgba(0,0,0,.55));
 }
-.cer__hand--l { left: -4%;  transform: translate3d(-46%, 38%, 0) rotate(24deg); }
-.cer__hand--r { right: -4%; transform: translate3d(46%, 38%, 0) rotate(-24deg) scaleX(-1); }
+.cer__hand--l { left: -26%;  transform: translate3d(-40%, 34%, 0) rotate(22deg); }
+.cer__hand--r { right: -26%; transform: translate3d(40%, 34%, 0) rotate(-22deg) scaleX(-1); }
 .cer__rite.is-hands .cer__hand { opacity: 1; }
-.cer__rite.is-hands .cer__hand--l { transform: translate3d(0, 2%, 0) rotate(7deg); }
-.cer__rite.is-hands .cer__hand--r { transform: translate3d(0, 2%, 0) rotate(-7deg) scaleX(-1); }
+.cer__rite.is-hands .cer__hand--l { transform: translate3d(0, 6%, 0) rotate(6deg); }
+.cer__rite.is-hands .cer__hand--r { transform: translate3d(0, 6%, 0) rotate(-6deg) scaleX(-1); }
 
 @keyframes rite-float { 0%, 100% { translate: 0 0; } 50% { translate: 0 -10px; } }
 @keyframes rite-turn  { to { rotate: 360deg; } }

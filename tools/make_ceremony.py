@@ -21,22 +21,35 @@ from PIL import Image
 
 OUT = os.path.join(os.path.dirname(__file__), '..', 'assets', 'ceremony')
 NAMES = ['orb', 'aura', 'hand-l', 'hand-r']
-MAXW = {'orb': 620, 'aura': 1100, 'hand-l': 560, 'hand-r': 560}
+MAXW = {'orb': 620, 'aura': 900, 'hand-l': 560, 'hand-r': 560}
+QUALITY = {'aura': 78}          # 光暈是漸層，壓狠一點也看不出來，檔案卻小一半
+
+# 去完白底之後整體會偏暗（本來淡淡的顏色，alpha 也就淡）。
+# 在深色畫面上要夠亮才像「發光」，所以把 alpha 拉一把。
+AURA_GAIN = 1.85
+
+# JPEG 的白底不是純白，壓縮會留下 250～254 的雜訊。
+# 不切掉的話整張圖的方框會變成一層很淡的紗，在夜空上看得出一個長方形。
+# 低於這個門檻一律歸零，其餘重新拉回滿量程，邊緣才不會出現硬邊。
+WHITE_FLOOR = 10
 
 
 def find(src_dir, name):
     for f in sorted(os.listdir(src_dir)):
         stem, ext = os.path.splitext(f)
+        # 副檔名大小寫都收 —— 手機相簿匯出來的常常是 .PNG / .JPG
         if stem.lower() == name and ext.lower() in ('.png', '.jpg', '.jpeg', '.webp'):
             return os.path.join(src_dir, f)
     return None
 
 
-def unmultiply_white(im):
+def unmultiply_white(im, gain=1.0):
     """白底 → 透明。alpha = 1 - min(r,g,b)/255，顏色再除回去。
 
     純白 → alpha 0（完全透明）；越飽和、越暗的地方 alpha 越高。
     顏色除以 alpha 是在還原「這個顏色如果沒有跟白紙混過，本來長什麼樣」。
+    gain 再把 alpha 整體拉亮 —— 原圖是印在白紙上的淡彩，
+    直接轉過來放在夜空上會太弱，看起來不像在發光。
     """
     im = im.convert('RGB')
     px = im.load()
@@ -45,11 +58,12 @@ def unmultiply_white(im):
     for y in range(im.height):
         for x in range(im.width):
             r, g, b = px[x, y]
-            a = 255 - min(r, g, b)
+            raw = 255 - min(r, g, b)
+            a = 0 if raw <= WHITE_FLOOR else min(255, round((raw - WHITE_FLOOR) * (255 / (255 - WHITE_FLOOR)) * gain))
             if a <= 2:
                 op[x, y] = (0, 0, 0, 0)
                 continue
-            k = a / 255
+            k = raw / 255
             op[x, y] = (
                 min(255, round((r - 255 * (1 - k)) / k)),
                 min(255, round((g - 255 * (1 - k)) / k)),
@@ -71,12 +85,12 @@ def main(src_dir):
             print(f'✗ {name}：找不到原圖')
             continue
         im = Image.open(p)
-        im = unmultiply_white(im) if name == 'aura' else im.convert('RGBA')
+        im = unmultiply_white(im, AURA_GAIN) if name == 'aura' else im.convert('RGBA')
         w = MAXW[name]
         if im.width > w:
             im = im.resize((w, round(im.height * w / im.width)), Image.LANCZOS)
         dst = os.path.join(OUT, f'{name}.webp')
-        im.save(dst, 'WEBP', quality=88, method=6)
+        im.save(dst, 'WEBP', quality=QUALITY.get(name, 88), method=6)
         print(f'✓ {name}.webp  {im.width}×{im.height}  {os.path.getsize(dst) // 1024} KB')
         done.append(name)
     if 'orb' in done and 'aura' in done and 'hand-l' in done:

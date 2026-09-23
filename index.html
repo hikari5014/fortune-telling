@@ -40,7 +40,13 @@
 <body>
   <div id="boot" class="boot">
     <div class="boot__mark" aria-hidden="true">
-      <svg viewBox="0 0 100 100"><circle class="boot__ring" cx="50" cy="50" r="38"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"
+           stroke-linecap="round" stroke-linejoin="round">
+        <circle class="boot__orbit" cx="12" cy="12" r="10.1" stroke-dasharray="1.1 2.3"/>
+        <circle class="boot__ring" cx="12" cy="12" r="6.1" stroke-dasharray="9 29"/>
+        <path class="boot__star" d="M12 7.2Q12 12 16.8 12Q12 12 12 16.8Q12 12 7.2 12Q12 12 12 7.2Z"/>
+        <circle cx="12" cy="12" r=".95" fill="currentColor" stroke="none"/>
+      </svg>
     </div>
     <p class="boot__text">玄鑑</p>
   </div>
