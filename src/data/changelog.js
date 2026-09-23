@@ -2,11 +2,19 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.31.0';
+export const APP_VERSION = '0.32.0';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.32.0', date: '2026-09-23', title: '行運：今天的天空疊到你的本命盤',
+    items: [
+      { kind: 'add', text: '星盤頁多了「行運」：把那一天的行星疊到本命盤上，列出碰到的相位、是「這陣子」還是「這兩天」的事、還在變強或高峰已過' },
+      { kind: 'add', text: '月亮今天走到本命第幾宮，直接告訴你心思容易放在哪一塊；可以換日期看其他天，也可以一鍵請 LLM 解讀' },
+      { kind: 'add', text: '首頁多了「今日行運」卡，跟今日宜忌、今日一張放在一起（自訂首頁可以關）' },
+    ],
+  },
   {
     v: '0.31.0', date: '2026-09-23', title: '設定改成二級選單',
     items: [
