@@ -2,11 +2,21 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.26.0';
+export const APP_VERSION = '0.27.0';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.27.0', date: '2026-09-23', title: '筊杯換成自繪，備份可以挑要帶哪幾項',
+    items: [
+      { kind: 'change', text: '擲筊改成自己畫的筊杯：平面看得到年輪切面，凸面看得到隆起的脊線與它的影' },
+      { kind: 'change', text: '匯出改成可以勾選：設定、出生資料、解讀紀錄、模板、牌陣、籤詩集⋯⋯要帶哪幾項自己決定' },
+      { kind: 'add', text: '含個資的項目會標「個資」，傳給別人之前一眼看得出該取消哪幾個；保密檔案預設不帶走，要另外勾' },
+      { kind: 'add', text: '匯入前會先列出檔案裡有什麼、各幾筆，並且可以選合併或取代（取代會再問一次）' },
+      { kind: 'change', text: '匯出匯入一律是純 JSON，沒有自訂格式' },
+    ],
+  },
   {
     v: '0.26.0', date: '2026-09-23', title: '求籤與卜卦換上法器，外部 LLM 可以一鍵開啟',
     items: [

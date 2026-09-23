@@ -256,3 +256,28 @@ test('雙擊縮放還是要關掉 —— 那是另一件事', () => {
   const block = base.slice(base.indexOf('/* 雙擊縮放'));
   assert.match(block.slice(0, block.indexOf('}')), /touch-action: manipulation/);
 });
+
+/* ── 筊杯 ───────────────────────────────────────── */
+const relics = readFileSync('src/relics.js', 'utf8');
+const qian = readFileSync('src/views/qian.js', 'utf8');
+
+test('筊杯的兩面是同一塊木頭，輪廓一樣只有表面不同', () => {
+  // 輪廓是同一條路徑，平面畫年輪切面、凸面畫脊線與它的影
+  assert.match(relics, /const body = 'M14 60/);
+  assert.match(relics, /rl-ridge/);
+  assert.match(relics, /rl-shade/);
+  assert.equal((relics.match(/\$\{body\}/g) || []).length, 2, '輪廓應該只定義一次、用兩次');
+});
+
+test('先擲出結果再放動畫 —— 動畫跑到一半才改面會整個重來', () => {
+  const cast = qian.slice(qian.indexOf('async function doCast'));
+  const decide = cast.indexOf('const r = castJiao()');
+  const animate = cast.indexOf("classList.add('is-cast')");
+  assert.ok(decide >= 0 && animate > decide, '結果要在加上 is-cast 之前就決定好');
+});
+
+test('動畫關掉時，看到哪一面也要是對的', () => {
+  // 只靠 is-cast 的最後一格決定，動畫一關就會停在錯的面
+  assert.match(views, /\.jiao:not\(\.jiao--flat\) \{ transform: rotateX\(180deg\); \}/);
+  assert.match(views, /data-motion="off"\] \.jiao\.is-cast \{ animation: none/);
+});

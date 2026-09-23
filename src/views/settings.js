@@ -1,6 +1,6 @@
 import { html, raw, $, $$, toast, confirmSheet, download, sheet, haptic, hapticSupport } from '../ui.js';
 import { icon } from '../icons.js';
-import { store, applyChrome, DEFAULT_SETTINGS } from '../store.js';
+import { store, applyChrome, DEFAULT_SETTINGS, EXPORT_PARTS } from '../store.js';
 import { invalidate } from '../app.js';
 import { resolve } from '../router.js';
 import { dictSize } from '../data/strokes.js';
@@ -235,22 +235,8 @@ export default {
     });
     fontEl.addEventListener('change', (e) => save({ fontScale: Number(e.target.value) }));
 
-    $('#btn-export', root).addEventListener('click', () => {
-      download(`玄鑑備份-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(store.exportAll(), null, 2));
-      toast('已匯出備份');
-    });
-    $('#btn-import', root).addEventListener('click', () => {
-      const input = document.createElement('input');
-      input.type = 'file'; input.accept = 'application/json,.json';
-      input.onchange = async () => {
-        const f = input.files?.[0]; if (!f) return;
-        try {
-          store.importAll(JSON.parse(await f.text()), { merge: true });
-          invalidate(); toast('已匯入'); resolve();
-        } catch (e) { toast('匯入失敗：' + e.message); }
-      };
-      input.click();
-    });
+    $('#btn-export', root).addEventListener('click', openExport);
+    $('#btn-import', root).addEventListener('click', pickImport);
     $('#btn-install', root).addEventListener('click', () => import('../install.js').then(m => m.openInstall()));
     $('#btn-guide', root).addEventListener('click', () => import('../install.js').then(m => m.showGuide()));
     $('#btn-tour', root).addEventListener('click', () => import('../onboarding.js').then(m => m.startTour()));
@@ -266,3 +252,119 @@ export default {
     });
   },
 };
+
+/* ── 備份：匯出 ─────────────────────────────────────
+   一律 JSON。勾哪幾項自己決定 —— 備份給自己、
+   跟把檔案傳給別人看，該帶的東西本來就不一樣。
+   含個資的項目標出來，而且保密檔案預設不帶。 */
+
+const amount = (v) => (Array.isArray(v) ? `${v.length} 筆` : '一組');
+/** 現在這台裝置上這一項有多少 */
+const mine = (p) => amount(p.get(store, { includePrivate: true }));
+
+function partRow(p, on, n) {
+  return html`
+    <label class="exrow">
+      <input type="checkbox" data-part="${p.key}" ${on ? 'checked' : ''}>
+      <span>
+        <b>${p.label}${p.personal ? html`<i class="exrow__tag">個資</i>` : ''}</b>
+        <small>${raw(p.desc.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>'))}</small>
+      </span>
+      <em>${n}</em>
+    </label>`;
+}
+
+function openExport() {
+  const priv = store.profiles.filter(x => x.private).length;
+  sheet({
+    title: '匯出備份',
+    body: html`<div class="stack" data-noswipe>
+      <p class="hint">
+        全部都在這台裝置上，匯出的是一個 JSON 檔。
+        要拿去別台裝置就整包帶走；要給別人看就把含個資的那幾項取消勾選。
+      </p>
+      <div class="exlist">${raw(EXPORT_PARTS.map(p => partRow(p, true, mine(p))).join(''))}</div>
+      ${priv ? html`
+        <label class="exrow exrow--warn">
+          <input type="checkbox" id="ex-priv">
+          <span><b>連保密檔案一起帶</b>
+            <small>有 ${priv} 份標記為保密的出生資料。預設不放進備份 ——
+              保密檔案當初就是答應過不會被順手帶走的。</small></span>
+        </label>` : ''}
+      <div class="switch" role="switch" tabindex="0" id="ex-pretty" aria-checked="true">
+        <span>排版好讀的 JSON</span><span class="switch__box"></span>
+      </div>
+      <p class="hint">關掉可以讓檔案小一半，但就不好用文字編輯器看了。</p>
+    </div>`,
+    actions: html`<button class="btn btn--primary btn--block press" data-go>${raw(icon('down'))} 匯出</button>`,
+    onMount(sr, close) {
+      const sw2 = $('#ex-pretty', sr);
+      sw2.addEventListener('click', () => sw2.setAttribute('aria-checked', String(sw2.getAttribute('aria-checked') !== 'true')));
+      $('[data-go]', sr).addEventListener('click', () => {
+        const parts = $$('[data-part]', sr).filter(c => c.checked).map(c => c.dataset.part);
+        if (!parts.length) { toast('至少要勾一項'); return; }
+        const data = store.exportAll({ parts, includePrivate: !!$('#ex-priv', sr)?.checked });
+        const pretty = sw2.getAttribute('aria-checked') === 'true';
+        download(`玄鑑備份-${new Date().toISOString().slice(0, 10)}.json`,
+          JSON.stringify(data, null, pretty ? 2 : 0));
+        close();
+        toast(`已匯出 ${parts.length} 項`);
+      });
+    },
+  });
+}
+
+/* ── 備份：匯入 ─────────────────────────────────────
+   先讓人看清楚檔案裡有什麼、各幾筆，再決定要蓋掉還是合併。
+   直接蓋掉是不可逆的，所以預設是合併。 */
+
+function pickImport() {
+  const input = document.createElement('input');
+  input.type = 'file'; input.accept = 'application/json,.json';
+  input.onchange = async () => {
+    const f = input.files?.[0]; if (!f) return;
+    let data;
+    try { data = JSON.parse(await f.text()); } catch { toast('這不是一個可以讀的 JSON 檔'); return; }
+    try { openImport(data, f.name); } catch (e) { toast('匯入失敗：' + e.message); }
+  };
+  input.click();
+}
+
+function openImport(data, filename) {
+  const found = store.inspect(data);            // 格式不符會在這裡丟出來
+  sheet({
+    title: '匯入備份',
+    body: html`<div class="stack" data-noswipe>
+      <p class="hint">
+        <b>${filename}</b>${data.exportedAt ? html`　·　匯出於 ${data.exportedAt.slice(0, 10)}` : ''}
+      </p>
+      <div class="exlist">${raw(found.map(p => partRow(p, true, amount(data[p.key]))).join(''))}</div>
+      <div class="field"><label for="im-mode">要怎麼放進來</label>
+        <select class="select" id="im-mode">
+          <option value="merge">合併 —— 保留現有的，補上檔案裡有而這裡沒有的</option>
+          <option value="replace">取代 —— 勾選的項目整個換成檔案裡的</option>
+        </select></div>
+      <p class="hint" id="im-warn"></p>
+    </div>`,
+    actions: html`<button class="btn btn--primary btn--block press" data-go>${raw(icon('up'))} 匯入</button>`,
+    onMount(sr, close) {
+      const mode = $('#im-mode', sr), warn = $('#im-warn', sr);
+      const sync = () => {
+        warn.innerHTML = mode.value === 'replace'
+          ? '<b>取代是不可逆的。</b>勾選的項目會被檔案裡的內容整個換掉，現在的資料救不回來。建議先匯出一份現況。'
+          : '合併只會新增，不會刪掉你現在的東西。同一筆（ID 相同）以現有的為準。';
+      };
+      mode.addEventListener('change', sync); sync();
+      $('[data-go]', sr).addEventListener('click', async () => {
+        const parts = $$('[data-part]', sr).filter(c => c.checked).map(c => c.dataset.part);
+        if (!parts.length) { toast('至少要勾一項'); return; }
+        if (mode.value === 'replace'
+          && !await confirmSheet('確定要取代？', `${parts.length} 個項目會被檔案裡的內容整個換掉，無法復原。`, '取代')) return;
+        try {
+          store.importAll(data, { merge: mode.value === 'merge', parts });
+          close(); invalidate(); toast(`已匯入 ${parts.length} 項`); resolve();
+        } catch (e) { toast('匯入失敗：' + e.message); }
+      });
+    },
+  });
+}

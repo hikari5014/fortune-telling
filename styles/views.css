@@ -328,23 +328,40 @@
 .qstep { display: grid; gap: var(--sp-4); justify-items: center; text-align: center; }
 .qstep__hint { font-size: var(--step--1); color: var(--ink-3); max-width: 34ch; line-height: 1.8; }
 
-/* 擲筊 */
-.jiaos { display: flex; gap: var(--sp-5); justify-content: center; margin: var(--sp-4) 0; perspective: 700px; }
+/* 擲筊 —— 筊杯是自己畫的（見 src/relics.js）。
+   兩面是同一塊木頭的兩種樣子，輪廓一樣，只有表面不同：
+   平面看得到年輪切面，凸面看得到脊線與它落下的影。 */
+.jiaos { display: flex; gap: var(--sp-5); justify-content: center; margin: var(--sp-5) 0; perspective: 800px; }
 .jiao {
-  width: 62px; height: 46px; border: 2px solid var(--ink);
-  border-radius: 62px 62px 10px 10px / 46px 46px 10px 10px;
-  background: var(--surface); display: grid; place-items: center;
-  font-size: var(--step--2); letter-spacing: .2em; color: var(--ink-3);
-  transform-style: preserve-3d;
+  width: 96px; flex: none; transform-style: preserve-3d; position: relative;
+  color: var(--accent); filter: drop-shadow(0 8px 12px rgba(0,0,0,.5));
 }
-.jiao--flat { background: var(--invert-bg); color: var(--invert-ink); border-color: var(--invert-bg); }
-.jiao.is-cast { animation: jiao-cast 760ms cubic-bezier(.3,.1,.3,1) both; }
-.jiao:nth-child(2).is-cast { animation-delay: 90ms; }
+.rl--jiao { width: 100%; height: auto; }
+.rl--jiao .rl-body { fill: var(--surface-2); }
+.rl-ridge { fill: none; stroke: currentColor; stroke-width: 1.6; opacity: .45; stroke-linecap: round; }
+.rl-shade { fill: currentColor; opacity: .09; }
+/* 正反兩面各一張，靠翻轉決定看到哪一面 —— 有厚度才像丟出去翻過來 */
+.jiao__f { display: block; backface-visibility: hidden; }
+.jiao__f--b { position: absolute; inset: 0; transform: rotateX(180deg); }
+/* 狀態本身就要對：動畫關掉時沒有 animation 收尾，
+   只靠 is-cast 的最後一格決定看到哪一面是不行的。 */
+.jiao--flat { transform: rotateX(0deg); }
+.jiao:not(.jiao--flat) { transform: rotateX(180deg); }
+.jiao.is-cast { animation: jiao-cast 820ms cubic-bezier(.3,.05,.25,1) both; }
+.jiao:not(.jiao--flat).is-cast { animation-name: jiao-cast-b; }
+.jiao:nth-child(2).is-cast { animation-delay: 110ms; }
 @keyframes jiao-cast {
-  0% { transform: rotateX(0) translateY(0); }
-  45% { transform: rotateX(900deg) translateY(-46px); }
-  100% { transform: rotateX(1800deg) translateY(0); }
+  0%   { transform: rotateX(0) translateY(0); }
+  45%  { transform: rotateX(1080deg) translateY(-54px); }
+  100% { transform: rotateX(2160deg) translateY(0); }
 }
+@keyframes jiao-cast-b {
+  0%   { transform: rotateX(180deg) translateY(0); }
+  45%  { transform: rotateX(1260deg) translateY(-54px); }
+  100% { transform: rotateX(2340deg) translateY(0); }
+}
+:root[data-motion="off"] .jiao.is-cast { animation: none; }
+
 .jiao-log { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
 .jiao-log span {
   font-size: var(--step--2); letter-spacing: .1em; padding: 2px 9px;
@@ -952,3 +969,21 @@ body.cer-open { overflow: hidden; }
 .llmbtn { justify-content: flex-start; text-align: left; padding-inline: var(--sp-4); }
 .llmbtn span { display: grid; line-height: 1.25; }
 .llmbtn small { font-size: var(--step--2); color: var(--ink-3); letter-spacing: .04em; }
+
+/* ── 備份：勾選要帶哪幾項 ──────────────────────────── */
+.exlist { display: grid; gap: 2px; }
+.exrow {
+  display: grid; grid-template-columns: 20px 1fr auto; align-items: start; gap: var(--sp-3);
+  padding: var(--sp-3); border-radius: var(--r-2); background: var(--surface-2); cursor: pointer;
+}
+.exrow input { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--accent); }
+.exrow span { display: grid; gap: 3px; min-width: 0; }
+.exrow b { font-size: var(--step--1); font-weight: 500; letter-spacing: .04em; }
+.exrow small { font-size: var(--step--2); color: var(--ink-3); line-height: 1.6; }
+.exrow em { font-family: var(--font-num); font-size: var(--step--2); color: var(--ink-4); font-style: normal; white-space: nowrap; }
+/* 含個資的項目要一眼看得出來 —— 傳給別人之前會想取消勾的就是這幾項 */
+.exrow__tag {
+  font-style: normal; font-size: var(--step--2); letter-spacing: .1em; margin-left: 6px;
+  padding: 1px 7px; border-radius: var(--r-full); background: var(--accent); color: var(--accent-ink);
+}
+.exrow--warn { background: var(--bg-2); outline: 1px dashed var(--line-2); }

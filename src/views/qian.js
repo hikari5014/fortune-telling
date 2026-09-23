@@ -5,7 +5,7 @@ import { resolve } from '../router.js';
 import { shakeQian, castJiao, toText, BUILTIN_SET, normalizeSet, SET_SCHEMA, luckScore } from '../engines/qian.js';
 import { observeReveal } from '../motion.js';
 import { DISCLAIMER, sectionHead, kv, shareBtn, doShare, askPrompt } from './_shared.js';
-import { tube as tubeArt, stick as stickArt, slip as slipArt } from '../relics.js';
+import { tube as tubeArt, stick as stickArt, slip as slipArt, jiao as jiaoArt } from '../relics.js';
 
 const luckCls = (l) => ['大吉', '上吉', '吉'].includes(l) ? 'luck--good' : l === '中吉' || l === '中平' ? 'luck--half' : 'luck--bad';
 const allSets = () => [BUILTIN_SET, ...store.qianSets];
@@ -115,7 +115,11 @@ export default {
             ${need > 1 ? `連得 ${need} 個聖筊才算準` : '擲出聖筊就算確認'}；擲出笑筊或陰筊就重新搖過。
           </p>
           <div class="jiaos" id="jiaos">
-            <span class="jiao">筊</span><span class="jiao">筊</span>
+            ${raw(Array.from({ length: 2 }, () => html`
+              <span class="jiao">
+                <span class="jiao__f">${raw(jiaoArt(true))}</span>
+                <span class="jiao__f jiao__f--b">${raw(jiaoArt(false))}</span>
+              </span>`).join(''))}
           </div>
           <div class="jiao-log" id="jlog"></div>
           <p class="qstep__hint" id="jmsg" style="min-height:3.4em"></p>
@@ -138,13 +142,17 @@ export default {
       const btn = $('#cast', stage);
       btn.disabled = true;
       const [a, b] = $$('.jiao', stage);
-      [a, b].forEach(el => { el.classList.remove('is-cast', 'jiao--flat'); void el.offsetWidth; el.classList.add('is-cast'); });
-      haptic(12);
-      await sleep(820);
+      /* 先擲出結果再放動畫：翻幾圈由「最後要落哪一面」決定，
+         動畫跑到一半才改面，animation-name 一換就會整個重來。 */
       const r = castJiao();
-      a.textContent = r.faces[0]; b.textContent = r.faces[1];
+      [a, b].forEach(el => el.classList.remove('is-cast'));
       a.classList.toggle('jiao--flat', r.faces[0] === '平');
       b.classList.toggle('jiao--flat', r.faces[1] === '平');
+      void a.offsetWidth;
+      [a, b].forEach(el => el.classList.add('is-cast'));
+      a.title = r.faces[0]; b.title = r.faces[1];
+      haptic(12);
+      await sleep(820);
       log.push(r);
       drawLog();
       $('#jmsg', stage).textContent = r.text;
