@@ -2,11 +2,18 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.24.0';
+export const APP_VERSION = '0.24.1';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.24.1', date: '2026-09-23', title: '選走的牌不再疊到標題，右手方向修正',
+    items: [
+      { kind: 'fix', text: '選走的牌改停在牌位標籤下面 —— 原本放上面，手機上會跑出畫面疊到最上面的標題' },
+      { kind: 'fix', text: '起卦的右手方向反了：素材本來就是一對，程式卻又鏡射了一次，把對的方向翻成反的' },
+    ],
+  },
   {
     v: '0.24.0', date: '2026-09-23', title: '可以換自己的塔羅牌了',
     items: [

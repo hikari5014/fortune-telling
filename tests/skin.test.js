@@ -143,11 +143,31 @@ test('白光是接力棒：儀式就位了才散，而且一定會散', () => {
 });
 
 test('兩隻手一起合圍，右手多一個搓的動作', () => {
-  assert.match(cast, /NEEDED = \['orb', 'aura', 'handL', 'handR'\]/);
+  assert.match(cast, /NEEDED = \['orb', 'aura', 'handL'\]/);
   assert.match(views, /\.rite\.is-rub \.rite__hand--l \{/);
   // 搓只掛在右手上；左手負責捧著不動
   assert.match(views, /\.rite\.is-rub \.rite__hand--r \{[\s\S]*?animation: rite-rub/);
   assert.ok(!/\.rite\.is-rub \.rite__hand--l \{[^}]*animation/.test(views), '左手也在搓，兩隻一起動就看不懂了');
+});
+
+test('有真的右手素材就不要鏡射它', () => {
+  // 素材本來就是一對：左手往右上傾、右手往左上傾，兩張直接用就對著球。
+  // 不分青紅皂白鏡射右手，會把本來就對的方向翻成反的。
+  assert.match(cast, /ok\.handR \? \{ handR: ART\.handR, flip: false \}/);
+  assert.match(cast, /\{ handR: ART\.handL, flip: true \}/);
+  assert.match(cast, /if \(art\?\.flip\) rightHand\.classList\.add\('is-flip'\)/);
+  // 鏡射由 --flip 控制，預設 1（不翻）
+  assert.match(views, /\.rite__hand--r \{ --flip: 1;/);
+  assert.match(views, /\.rite__hand--r\.is-flip \{ --flip: -1; \}/);
+  assert.ok(!/\.rite__hand--r[^}]*scaleX\(-1\)/.test(views), '右手還被寫死鏡射');
+});
+
+test('選走的牌停在牌位標籤下面，不會疊到標題', () => {
+  // 牌位那一排在舞台上緣之外，放上面就會跑出舞台、疊到最上面的標題
+  assert.match(draw, /y: sr\.bottom - st\.top \+ 10/);
+  assert.ok(!/y: sr\.top - st\.top - CW/.test(draw), '還在往上放');
+  // 兩個地方（選走時、重排時）要用同一份算式
+  assert.match(draw, /const slotPos = \(sr, st\)/);
 });
 
 test('起卦已經搬到抽牌頁，儀式裡不再有第二份', () => {
