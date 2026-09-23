@@ -218,6 +218,8 @@ function boot() {
   buildNav();
   syncThemeBtn();
   paintSky();
+  // 目前選的那一副牌：圖在 IndexedDB，載進記憶體之後畫面才能同步拿到
+  import('./decks.js').then(d => d.useDeck(store.settings.tarotDeck)).catch(() => {});
   initFeedback();
 
   $('#btn-back').innerHTML = icon('back');

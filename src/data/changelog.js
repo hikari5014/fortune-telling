@@ -2,11 +2,20 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.23.1';
+export const APP_VERSION = '0.24.0';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.24.0', date: '2026-09-23', title: '可以換自己的塔羅牌了',
+    items: [
+      { kind: 'add', text: '塔羅頁多了「牌組」分頁：可以新增自己的牌組，背面與正面一張一張都能換' },
+      { kind: 'add', text: '一次選多張會照檔名自動對位 —— major-00、wands-3、Cups_07、聖杯10、愚者、back 都認得；對不上的點格子手動指定' },
+      { kind: 'change', text: '沒換到的牌自動補內建的偉特牌，所以只換背面、或只換大牌都成立，不用一次湊滿 79 張' },
+      { kind: 'change', text: '圖存在這台裝置上（IndexedDB），匯入時會縮到寬 600px 再存，不會上傳到任何地方' },
+    ],
+  },
   {
     v: '0.23.1', date: '2026-09-23', title: '起卦：兩隻手回來了，白光縮短',
     items: [

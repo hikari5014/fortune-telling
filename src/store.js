@@ -11,6 +11,7 @@ const K = {
   qianSets: 'xj.qiansets',
   orgs: 'xj.orgs',
   spreads: 'xj.spreads',
+  decks: 'xj.decks',
   daily: 'xj.daily',
 };
 
@@ -61,6 +62,7 @@ const DEFAULT_SETTINGS = {
   tarotImages: true,         // 塔羅顯示偉特牌圖（關掉就用線稿卡，省流量）
   tarotChartLink: true,      // 塔羅牌面對照本命盤（大牌對行星星座、小牌對三十六旬）
   tarotCeremony: true,       // 抽牌儀式：洗牌、攤扇、自己挑、翻開
+  tarotDeck: 'waite',        // 目前用哪一副牌（'waite' 是內建的偉特牌）
   starfield: true,           // 背景星空：會閃、會極慢自轉、跟著捲動有視差、偶爾來一顆流星
   starDensity: 1,            // 星點密度倍率（0.5 稀疏 / 1 標準 / 1.6 濃密）
 };
@@ -185,6 +187,22 @@ export const store = {
   set qianSets(v) { write(K.qianSets, v); emit('qianSets', v); },
   addQianSet(set) { this.qianSets = [set, ...this.qianSets.filter(s => s.id !== set.id)].slice(0, 12); return set; },
   removeQianSet(id) { this.qianSets = this.qianSets.filter(s => s.id !== id); },
+
+  /* 牌組名冊。圖本身在 IndexedDB（見 decks.js），
+     這裡只留名字這種小東西 —— localStorage 塞不下 78 張圖。 */
+  get decks() { return read(K.decks, []); },
+  set decks(v) { write(K.decks, v); emit('decks', v); },
+  saveDeck(d) {
+    const list = this.decks;
+    const i = list.findIndex(x => x.id === d.id);
+    if (i >= 0) list[i] = { ...list[i], ...d }; else list.push(d);
+    this.decks = list;
+    return d;
+  },
+  removeDeck(id) {
+    this.decks = this.decks.filter(d => d.id !== id);
+    if (this.settings.tarotDeck === id) this.setSettings({ tarotDeck: 'waite' });
+  },
 
   get drafts() { return read(K.drafts, {}); },
   setDraft(key, value) { const d = this.drafts; d[key] = value; write(K.drafts, d); },

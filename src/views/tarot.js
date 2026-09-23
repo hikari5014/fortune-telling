@@ -17,11 +17,13 @@ import { observeReveal } from '../motion.js';
 import { nameOf } from '../privacy.js';
 import { DISCLAIMER, sectionHead, needProfile, askPrompt } from './_shared.js';
 import { castHTML, mountCast, castRite } from '../orbcast.js';
+import * as decks from '../decks.js';
 
 /* ── 牌面 ─────────────────────────────────────────── */
 
 const imgOn = () => store.settings.tarotImages !== false;
-const imgSrc = (c) => `assets/tarot/${c.img}.webp`;
+/* 圖走牌組：目前那一副有這張就用那張，沒有就退回內建的偉特牌 */
+const imgSrc = (c) => decks.srcOf(c.img);
 
 /** 一張牌的圖（關掉圖像、或圖抓不到時，退回線稿卡） */
 export function cardPic(c, cls = 'tpic') {
@@ -288,11 +290,54 @@ function spreadTab() {
 
 /* ── 頁面 ─────────────────────────────────────────── */
 
-const TABS = [['draw', '抽牌'], ['daily', '今日一張'], ['natal', '本命牌'], ['spread', '牌陣']];
+/* ── 牌組 ─────────────────────────────────────────
+   內建的是偉特牌。想放自己的牌就在這裡新增一副，
+   背面、正面一張一張換；沒換到的自動補內建那一張。 */
+
+/** 79 個格子：背面 + 78 張牌 */
+const SLOTS = [{ img: decks.BACK, name: '牌背', full: '牌背' }, ...DECK];
+
+function deckTab(settings) {
+  const list = decks.allDecks();
+  const cur = settings.tarotDeck || decks.BUILTIN;
+  return html`
+    <section class="card reveal" data-noswipe>
+      ${raw(sectionHead('牌組', `<button class="chip press" id="dk-add">${icon('plus')} 新增</button>`))}
+      <div class="stack" style="gap:6px;margin-top:var(--sp-3)" id="dk-list">
+        ${list.map(d => html`
+          <button class="tmpl press" data-dk="${d.id}" aria-pressed="${d.id === cur}">
+            <b>${d.name}</b>
+            <small>${d.builtin ? '公有領域掃描，已轉成灰階配合黑白調性' : '自訂牌組'}</small>
+          </button>`)}
+      </div>
+      <p class="hint" style="margin-top:var(--sp-3)">
+        選起來的那一副會用在抽牌、今日一張、本命牌所有地方。
+        自訂牌組<b>沒換到的牌會自動補內建的偉特牌</b> —— 只換背面、或只換大牌都成立。
+      </p>
+    </section>
+
+    <section class="card reveal" id="dk-edit" data-noswipe style="margin-top:var(--sp-4)" hidden>
+      ${raw(sectionHead('這一副的內容', `<span class="hint" id="dk-stat"></span>`))}
+      <div class="row" style="gap:var(--sp-2);margin-top:var(--sp-2)">
+        <button class="btn btn--primary btn--sm press" id="dk-import">${raw(icon('up'))} 匯入圖片</button>
+        <button class="btn btn--ghost btn--sm press" id="dk-rename">${raw(icon('edit'))} 改名</button>
+        <button class="btn btn--ghost btn--sm press" id="dk-del">${raw(icon('trash'))} 刪除這一副</button>
+      </div>
+      <p class="hint" style="margin-top:var(--sp-2)">
+        一次選多張沒關係，會照檔名自動對位：<code>major-00</code>、<code>wands-3</code>、
+        <code>聖杯10</code>、<code>愚者</code>、<code>back</code> 都認得。
+        對不上的、或想手動換某一張，直接點下面那一格。
+        圖會在這台裝置上縮到寬 600px 再存，不會上傳。
+      </p>
+      <div class="dkgrid" id="dk-grid" style="margin-top:var(--sp-4)"></div>
+    </section>`;
+}
+
+const TABS = [['draw', '抽牌'], ['daily', '今日一張'], ['natal', '本命牌'], ['spread', '牌陣'], ['deck', '牌組']];
 
 export default {
   title: '塔羅', eyebrow: 'TAROT',
-  render({ profile, all, query }) {
+  render({ profile, all, query, settings }) {
     const tab = TABS.some(t => t[0] === query.tab) ? query.tab : 'draw';
     const d = store.drafts;
     return html`
@@ -305,6 +350,7 @@ export default {
         ${tab === 'draw' ? drawTab(d)
         : tab === 'daily' ? dailyTab(profile, all?.astro)
         : tab === 'natal' ? natalTab(profile, all?.astro)
+        : tab === 'deck' ? deckTab(settings)
         : spreadTab()}
       </div>
       ${DISCLAIMER}`;
@@ -316,6 +362,8 @@ export default {
       haptic(6);
       navigate(`/tarot?tab=${b.dataset.t}`);
     }));
+
+    if (tab === 'deck') { mountDeck(root, settings); return; }
 
     if (tab === 'spread') {
       $('#sp-add', root)?.addEventListener('click', () => spreadSheet(null));
@@ -440,3 +488,166 @@ export default {
     }
   },
 };
+
+/* ── 牌組頁的行為 ─────────────────────────────────── */
+
+const fmtKB = (n) => (n < 1024 * 1024 ? `${Math.round(n / 1024)} KB` : `${(n / 1048576).toFixed(1)} MB`);
+
+function mountDeck(root, settings) {
+  let cur = settings.tarotDeck || decks.BUILTIN;
+  let editing = cur === decks.BUILTIN ? null : cur;
+  const editBox = $('#dk-edit', root);
+  const grid = $('#dk-grid', root);
+
+  /** 切到某一副：存設定、載圖、重畫格子 */
+  async function select(id) {
+    cur = id;
+    store.setSettings({ tarotDeck: id });
+    await decks.useDeck(id);
+    $$('#dk-list .tmpl', root).forEach(b => b.setAttribute('aria-pressed', String(b.dataset.dk === id)));
+    editing = id === decks.BUILTIN ? null : id;
+    await paint();
+    haptic(8);
+  }
+
+  async function paint() {
+    editBox.hidden = !editing;
+    if (!editing) return;
+    // 目前選的那一副已經載在記憶體裡；在編輯別副時就直接問 IndexedDB
+    const own = editing === decks.liveId()
+      ? new Set(SLOTS.map(c => c.img).filter(decks.hasOwn))
+      : new Set(await decks.idsOf(editing));
+    const size = await decks.sizeOf(editing);
+    $('#dk-stat', root).textContent = `${own.size} / ${SLOTS.length} 張　·　${fmtKB(size)}`;
+    grid.innerHTML = SLOTS.map(c => {
+      const mine = own.has(c.img);
+      const src = mine && editing === decks.liveId() ? decks.srcOf(c.img) : `assets/tarot/${c.img}.webp`;
+      return html`<button class="dkcell ${mine ? 'is-own' : ''}" data-img="${c.img}" title="${c.full}">
+        <img src="${src}" alt="" loading="lazy" decoding="async">
+        <span>${c.name}</span>
+      </button>`;
+    }).join('');
+    $$('.dkcell', grid).forEach(b => b.addEventListener('click', () => oneSlot(b.dataset.img)));
+  }
+
+  /** 挑檔案。回傳 File[]（取消就是空的） */
+  function pickFiles(multiple) {
+    return new Promise((res) => {
+      const el = document.createElement('input');
+      el.type = 'file'; el.accept = 'image/*'; el.multiple = multiple;
+      el.onchange = () => res([...(el.files || [])]);
+      el.click();
+    });
+  }
+
+  /** 一次匯入多張，照檔名對位 */
+  async function importMany() {
+    const files = await pickFiles(true);
+    if (!files.length) return;
+    toast(`處理 ${files.length} 張⋯⋯`);
+    let ok = 0;
+    const missed = [];
+    for (const f of files) {
+      const id = decks.guessId(f.name, DECK);
+      if (!id) { missed.push(f.name); continue; }
+      try {
+        await decks.putImage(editing, id, await decks.shrink(f));
+        ok++;
+      } catch { missed.push(f.name); }
+    }
+    if (editing === cur) await decks.useDeck(cur, true);
+    await paint();
+    haptic(14);
+    toast(missed.length
+      ? `對上 ${ok} 張，${missed.length} 張看不出是哪一張 —— 點格子手動指定`
+      : `匯入了 ${ok} 張`);
+  }
+
+  /** 指定某一格（或把它換掉／清掉） */
+  async function oneSlot(imgId) {
+    const card = SLOTS.find(c => c.img === imgId);
+    const mine = editing === decks.liveId() ? decks.hasOwn(imgId) : (await decks.idsOf(editing)).includes(imgId);
+    sheet({
+      title: card.full,
+      body: html`<div class="stack" data-noswipe>
+        <p class="hint">${mine ? '這一格已經是你自己的圖。' : '這一格還是內建的偉特牌。'}</p>
+        <button class="btn btn--primary btn--block press" data-pick>${raw(icon('up'))} ${mine ? '換一張' : '選一張圖'}</button>
+        ${mine ? html`<button class="btn btn--ghost btn--block press" data-clear>${raw(icon('trash'))} 清掉，改用內建那張</button>` : ''}
+      </div>`,
+      onMount(sr, close) {
+        $('[data-pick]', sr).addEventListener('click', async () => {
+          const [f] = await pickFiles(false);
+          close();
+          if (!f) return;
+          try {
+            await decks.putImage(editing, imgId, await decks.shrink(f));
+            if (editing === cur) await decks.useDeck(cur, true);
+            await paint(); haptic(12); toast('換好了');
+          } catch (e) { toast('存不進去：' + (e.message || e)); }
+        });
+        $('[data-clear]', sr)?.addEventListener('click', async () => {
+          close();
+          await decks.delImage(editing, imgId);
+          if (editing === cur) await decks.useDeck(cur, true);
+          await paint(); toast('已清掉，這一格改用內建那張');
+        });
+      },
+    });
+  }
+
+  $$('#dk-list .tmpl', root).forEach(b => b.addEventListener('click', () => select(b.dataset.dk)));
+
+  $('#dk-add', root).addEventListener('click', () => {
+    sheet({
+      title: '新增牌組',
+      body: html`<div class="stack" data-noswipe>
+        <div class="field"><label for="dk-name">名字</label>
+          <input class="input" id="dk-name" placeholder="例如：馬賽牌、我自己畫的" maxlength="30"></div>
+        <p class="hint">建好之後再一張一張放圖。沒放的牌會自動補內建的偉特牌，所以不用一次湊滿。</p>
+      </div>`,
+      actions: html`<button class="btn btn--primary btn--block press" data-ok>${raw(icon('check'))} 建立</button>`,
+      onMount(sr, close) {
+        $('[data-ok]', sr).addEventListener('click', async () => {
+          const name = $('#dk-name', sr).value.trim() || '未命名牌組';
+          const d = store.saveDeck({ id: uid('deck'), name, createdAt: new Date().toISOString() });
+          close();
+          navigate('/tarot?tab=deck');
+          setTimeout(() => location.reload(), 60);
+          store.setSettings({ tarotDeck: d.id });
+        });
+      },
+    });
+  });
+
+  $('#dk-rename', root).addEventListener('click', () => {
+    const d = store.decks.find(x => x.id === editing);
+    if (!d) return;
+    sheet({
+      title: '改名',
+      body: html`<div class="stack" data-noswipe><div class="field"><label for="dk-nn">名字</label>
+        <input class="input" id="dk-nn" value="${d.name}" maxlength="30"></div></div>`,
+      actions: html`<button class="btn btn--primary btn--block press" data-ok>${raw(icon('check'))} 存好</button>`,
+      onMount(sr, close) {
+        $('[data-ok]', sr).addEventListener('click', () => {
+          store.saveDeck({ id: d.id, name: $('#dk-nn', sr).value.trim() || d.name });
+          close(); location.reload();
+        });
+      },
+    });
+  });
+
+  $('#dk-del', root).addEventListener('click', async () => {
+    const d = store.decks.find(x => x.id === editing);
+    if (!d) return;
+    if (!await confirmSheet('刪除牌組', `「${d.name}」與裡面的所有圖都會刪掉，無法復原。`, '刪除')) return;
+    await decks.dropDeck(d.id);
+    store.removeDeck(d.id);
+    await decks.useDeck(store.settings.tarotDeck, true);
+    toast('已刪除');
+    location.reload();
+  });
+
+  $('#dk-import', root).addEventListener('click', importMany);
+
+  paint();
+}
