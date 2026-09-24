@@ -59,7 +59,8 @@ function slipHTML(s, question) {
         <span class="omi-slip__ban">${banOf(s.n)}</span>
         <span class="omi-slip__lv">${s.level}</span>
       </div>
-      ${s.lines.length ? html`<div class="omi-poem">${s.lines.map((l, i) => html`<p style="--i:${i}">${l}</p>`)}</div>` : ''}
+      <!-- 直書：一句一欄、由右往左，一個字一格。不用 writing-mode —— 它在 flex 裡會把四欄疊成一欄 -->
+      ${s.lines.length ? html`<div class="omi-poem" lang="zh-Hant">${s.lines.map((l, i) => html`<p style="--i:${i}">${[...l].map(c => html`<i>${c}</i>`)}</p>`)}</div>` : ''}
       <p class="omi-say">${lv.say}</p>
       <dl class="omi-topics">
         ${s.topics.map(t => html`<div><dt>${t.t}<small>${t.jp}</small></dt><dd>${t.text}</dd></div>`)}

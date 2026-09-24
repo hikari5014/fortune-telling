@@ -2,11 +2,21 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.35.0';
+export const APP_VERSION = '0.36.0';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.36.0', date: '2026-09-24', title: '神籤：星空下的神社おみくじ',
+    items: [
+      { kind: 'add', text: '占卜多了「神籤」：星空下的朱色鳥居，點賽錢箱投一枚百圓，鈴響、二拜二拍手一拜' },
+      { kind: 'add', text: '搖手機或點御神籤箱三下，箱子倒過來、籤棒從孔裡滑出來，打開籤紙' },
+      { kind: 'add', text: '籤詩是淺草寺的觀音百籤原文（一百首，吉凶分布照淺草寺：凶三十支），各項運勢解說為本 App 自撰' },
+      { kind: 'add', text: '抽到凶可以把籤綁在結籤處再走；其他的可以帶回家（存到紀錄，之後也會問你準不準）' },
+      { kind: 'add', text: '設定 → 外觀 →「神籤：搖手機」可以調靈敏度或關掉' },
+    ],
+  },
   {
     v: '0.35.0', date: '2026-09-23', title: '籤筒、籤枝、筊杯換成實物照片',
     items: [

@@ -1240,9 +1240,10 @@ body.cer-open { overflow: hidden; }
   color: #c0432c; letter-spacing: .1em;
 }
 .omi-slip[data-tone="bad"] .omi-slip__lv { color: #3b3630; }
-.omi-poem { writing-mode: vertical-rl; display: flex; gap: 14px; justify-content: center; margin: var(--sp-4) auto;
-  font-family: var(--font-display); font-size: var(--step-1); letter-spacing: .3em; height: 7.6em; }
-.omi-poem p { white-space: nowrap; }   /* 一句一行，不讓它折到下一行（直書時會跟下一句疊在一起） */
+.omi-poem { display: flex; flex-direction: row-reverse; justify-content: center; gap: 20px; margin: var(--sp-4) auto;
+  font-family: var(--font-display); font-size: var(--step-1); }
+.omi-poem p { display: flex; flex-direction: column; align-items: center; gap: .28em; margin: 0; }
+.omi-poem i { font-style: normal; line-height: 1; }
 .omi-poem p { margin: 0; animation: omi-ink 700ms calc(500ms + var(--i) * 180ms) ease-out both; }
 @keyframes omi-ink { from { opacity: 0; filter: blur(3px); } to { opacity: 1; filter: none; } }
 .omi-say { font-size: var(--step--1); line-height: 1.8; color: #4a4334; text-align: center; margin: var(--sp-2) 0 var(--sp-3); }

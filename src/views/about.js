@@ -80,6 +80,7 @@ export default {
         <div class="card reveal track">
           ${raw(kv('塔羅牌面', 'Rider–Waite–Smith（1909），Pamela Colman Smith 繪，公有領域'))}
           ${raw(kv('籤筒、籤枝', '<a href="https://commons.wikimedia.org/wiki/File:Qiantong.jpg" target="_blank" rel="noopener" style="text-decoration:underline">Fengshuimestari</a>，CC BY-SA 3.0'))}
+          ${raw(kv('神籤籤詩', '觀音百籤（元三大師御籤，淺草寺系）古籤原文；各項解說為本 App 自撰'))}
           ${raw(kv('筊杯', '<a href="https://commons.wikimedia.org/wiki/File:Poe_(Jiaobei)_at_Yokohama_Mazimiao.jpg" target="_blank" rel="noopener" style="text-decoration:underline">Yoshi Canopus</a>，CC BY-SA 4.0'))}
           <p class="hint" style="margin-top:var(--sp-3)">
             籤筒、籤枝、筊杯的照片經過去背、轉向與抹除籤上原有文字，
