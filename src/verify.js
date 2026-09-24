@@ -25,7 +25,7 @@ export const VERDICTS = [
 export const verdictName = (k) => (VERDICTS.find(v => v.k === k) || {}).t || '';
 
 /** 可以追蹤的占卜種類（對應模板 id） */
-export const KINDS = { iching: '卜卦', tarot: '塔羅', qian: '求籤' };
+export const KINDS = { iching: '卜卦', tarot: '塔羅', qian: '求籤', omikuji: '神籤' };
 export const kindOf = (r) => (KINDS[r?.templateId] ? r.templateId : null);
 export const trackable = (r) => !!kindOf(r);
 

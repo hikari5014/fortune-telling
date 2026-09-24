@@ -31,6 +31,8 @@ const P = {
   edit: '<path d="M4.5 19.5h4L19 9a2.3 2.3 0 0 0-3.2-3.2L5.3 16.3z"/><path d="m14.5 6.5 3 3"/>',
   close: '<path d="m6 6 12 12M18 6 6 18"/>',
   dice: '<rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="9" cy="9" r="1.2" fill="currentColor" stroke="none"/><circle cx="15" cy="15" r="1.2" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/>',
+  // 鳥居：上翹的笠木、貫、兩根柱、額束
+  torii: '<path d="M2.8 5.2q9.2 2 18.4 0l-.6 2q-8.6 1.6-17.2 0z"/><path d="M5 10.2h14"/><path d="M7.2 7.4 6.6 20.5M16.8 7.4l.6 13.1"/><path d="M12 7.6v2.6"/>',
   star: '<path d="m12 4 2.3 5 5.5.7-4 3.8 1 5.5-4.8-2.7-4.8 2.7 1-5.5-4-3.8 5.5-.7z"/>',
   refresh: '<path d="M19 12a7 7 0 1 1-2.1-5"/><path d="M19.5 4.5V10H14"/>',
   install: '<path d="M12 3.5v11M8 11l4 4 4-4"/><path d="M4.5 16v3.5h15V16"/>',

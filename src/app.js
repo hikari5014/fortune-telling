@@ -26,6 +26,7 @@ const VIEWS = {
   '/iching':   () => import('./views/iching.js'),
   '/tarot':    () => import('./views/tarot.js'),
   '/qian':     () => import('./views/qian.js'),
+  '/omikuji':  () => import('./views/omikuji.js'),
   '/naming':   () => import('./views/naming.js'),
   '/numbers':  () => import('./views/numbers.js'),
   '/prompt':   () => import('./views/prompt.js'),
