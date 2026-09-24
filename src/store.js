@@ -46,7 +46,8 @@ const DEFAULT_SETTINGS = {
      預設關閉 —— 一般情況下按一下就把提示詞複製好，直接跳到貼回頁。 */
   advancedPrompt: false,
   dailyReco: true,
-  relicStyle: 'photo',       // 求籤的籤筒、籤枝、筊杯：photo 照片 | line 線稿           // 首頁每天跳一次「今日推薦」
+  relicStyle: 'photo',
+  omikujiShake: 'mid',       // 神籤頁搖手機的靈敏度：soft | mid | hard | off（只用點的）       // 求籤的籤筒、籤枝、筊杯：photo 照片 | line 線稿           // 首頁每天跳一次「今日推薦」
   verifyDays: 7,             // 卜卦／塔羅／求籤存下來幾天後回頭問準不準（0＝不提醒）
   /* 外部 LLM：複製完之後要不要順手把它開起來，以及開哪一個。
      網址帶不帶得動提示詞是對方決定的，見 src/llm.js。 */
