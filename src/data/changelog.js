@@ -2,11 +2,22 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.36.0';
+export const APP_VERSION = '0.37.0';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.37.0', date: '2026-10-03', title: '神社：參拜與求籤分開，像真的走一趟',
+    items: [
+      { kind: 'change', text: '「神籤」改成「神社」：先在鳥居前按住一禮、走進境內，再自己選要去手水舍、拜殿或授與所，順序不限' },
+      { kind: 'add', text: '手水舍：舀一勺水，按住左手、右手、漱口、再洗左手，最後立起柄杓洗握柄 —— 一勺水用到最後' },
+      { kind: 'add', text: '拜殿：從錢包挑硬幣（五圓、十圓⋯⋯五百圓）往上甩進賽錢箱、拉鈴緒搖鈴、按住鞠躬二拜、拍手兩下、許願（願望化成一顆星升上夜空）、最後一拜' },
+      { kind: 'add', text: '參拜完蓋一個御朱印（星宮神社，令和年號的日期），收進御朱印帳；御朱印帳會跟著備份' },
+      { kind: 'add', text: '授與所：納初穗料、抓著籤箱左右甩（或搖手機）、往下拉把箱子倒過來、到一百格的籤棚找自己的抽屜、把摺好的籤紙往兩邊拉開' },
+      { kind: 'add', text: '鈴聲、拍手、投錢、水聲、籤棒聲都是當場合成的音效，設定 → 外觀可以關掉' },
+    ],
+  },
   {
     v: '0.36.0', date: '2026-09-24', title: '神籤：星空下的神社おみくじ',
     items: [

@@ -46,7 +46,7 @@ const select = (id, list, value) => html`<select class="select" id="${id}" style
    各分類的內容照樣全部 render，只是不是這一類的先 hidden ——
    mount 裡的綁定不用跟著拆，也不會漏綁。 */
 const GROUPS = [
-  { k: 'look',   t: '外觀',       icon: 'moon',    d: '主題、字級、介面密度、法器樣式、神籤搖晃、今日推薦、語調' },
+  { k: 'look',   t: '外觀',       icon: 'moon',    d: '主題、字級、介面密度、法器樣式、神社音效與搖晃、今日推薦、語調' },
   { k: 'motion', t: '動態',       icon: 'spark',   d: '動畫強度、滑動切頁、觸覺回饋、背景星空、命盤特效' },
   { k: 'calc',   t: '命理參數',   icon: 'compass', d: '時區與城市、真太陽時、子時換日、姓名學算法' },
   { k: 'tarot',  t: '塔羅',       icon: 'star',    d: '預設牌組、牌面圖像、抽牌儀式、對照本命盤' },
@@ -86,6 +86,9 @@ export default {
           ${raw(row('法器樣式',
             '求籤的籤筒、籤枝與筊杯要用實物照片還是線稿。照片取自 Wikimedia Commons（授權見「關於」頁）。',
             seg('set-relic', [['photo', '照片'], ['line', '線稿']], s.relicStyle || 'photo')))}
+          ${raw(row('神社音效',
+            '鈴聲、拍手、投錢、水聲與籤棒的聲音（當場合成，不下載音檔）。手機靜音時可能聽不到。',
+            sw('set-shrinesnd', s.shrineSound !== false)))}
           ${raw(row('神籤：搖手機',
             '在神籤頁搖手機就能搖籤箱。太容易誤觸就調「用力」，不想用就關掉（照樣可以點籤箱）。',
             seg('set-omishake', [['soft', '輕'], ['mid', '標準'], ['hard', '用力'], ['off', '關']], s.omikujiShake || 'mid')))}
@@ -261,7 +264,7 @@ export default {
     }));
     bindSeg('set-zi', 'lateZiRule');
     bindSeg('set-wai', 'wageWaiRule');
-    ['set-swipe|swipeNav', 'set-haptics|haptics', 'set-glow|pointerGlow', 'set-scorecolor|scoreColor', 'set-tst|trueSolarTime', 'set-pdisc|promptDisclaimer', 'set-numeral|numeralRule', 'set-tarotimg|tarotImages', 'set-tarotlink|tarotChartLink', 'set-tarotcer|tarotCeremony', 'set-advprompt|advancedPrompt', 'set-sky|starfield', 'set-llmauto|llmAutoOpen', 'set-reco|dailyReco']
+    ['set-swipe|swipeNav', 'set-haptics|haptics', 'set-glow|pointerGlow', 'set-scorecolor|scoreColor', 'set-tst|trueSolarTime', 'set-pdisc|promptDisclaimer', 'set-numeral|numeralRule', 'set-tarotimg|tarotImages', 'set-tarotlink|tarotChartLink', 'set-tarotcer|tarotCeremony', 'set-advprompt|advancedPrompt', 'set-sky|starfield', 'set-llmauto|llmAutoOpen', 'set-reco|dailyReco', 'set-shrinesnd|shrineSound']
       .forEach(x => { const [id, key] = x.split('|'); bindSw(id, key); });
     bindVal('set-tz', 'tzOffset', Number);
     bindVal('set-city', 'city');
