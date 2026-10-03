@@ -13,6 +13,7 @@ const K = {
   spreads: 'xj.spreads',
   decks: 'xj.decks',
   daily: 'xj.daily',
+  shrine: 'xj.shrinelog',
 };
 
 const DEFAULT_SETTINGS = {
@@ -47,7 +48,8 @@ const DEFAULT_SETTINGS = {
   advancedPrompt: false,
   dailyReco: true,
   relicStyle: 'photo',
-  omikujiShake: 'mid',       // 神籤頁搖手機的靈敏度：soft | mid | hard | off（只用點的）       // 求籤的籤筒、籤枝、筊杯：photo 照片 | line 線稿           // 首頁每天跳一次「今日推薦」
+  omikujiShake: 'mid',
+  shrineSound: true,         // 神社的鈴聲、拍手、水聲（Web Audio 合成）       // 神籤頁搖手機的靈敏度：soft | mid | hard | off（只用點的）       // 求籤的籤筒、籤枝、筊杯：photo 照片 | line 線稿           // 首頁每天跳一次「今日推薦」
   verifyDays: 7,             // 卜卦／塔羅／求籤存下來幾天後回頭問準不準（0＝不提醒）
   /* 外部 LLM：複製完之後要不要順手把它開起來，以及開哪一個。
      網址帶不帶得動提示詞是對方決定的，見 src/llm.js。 */
@@ -111,6 +113,8 @@ export const EXPORT_PARTS = [
     get: (s) => s.decks, set: (s, v, m) => write(K.decks, m ? dedupe([...s.decks, ...v]) : v) },
   { key: 'candidates', label: '候選名', personal: true, desc: '姓名頁收藏的候選名字',
     get: (s) => s.candidates, set: (s, v, m) => write(K.candidates, m ? dedupe([...s.candidates, ...v]) : v) },
+  { key: 'shrineLog', label: '御朱印帳', personal: true, desc: '在神社參拜的日子、投的香油錢，以及寫下的願望',
+    get: (s) => s.shrineLog, set: (s, v, m) => write(K.shrine, m ? dedupe([...s.shrineLog, ...v]) : v) },
   { key: 'dailyLog', label: '今日一張紀錄', desc: '每天抽的那張塔羅與你寫的筆記',
     get: (s) => s.dailyLog, set: (s, v, m) => write(K.daily, m ? [...v, ...s.dailyLog].slice(0, 400) : v) },
 ];
@@ -173,6 +177,10 @@ export const store = {
   removeSpread(id) { this.spreads = this.spreads.filter(s => s.id !== id); },
 
   /* 今日一張的紀錄：{ day, who, id, reversed, note } —— 一天一筆，可以回頭看 */
+  /** 御朱印帳：每參拜一次一筆 {id, date, coin, wish} */
+  get shrineLog() { return read(K.shrine, []); },
+  set shrineLog(v) { write(K.shrine, v); emit('shrine', v); },
+  addShrine(e) { this.shrineLog = [e, ...this.shrineLog].slice(0, 500); return e; },
   get dailyLog() { return read(K.daily, []); },
   set dailyLog(v) { write(K.daily, v); emit('daily', v); },
   logDaily(entry) {

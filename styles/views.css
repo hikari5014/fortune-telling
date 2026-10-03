@@ -1134,6 +1134,7 @@ body.cer-open { overflow: hidden; }
   --shu: #c0432c; --shu-hi: #e0654a; --shu-lo: #8f2e1f;
   --sumi: #1b1a1d; --gold: #d9b25f; --gold-lo: #8a6a2a;
   --wood-hi: #b98a57; --wood-lo: #74502f; --wood-top: #d0a676;
+  --stone-hi: #8b8e98; --stone-lo: #4c4f59;
 }
 .jinja {
   position: relative; overflow: hidden; border-radius: var(--r-3);
@@ -1270,3 +1271,218 @@ body.cer-open { overflow: hidden; }
 @media (prefers-reduced-motion: reduce) {
   .jinja__sky i, .omi-slip, .omi-poem p, .jn-stick, .jn-kujibox.is-shake, .jinja__bell.is-ring { animation: none; }
 }
+
+/* ══ 神社：境內與三處 ════════════════════════════════════════
+   共通：上面一排步驟（.jn-steps）、中間場景、下面一行指示（.jn-say）與操作區。 */
+.jn-steps { position: relative; z-index: 2; display: flex; flex-wrap: wrap; gap: 4px 6px; justify-content: center;
+  list-style: none; margin: 0 0 var(--sp-3); padding: 0; counter-reset: st; }
+.jn-steps li { counter-increment: st; font-size: 11px; letter-spacing: .08em; padding: 3px 9px; border-radius: 99px;
+  color: rgba(239,230,207,.5); border: 1px solid rgba(217,178,95,.2); transition: all 300ms var(--ease); }
+.jn-steps li::before { content: counter(st) " "; opacity: .6; }
+.jn-steps li.is-now { color: #1a160e; background: var(--gold); border-color: var(--gold); box-shadow: 0 0 12px rgba(217,178,95,.5); }
+.jn-steps li.is-done { color: var(--gold); border-color: rgba(217,178,95,.5); }
+.jn-steps li.is-done::before { content: "✓ "; opacity: 1; }
+.jn-say { position: relative; z-index: 2; min-height: 3.2em; margin: var(--sp-3) auto 0; max-width: 32em;
+  font-size: var(--step--1); line-height: 1.8; color: #f3e9cf; letter-spacing: .04em; }
+.jn-say.is-on { animation: jn-say 500ms ease-out; }
+@keyframes jn-say { from { opacity: 0; transform: translateY(6px); } }
+.jn-ctrl__hint { margin-top: var(--sp-2); color: rgba(239,230,207,.6) !important; }
+
+/* 長按的圓鈕：外圈是進度 */
+.jn-holdbtn {
+  --p: 0; position: relative; display: inline-grid; place-items: center; width: 132px; height: 132px; margin: var(--sp-3) auto 0;
+  border-radius: 50%; color: #f3e9cf; touch-action: none; user-select: none;
+  background: conic-gradient(var(--gold) calc(var(--p) * 360deg), rgba(217,178,95,.16) 0);
+  box-shadow: 0 0 0 1px rgba(217,178,95,.3), 0 0 26px rgba(217,178,95, calc(.15 + var(--p) * .4));
+}
+.jn-holdbtn span { display: grid; place-items: center; width: 118px; height: 118px; border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #23284a, #0d1128); font-family: var(--font-display); letter-spacing: .2em; font-size: var(--step--1); }
+.jn-holdbtn.is-holding span { transform: scale(.96); transition: transform 200ms; }
+
+/* ── 境內 ── */
+.jn-hub { transition: min-height 900ms var(--ease); min-height: 0; }
+.jn-hub:has(.jn-gate) { min-height: 520px; }   /* 鳥居那一層蓋在上面時，卡片要夠高，按鈕才不會被切掉 */
+.jn-map { position: relative; width: min(100%, 420px); margin: 0 auto; opacity: 0; transform: scale(.94); transition: opacity 900ms var(--ease), transform 1200ms var(--ease-out); }
+.jn-map.is-in { opacity: 1; transform: none; }
+.jn-grounds { display: block; width: 100%; height: auto; }
+.jn-map__lantern { position: absolute; left: var(--x); top: var(--y); width: calc(26px * var(--s)); translate: -50% -100%; }
+.jn-lantern { display: block; width: 100%; height: auto; }
+.jn-lantern__fire { animation: jn-fire 2.8s ease-in-out infinite; }
+@keyframes jn-fire { 50% { opacity: .7; } }
+.jn-place {
+  position: absolute; display: grid; justify-items: center; gap: 1px; padding: 6px 12px; border-radius: 12px;
+  background: rgba(11,16,48,.72); color: #f3e9cf; border: 1px solid rgba(217,178,95,.45);
+  backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); box-shadow: 0 6px 18px rgba(0,0,0,.4);
+  animation: jn-float 3.6s ease-in-out infinite;
+}
+.jn-place b { font-family: var(--font-display); font-size: var(--step-0); letter-spacing: .14em; }
+.jn-place small { font-size: 10px; color: rgba(239,230,207,.6); }
+.jn-place i { position: absolute; top: -8px; right: -8px; width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; background: var(--gold); color: #1a160e; }
+.jn-place i svg { width: 12px; height: 12px; }
+.jn-place.is-done { border-color: var(--gold); }
+.jn-place--haiden { left: 50%; top: 22%; translate: -50% 0; animation-delay: -.6s; }
+.jn-place--temizu { left: 4%; top: 68%; animation-delay: -1.4s; }
+.jn-place--kuji { right: 4%; top: 68%; animation-delay: -2.2s; }
+@keyframes jn-float { 50% { transform: translateY(-4px); } }
+.jn-placecard small { color: var(--ink-3); }
+/* 鳥居前：一禮再走進去 */
+.jn-gate { position: absolute; inset: 0; z-index: 3; display: grid; place-items: center; align-content: center; gap: var(--sp-3);
+  padding: var(--sp-4); background: radial-gradient(120% 80% at 50% 10%, #1a2350, #060816 75%); transition: opacity 900ms var(--ease); }
+.jn-gate__torii { width: min(86%, 340px); transition: transform 1100ms cubic-bezier(.5,0,.3,1), opacity 1000ms, filter 600ms; transform-origin: 50% 70%; }
+.jn-gate__say { font-size: var(--step--1); line-height: 1.9; color: #f3e9cf; letter-spacing: .1em; }
+.jn-gate.is-bowing .jn-gate__torii { transform: translateY(14px) scale(.97); filter: brightness(.75); }
+.jn-gate.is-bowed .jn-gate__torii { transform: none; filter: none; }
+.jn-gate.is-through { opacity: 0; pointer-events: none; }
+.jn-gate.is-through .jn-gate__torii { transform: scale(3.2); opacity: 0; }
+
+/* ── 拜殿 ── */
+.jn-hd__stage { position: relative; width: min(100%, 400px); margin: 0 auto; transition: transform 1.1s cubic-bezier(.3,0,.2,1), filter 1.1s; transform-origin: 50% 0; }
+.jn-hd.is-bowing .jn-hd__stage { transform: perspective(700px) rotateX(14deg) translateY(26px) scale(.95); filter: brightness(.55); }
+.jn-hd.is-rise .jn-hd__stage { transition-duration: .5s; }
+.jn-haiden { display: block; width: 100%; height: auto; }
+.jn-hd__bell { position: absolute; left: 50%; top: 37%; width: 11%; translate: -50% 0; transform-origin: 50% 0; z-index: 2; touch-action: none; cursor: grab; }
+.jn-hd__bell.is-live { filter: drop-shadow(0 0 10px rgba(255,220,140,.7)); animation: jn-glow 1.6s ease-in-out infinite; }
+@keyframes jn-glow { 50% { filter: drop-shadow(0 0 2px rgba(255,220,140,.2)); } }
+.jn-hd__bell.is-ring { animation: jn-swing 1.6s cubic-bezier(.3,.6,.3,1); }
+@keyframes jn-swing { 15% { rotate: var(--swing, 10deg); } 35% { rotate: calc(var(--swing, 10deg) * -.75); } 55% { rotate: calc(var(--swing, 10deg) * .45); } 75% { rotate: calc(var(--swing, 10deg) * -.2); } }
+.jn-hd__box { position: absolute; left: 50%; bottom: 7%; width: 44%; translate: -50% 0; z-index: 2; }
+.jn-hd__box.is-hit { animation: jn-hit 380ms cubic-bezier(.3,1.6,.5,1); }
+.jn-fly { position: absolute; left: 0; top: 0; width: 36px; height: 36px; z-index: 5; pointer-events: none; }
+.jn-hd__ctrl, .jn-kj__ctrl { position: relative; z-index: 2; margin-top: var(--sp-2); }
+.jn-purse { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; padding: var(--sp-3); border-radius: 18px;
+  background: linear-gradient(#3a2418, #24150e); box-shadow: inset 0 2px 6px rgba(0,0,0,.6), 0 0 0 1px rgba(217,178,95,.25); }
+.jn-purse__coin { display: grid; justify-items: center; gap: 3px; width: 52px; padding: 0; background: none; color: rgba(239,230,207,.75);
+  touch-action: none; transition: transform 250ms cubic-bezier(.3,1.6,.5,1); }
+.jn-purse__coin .jn-coin { width: 44px; height: 44px; filter: drop-shadow(0 3px 4px rgba(0,0,0,.5)); }
+.jn-purse__coin small { font-size: 10px; }
+.jn-purse__coin.is-picked { transform: translateY(-10px) scale(1.12); }
+.jn-purse__coin.is-picked .jn-coin { filter: drop-shadow(0 0 10px rgba(255,230,160,.8)); }
+.jn-purse__coin.is-drag { transition: none; z-index: 3; }
+.jn-coin__v--big { font: 700 15px var(--font-num); text-anchor: middle; }
+.jn-hd__hands { position: absolute; left: 50%; top: 52%; translate: -50% -50%; width: 160px; height: 120px; z-index: 4; pointer-events: none; }
+.jn-hd__hand { position: absolute; top: 0; width: 64px; transition: transform 120ms; filter: drop-shadow(0 0 14px rgba(255,220,160,.45)); }
+.jn-hd__hand svg { width: 100%; height: auto; display: block; }
+.jn-hd__hand--l { left: 22px; transform: rotate(-8deg); }
+.jn-hd__hand--r { right: 22px; transform: rotate(8deg); }
+.jn-hd__hands.is-clap .jn-hd__hand--l { animation: jn-clapl 260ms ease-in-out; }
+.jn-hd__hands.is-clap .jn-hd__hand--r { animation: jn-clapr 260ms ease-in-out; }
+@keyframes jn-clapl { 50% { transform: translateX(28px) rotate(0); } }
+@keyframes jn-clapr { 50% { transform: translateX(-28px) rotate(0); } }
+.jn-ripple { position: absolute; left: 50%; top: 50%; width: 30px; height: 30px; margin: -15px; border-radius: 50%;
+  border: 2px solid rgba(255,230,170,.8); animation: jn-ripple 800ms ease-out forwards; }
+@keyframes jn-ripple { to { transform: scale(6); opacity: 0; } }
+.jn-breath { width: 70px; height: 70px; margin: 0 auto var(--sp-3); display: grid; place-items: center; }
+.jn-breath i { width: 26px; height: 26px; border-radius: 50%; background: radial-gradient(circle, #fff6d6, rgba(217,178,95,.2) 70%); box-shadow: 0 0 20px rgba(217,178,95,.6); }
+.jn-breath.is-on i { animation: jn-breathe 2.6s ease-in-out; }
+@keyframes jn-breathe { 45% { transform: scale(2.6); } 100% { transform: scale(1); } }
+.jn-wishstar { position: absolute; left: 50%; bottom: 34%; z-index: 6; min-width: 28px; height: 28px; padding: 0 12px; display: grid; place-items: center;
+  border-radius: 99px; font-size: var(--step--1); color: #1a160e; background: radial-gradient(circle, #fffbe6, #f3d37f);
+  box-shadow: 0 0 30px 8px rgba(255,225,140,.75); white-space: nowrap; pointer-events: none; }
+.jinja__sky .jn-newstar { width: 4px; height: 4px; opacity: 1; background: #fff3c4; box-shadow: 0 0 12px 3px rgba(255,225,140,.9); animation: jn-twinkle 2.4s ease-in-out infinite; }
+/* 御朱印 */
+.jn-stamp__page { margin: var(--sp-3) auto 0; width: min(100%, 260px); aspect-ratio: 3 / 4.2; border-radius: 4px;
+  background: repeating-linear-gradient(0deg, transparent 0 3px, rgba(120,100,60,.03) 3px 4px), #f8f2e2;
+  box-shadow: 0 16px 36px -14px rgba(0,0,0,.7), inset 0 0 0 1px rgba(150,120,70,.25); padding: 18px 14px; }
+.jn-goshuin { position: relative; height: 100%; display: flex; flex-direction: row-reverse; justify-content: space-between; align-items: flex-start; color: #17140f; }
+.jn-gs__col { display: flex; flex-direction: column; align-items: center; font-family: var(--font-display); line-height: 1.05; }
+.jn-gs__col i { font-style: normal; }
+.jn-gs__col--r { font-size: 18px; font-weight: 700; }
+.jn-gs__col--m { font-size: 30px; font-weight: 900; letter-spacing: .02em; margin-top: 14%; }
+.jn-gs__col--l { font-size: 12px; margin-top: 30%; }
+.jn-gs__seal { position: absolute; pointer-events: none; mix-blend-mode: multiply; }
+.jn-gs__seal--sq { left: 50%; top: 32%; width: 46%; translate: -50% 0; opacity: .82; }
+.jn-gs__seal--rd { right: 2%; top: 26%; width: 24%; opacity: .8; }
+.jn-gs__st { font-family: var(--font-display); font-size: 22px; font-weight: 900; fill: var(--shu); text-anchor: middle; }
+.jn-stamp__page.is-writing .jn-gs__col { animation: jn-ink 700ms ease-out both; }
+.jn-stamp__page.is-writing .jn-gs__col--m { animation-delay: 300ms; }
+.jn-stamp__page.is-writing .jn-gs__col--l { animation-delay: 650ms; }
+@keyframes jn-ink { from { opacity: 0; filter: blur(4px); clip-path: inset(0 0 100% 0); } to { opacity: 1; filter: none; clip-path: inset(0); } }
+.jn-stamp__page.is-writing .jn-gs__seal--sq { animation: jn-seal 420ms 1500ms cubic-bezier(.3,1.6,.5,1) both; }
+.jn-stamp__page.is-writing .jn-gs__seal--rd { animation: jn-seal 420ms 1880ms cubic-bezier(.3,1.6,.5,1) both; }
+@keyframes jn-seal { from { opacity: 0; transform: scale(1.8); } 60% { opacity: .9; transform: scale(.94); } to { opacity: .82; transform: none; } }
+.jn-book { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: var(--sp-3); margin-top: var(--sp-3); }
+.jn-book__page { --shu: #c0432c; display: grid; gap: 6px; padding: 10px; border-radius: 6px; background: #f8f2e2; aspect-ratio: 3 / 4.6; text-align: center; }
+.jn-book__page .jn-goshuin { height: auto; aspect-ratio: 3 / 4; }
+.jn-book__page .jn-gs__col--r { font-size: 9px; } .jn-book__page .jn-gs__col--m { font-size: 15px; } .jn-book__page .jn-gs__col--l { font-size: 6px; }
+.jn-book__page .jn-gs__st { font-size: 22px; }
+.jn-book__page small { color: #6d6450; font-size: 10px; }
+.jn-book__big { width: min(100%, 280px); margin: 0 auto; aspect-ratio: 3 / 4.2; padding: 18px 14px; background: #f8f2e2; border-radius: 4px; }
+
+/* ── 手水舍 ── */
+.jn-tz__stage { position: relative; width: min(100%, 400px); margin: 0 auto; padding-bottom: 120px; }
+.jn-temizuya { display: block; width: 100%; height: auto; }
+.jn-tz__label { font-family: var(--font-display); font-size: 22px; letter-spacing: .3em; fill: var(--gold); text-anchor: middle; opacity: .8; }
+.jn-tz__drip { position: absolute; left: 66.5%; top: 46%; width: 5px; height: 9px; border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%;
+  background: #8cc3ef; animation: jn-drip 1.6s ease-in infinite; }
+@keyframes jn-drip { from { transform: translateY(0); opacity: 0; } 15% { opacity: 1; } to { transform: translateY(26px); opacity: 0; } }
+.jn-tz__ladle { position: absolute; left: 20%; top: 41%; width: 44%; padding: 0; background: none; z-index: 3; touch-action: none;
+  transition: left 500ms var(--ease), top 500ms var(--ease), transform 500ms var(--ease); transform-origin: 12% 60%; }
+.jn-ladle { display: block; width: 100%; height: auto; filter: drop-shadow(0 4px 6px rgba(0,0,0,.5)); }
+.jn-tz__ladle.is-live { animation: jn-glow 1.6s ease-in-out infinite; filter: drop-shadow(0 0 8px rgba(255,230,160,.6)); }
+.jn-tz__ladle.is-scoop { transform: translateY(22px) rotate(-8deg); }
+.jn-tz__ladle.is-full .jn-ladle__water { opacity: 1; transition: opacity 400ms; }
+.jn-tz__ladle.is-pour { transform: rotate(-38deg); }
+.jn-tz__ladle.is-upright { transform: rotate(-80deg); transition-duration: 1s; }
+.jn-tz__ladle.is-rest { transform: none; }
+.jn-tz__ladle.is-rest .jn-ladle__water { opacity: 0; }
+.jn-tz__targets { position: absolute; left: 0; right: 0; bottom: 0; display: flex; justify-content: center; gap: 22px; z-index: 2; }
+.jn-tz__t { --p: 0; display: grid; justify-items: center; gap: 4px; padding: 8px; border-radius: 16px; background: none; color: rgba(239,230,207,.75);
+  touch-action: none; user-select: none; box-shadow: 0 0 0 2px rgba(217,178,95, calc(.15 + var(--p) * .85)); }
+.jn-tz__t[hidden] { display: none; }
+.jn-tz__t svg { width: 64px; height: auto; }
+.jn-tz__t small { font-size: 11px; letter-spacing: .1em; }
+.jn-tz__t.is-live { animation: jn-glow 1.6s ease-in-out infinite; filter: drop-shadow(0 0 8px rgba(255,230,160,.5)); }
+.jn-tz__t.is-clean { animation: jn-clean 450ms ease-out; }
+@keyframes jn-clean { 50% { filter: drop-shadow(0 0 18px rgba(170,220,255,.95)) brightness(1.2); } }
+.jn-tz__stream { position: absolute; width: 10px; z-index: 2; border-radius: 6px; opacity: 0; pointer-events: none;
+  background: repeating-linear-gradient(180deg, rgba(150,205,245,.95) 0 6px, rgba(150,205,245,.35) 6px 10px); background-size: 100% 20px;
+  transition: opacity 200ms; }
+.jn-tz__stream.is-on { opacity: 1; animation: jn-flow 300ms linear infinite; }
+@keyframes jn-flow { to { background-position: 0 20px; } }
+.jn-dots--water i { border-color: #8cc3ef; }
+.jn-dots--water i.is-on { background: #8cc3ef; box-shadow: 0 0 8px #8cc3ef; }
+
+/* ── 授與所 ── */
+.jn-juyosho { display: block; width: min(100%, 400px); margin: 0 auto; height: auto; }
+.jn-juyo__t { font-family: var(--font-display); font-size: 24px; letter-spacing: .4em; fill: var(--gold); text-anchor: middle; }
+.jn-kj__counter { display: flex; justify-content: center; align-items: flex-end; gap: 28px; margin-top: var(--sp-3); }
+.jn-kj__offer { display: grid; justify-items: center; gap: 10px; }
+.jn-kj__coin { width: 44px; padding: 0; background: none; animation: jn-glow 1.6s ease-in-out infinite; filter: drop-shadow(0 0 8px rgba(255,230,160,.5)); }
+.jn-kj__coin .jn-coin { width: 44px; height: 44px; }
+.jn-kj__obox { display: grid; place-items: center; width: 74px; height: 56px; border-radius: 4px 4px 8px 8px;
+  background: linear-gradient(var(--wood-hi), var(--wood-lo)); color: var(--gold); box-shadow: inset 0 6px 0 rgba(0,0,0,.35), 0 6px 10px rgba(0,0,0,.4); }
+.jn-kj__obox b { font-family: var(--font-display); letter-spacing: .1em; font-size: 13px; }
+.jn-kj__obox small { font-size: 10px; opacity: .8; }
+.jn-kj__obox.is-paid { animation: jn-hit 380ms cubic-bezier(.3,1.6,.5,1); box-shadow: inset 0 6px 0 rgba(0,0,0,.35), 0 0 18px rgba(217,178,95,.6); }
+.jn-kj .jn-kujiwrap { height: 330px; }
+.jn-kujibox { touch-action: none; }
+.jn-kujibox.is-live { filter: drop-shadow(0 0 14px rgba(255,230,160,.55)); animation: jn-glow 1.6s ease-in-out infinite; }
+.jn-kujibox:disabled { opacity: .55; }
+/* 籤棚 */
+.jn-cab { position: relative; z-index: 2; margin: var(--sp-4) auto 0; width: min(100%, 380px); padding: 12px; border-radius: 6px;
+  background: linear-gradient(#5a3a22, #3a2416); box-shadow: 0 0 0 3px var(--wood-lo), 0 14px 30px rgba(0,0,0,.5); }
+.jn-cab__title { font-family: var(--font-display); letter-spacing: .6em; color: var(--gold); font-size: var(--step--1); margin-bottom: 8px; }
+.jn-cab__grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 3px; perspective: 600px; }
+.jn-drawer { aspect-ratio: 1; padding: 0; border-radius: 2px; display: grid; place-items: center;
+  background: linear-gradient(#c79a63, #9b7244); box-shadow: inset 0 -2px 0 rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.25);
+  color: #2a1b0f; font-family: var(--font-display); font-size: clamp(7px, 2.3vw, 10px); font-weight: 700; line-height: 1; transition: transform 300ms, box-shadow 300ms; }
+.jn-drawer span { writing-mode: horizontal-tb; }
+.jn-drawer::after { content: ""; position: absolute; }
+.jn-drawer.is-row { box-shadow: inset 0 -2px 0 rgba(0,0,0,.25), 0 0 0 1px #ffe3a0, 0 0 10px rgba(255,220,140,.7); }
+.jn-drawer.is-wrong { animation: jn-wrong 320ms; }
+@keyframes jn-wrong { 25% { transform: translateX(-2px); } 75% { transform: translateX(2px); } }
+.jn-drawer.is-open { transform: translateZ(40px) scale(1.5); z-index: 2; box-shadow: 0 10px 18px rgba(0,0,0,.6), 0 0 18px rgba(255,220,140,.9); background: linear-gradient(#e3b97e, #b48452); }
+/* 摺起來的籤紙：三摺，左右兩片往中間摺 */
+.jn-fold { position: relative; z-index: 2; margin-top: var(--sp-4); }
+.jn-fold__paper { --pull: 0; position: relative; display: flex; margin: 0 auto; padding: 0; background: none; perspective: 700px; touch-action: none; }
+.jn-fold__l, .jn-fold__m, .jn-fold__r { display: block; width: 46px; height: 150px; background: #f7f1e3; box-shadow: inset 0 0 0 1px rgba(192,67,44,.45); }
+/* 兩片摺到背後時看不到（只看得到中間寫著籤號的那一面），拉開時才翻回來 */
+.jn-fold__l, .jn-fold__r { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.jn-fold__m { display: grid; place-items: center; box-shadow: inset 0 0 0 1px rgba(192,67,44,.45), 0 10px 20px rgba(0,0,0,.5); }
+.jn-fold__m b i { font-style: normal; }
+.jn-fold__m b { font-family: var(--font-display); font-size: 12px; color: #8f2e1f; display: flex; flex-direction: column; letter-spacing: 0; }
+.jn-fold__l { transform-origin: 100% 50%; transform: rotateY(calc(170deg - var(--pull) * 120deg)); background: #ece4d0; transition: transform 600ms var(--ease); }
+.jn-fold__r { transform-origin: 0 50%; transform: rotateY(calc(-170deg + var(--pull) * 120deg)); background: #ece4d0; transition: transform 600ms var(--ease); }
+.jn-fold__paper.is-open .jn-fold__l, .jn-fold__paper.is-open .jn-fold__r { transform: none; }
+:root[data-motion="off"] .jn-place, :root[data-motion="off"] .jn-lantern__fire, :root[data-motion="off"] .jn-tz__drip { animation: none; }
+@media (prefers-reduced-motion: reduce) { .jn-place, .jn-lantern__fire, .jn-tz__drip, .jn-tz__stream.is-on { animation: none; } }

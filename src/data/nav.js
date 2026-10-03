@@ -14,7 +14,7 @@ export const NAV = [
   { p: '/iching',    t: '卜卦', icon: 'dice',     eyebrow: 'I CHING' },
   { p: '/tarot',     t: '塔羅', icon: 'star',     eyebrow: 'TAROT' },
   { p: '/qian',      t: '求籤', icon: 'folder',   eyebrow: 'ORACLE POEM' },
-  { p: '/omikuji',   t: '神籤', icon: 'torii',    eyebrow: 'OMIKUJI' },
+  { p: '/omikuji',   t: '神社', icon: 'torii',    eyebrow: 'SHRINE' },
   { p: '/naming',    t: '姓名', icon: 'naming',   eyebrow: 'NAME STUDY' },
   { p: '/numbers',   t: '數字', icon: 'numbers',  eyebrow: 'NUMEROLOGY' },
   { p: '/prompt',    t: '提示', icon: 'prompt',   eyebrow: 'PROMPT STUDIO' },
