@@ -15,6 +15,8 @@ const K = {
   daily: 'xj.daily',
   shrine: 'xj.shrinelog',
   merit: 'xj.merit',
+  wallet: 'xj.wallet',
+  wishes: 'xj.wishes',
 };
 
 const DEFAULT_SETTINGS = {
@@ -120,6 +122,8 @@ export const EXPORT_PARTS = [
     get: (s) => s.shrineLog, set: (s, v, m) => write(K.shrine, m ? dedupe([...s.shrineLog, ...v]) : v) },
   { key: 'meritLog', label: '功德簿', personal: true, desc: '在廟裡拜過哪位神明、求了什麼、添了多少香油錢（象徵性的）',
     get: (s) => s.meritLog, set: (s, v, m) => write(K.merit, m ? dedupe([...s.meritLog, ...v]) : v) },
+  { key: 'wishLog', label: '許願簿', personal: true, desc: '在許願池許過的願望，以及每枚硬幣落在哪裡',
+    get: (s) => s.wishLog, set: (s, v, m) => write(K.wishes, m ? dedupe([...s.wishLog, ...v]) : v) },
   { key: 'dailyLog', label: '今日一張紀錄', desc: '每天抽的那張塔羅與你寫的筆記',
     get: (s) => s.dailyLog, set: (s, v, m) => write(K.daily, m ? [...v, ...s.dailyLog].slice(0, 400) : v) },
 ];
@@ -191,6 +195,14 @@ export const store = {
   set meritLog(v) { write(K.merit, v); emit('merit', v); },
   addMerit(e) { this.meritLog = [e, ...this.meritLog].slice(0, 500); return e; },
   updateMerit(id, patch) { this.meritLog = this.meritLog.map(e => (e.id === id ? { ...e, ...patch } : e)); },
+  /** 福幣錢包 {coins, day, log[]} —— 規則在 src/wallet.js。不放進備份：
+      之後若改成真的儲值，餘額得放在伺服器上，備份檔一匯入就能變出錢來是不行的 */
+  get wallet() { return { coins: 0, day: '', log: [], ...read(K.wallet, {}) }; },
+  set wallet(v) { write(K.wallet, v); emit('wallet', v); },
+  /** 許願簿：每投一枚一筆 {id, date, wish, spot, x, z, yaw, tilt} */
+  get wishLog() { return read(K.wishes, []); },
+  set wishLog(v) { write(K.wishes, v); emit('wishes', v); },
+  addWish(e) { this.wishLog = [e, ...this.wishLog].slice(0, 500); return e; },
   get dailyLog() { return read(K.daily, []); },
   set dailyLog(v) { write(K.daily, v); emit('daily', v); },
   logDaily(entry) {

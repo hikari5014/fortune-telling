@@ -17,6 +17,8 @@ import { haiden as hall, COINS, coinSVG, goshuin, hand } from './art.js';
 import { bell, saisen } from '../shrine.js';
 import { sleep, fast, hold, drag, mark, dayKey, wareki } from './kit.js';
 import { suzu, clap, coinDrop, knock, paper } from './sound.js';
+import { spend, NAME } from '../wallet.js';
+import { walletChip, bindWallet, ensure } from '../walletui.js';
 
 const STEPS = [
   { k: 'coin', t: '香油錢' }, { k: 'bell', t: '搖鈴' }, { k: 'bow2', t: '二拜' },
@@ -46,6 +48,7 @@ export function mount(root, { all }) {
   const stage = $('#hd-stage', root), say = $('#hd-say', root), ctrl = $('#hd-ctrl', root);
   const bellEl = $('#hd-bell', root), boxEl = $('#hd-box', root), scene = $('.jn-hd', root);
   let coinKind = null, wish = '';
+  bindWallet(root);
 
   const setStep = (i) => {
     $$('#hd-steps li', root).forEach((li, j) => {
@@ -63,7 +66,8 @@ export function mount(root, { all }) {
       <div class="jn-purse" id="hd-purse">
         ${COINS.map(c => html`<button class="jn-purse__coin press" data-k="${c.k}" aria-label="${c.name}">${raw(coinSVG(c.k))}<small>${c.name}</small></button>`)}
       </div>
-      <p class="hint jn-ctrl__hint" id="hd-coinhint">挑好之後，按住硬幣往上甩；或再點一次直接投。</p>`;
+      <p class="hint jn-ctrl__hint" id="hd-coinhint">挑好之後，按住硬幣往上甩；或再點一次直接投。</p>
+      <div class="jn-wallet"><small>不論挑哪一枚，都用 1 枚${NAME}</small>${walletChip()}</div>`;
     const pick = (b) => {
       $$('.jn-purse__coin', ctrl).forEach(x => x.classList.remove('is-picked'));
       b.classList.add('is-picked');
@@ -99,6 +103,8 @@ export function mount(root, { all }) {
 
   async function throwCoin(btn) {
     if (ctrl.dataset.busy) return;
+    if (!ensure(1)) return;
+    spend(1, '神社・賽錢');
     ctrl.dataset.busy = '1';
     const k = Number(btn.dataset.k); coinKind = k;
     const from = btn.getBoundingClientRect(), to = boxEl.getBoundingClientRect(), base = stage.getBoundingClientRect();

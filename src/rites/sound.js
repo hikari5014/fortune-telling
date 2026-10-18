@@ -125,3 +125,37 @@ export function paper() {
   const c = ac(); if (!c) return;
   for (let i = 0; i < 4; i++) burst(c, { t: i * .05, dur: .07, gain: .12, f: 3500 + Math.random() * 2000, q: .6, type: 'highpass' });
 }
+
+/* ── 許願池 ─────────────────────────────── */
+/** 硬幣碰到石頭或月盞的邊：清脆的一聲「叮」，speed 越快越響 */
+export function clink(speed = 3) {
+  const c = ac(); if (!c) return;
+  const g = Math.min(.16, .04 + speed * .02), f = 3600 + Math.random() * 900;
+  tone(c, { f, dur: .3, gain: g });
+  tone(c, { f: f * 1.51, dur: .18, gain: g * .5 });
+  burst(c, { dur: .02, gain: .25, f: 7000, q: 2 });
+}
+
+/** 硬幣落水：先是很短的「噗」（往下滑的低音），再一點水花 */
+export function plop(speed = 4) {
+  const c = ac(); if (!c) return;
+  const o = c.createOscillator(), g = c.createGain(), t0 = c.currentTime;
+  o.type = 'sine';
+  o.frequency.setValueAtTime(900, t0);
+  o.frequency.exponentialRampToValueAtTime(260, t0 + .09);
+  const a = Math.min(.35, .12 + speed * .03);
+  g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(a, t0 + .005);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + .16);
+  o.connect(g).connect(c.destination); o.start(t0); o.stop(t0 + .2);
+  burst(c, { t: .01, dur: .22, gain: .22, f: 1800, q: .7 });
+  burst(c, { t: .06, dur: .3, gain: .1, f: 3200, q: 1.2 });
+}
+
+/** 投進月盞：一串往上走的鈴音，像星星亮起來 */
+export function chime() {
+  const c = ac(); if (!c) return;
+  [1046.5, 1318.5, 1568, 2093].forEach((f, i) => {
+    tone(c, { f, t: i * .09, dur: 1.6, gain: .09 });
+    tone(c, { f: f * 2.01, t: i * .09, dur: .7, gain: .025 });
+  });
+}

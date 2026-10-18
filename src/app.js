@@ -28,6 +28,7 @@ const VIEWS = {
   '/qian':     () => import('./views/qian.js'),
   '/omikuji':  () => import('./views/omikuji.js'),
   '/temple':   () => import('./views/temple.js'),
+  '/wish':     () => import('./views/wish.js'),
   '/naming':   () => import('./views/naming.js'),
   '/numbers':  () => import('./views/numbers.js'),
   '/prompt':   () => import('./views/prompt.js'),

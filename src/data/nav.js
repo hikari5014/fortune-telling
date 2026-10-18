@@ -15,6 +15,7 @@ export const NAV = [
   { p: '/tarot',     t: '塔羅', icon: 'star',     eyebrow: 'TAROT' },
   { p: '/temple',    t: '廟',   icon: 'temple',   eyebrow: 'TEMPLE' },
   { p: '/omikuji',   t: '神社', icon: 'torii',    eyebrow: 'SHRINE' },
+  { p: '/wish',      t: '許願池', icon: 'pool',   eyebrow: 'WISHING POOL' },
   { p: '/naming',    t: '姓名', icon: 'naming',   eyebrow: 'NAME STUDY' },
   { p: '/numbers',   t: '數字', icon: 'numbers',  eyebrow: 'NUMEROLOGY' },
   { p: '/prompt',    t: '提示', icon: 'prompt',   eyebrow: 'PROMPT STUDIO' },
@@ -26,15 +27,15 @@ export const NAV = [
 
 /* 四個分類排成扇形，正中央下面放圓形的首頁鍵。
    工具放最左邊 —— 那是最少用、也最不想誤觸的一類。
-   擇日與方位歸在占卜底下：嚴格說它們是擇吉不是占卜，
-   但使用者要找的時候會往同一個方向想，分類要照人的直覺分，不是照學理。 */
+   擇日歸在占卜底下：嚴格說它是擇吉不是占卜，但使用者要找的時候會往同一個方向想，
+   分類要照人的直覺分，不是照學理。方位（八宅）要用本命卦算，跟著命盤走。 */
 export const CATS = [
   { key: 'tool',   name: '工具', icon: 'settings',
     paths: ['/prompt', '/records', '/profile', '/settings', '/about'] },
   { key: 'chart',  name: '命盤', icon: 'astro',
-    paths: ['/astro', '/ziwei', '/bazi', '/fortune'] },
+    paths: ['/astro', '/ziwei', '/bazi', '/fortune', '/direction'] },
   { key: 'divine', name: '占卜', icon: 'dice',
-    paths: ['/iching', '/tarot', '/temple', '/omikuji', '/daily', '/direction'] },
+    paths: ['/iching', '/tarot', '/temple', '/omikuji', '/wish', '/daily'] },
   { key: 'bond',   name: '人際', icon: 'link',
     paths: ['/synastry', '/hire', '/naming', '/numbers'] },
 ];
