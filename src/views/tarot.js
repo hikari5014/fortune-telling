@@ -19,6 +19,8 @@ import { DISCLAIMER, sectionHead, needProfile, askPrompt } from './_shared.js';
 import { trackBtn, bindTrack } from '../verify.js';
 import { castHTML, mountCast, castRite } from '../orbcast.js';
 import * as decks from '../decks.js';
+import { shareCardBtn, openShare } from '../shareui.js';
+import { tarotSpec } from '../sharespecs.js';
 
 /* ── 牌面 ─────────────────────────────────────────── */
 
@@ -474,6 +476,7 @@ export default {
           </div>` : ''}
         <div class="row" style="gap:var(--sp-2);margin-top:var(--sp-4)">
           <button class="btn btn--primary press" id="ask">${raw(icon('prompt'))} 請 LLM 解牌</button>
+          ${shareCardBtn('t-card')}
           <button class="btn btn--ghost press" id="copy-cards">${raw(icon('copy'))} 複製牌面</button>
           <button class="btn btn--ghost press" id="redraw">${raw(icon('refresh'))} 重抽</button>
           ${trackBtn()}
@@ -481,6 +484,7 @@ export default {
       observeReveal(table);
 
       $('#copy-cards', table).addEventListener('click', () => copyText(plain, '牌面已複製'));
+      $('#t-card', table).addEventListener('click', () => openShare(tarotSpec(res, question, imgSrc), '玄鑑-塔羅'));
       bindTrack(table, () => ({ kind: 'tarot', question, text: plain, profile }));
       $('#redraw', table).addEventListener('click', () => { table.innerHTML = ''; scrollTo({ top: 0, behavior: 'smooth' }); });
       $('#ask', table).addEventListener('click', () => {

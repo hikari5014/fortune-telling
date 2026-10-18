@@ -90,11 +90,37 @@ export default {
       </section>
 
       <section class="section">
+        ${raw(sectionHead('宗旨'))}
+        <div class="card reveal track about-motto">
+          <p class="about-motto__big">讓有煩惱的人，<br>有近距離的依靠與解答。</p>
+          <p style="font-size:var(--step--1);color:var(--ink-2);line-height:1.9;margin-top:var(--sp-3)">
+            睡不著的夜裡、等結果的日子、不知道該不該的時候 —— 打開手機就有一個地方可以問、可以拜、可以許願。
+            所有功能都<b>免費</b>，不用註冊、不看廣告。
+          </p>
+        </div>
+      </section>
+
+      <section class="section">
+        ${raw(sectionHead('贊助與退費'))}
+        <div class="card reveal track">
+          <ul class="about-list">
+            <li>App 永遠免費使用。贊助是支持開發者繼續做下去，不是解鎖功能。</li>
+            <li>贊助者可以開通會員錢包（Google 或 Email 登入），拿到福幣，拜拜、許願時可以改投金色的福幣。</li>
+            <li><b>所有贊助費用 30 天內無條件退費</b>；退費時，那筆贊助換到的福幣會一起收回。</li>
+            <li>贊助的錢是給開發者，不是給任何一間廟或神社；App 裡的香油錢、賽錢都是象徵性的。</li>
+            <li>會員只在雲端存登入用的 Email 與福幣紀錄。生日、命盤、願望、功德簿一律只留在你的手機裡。</li>
+            <li>目前贊助還是<b>示範</b>：按了會加幣，但不會扣款。</li>
+          </ul>
+          <div class="row" style="gap:var(--sp-2);margin-top:var(--sp-3)"><button class="btn btn--ghost btn--sm press" data-wallet>贊助與福幣</button></div>
+        </div>
+      </section>
+
+      <section class="section">
         ${raw(sectionHead('關於這個 App'))}
         <div class="card reveal track">
           <p style="font-size:var(--step--1);color:var(--ink-2);line-height:1.9">
             曆法、節氣、農曆、四柱、星盤、紫微、姓名五格、數字磁場、卜卦、塔羅
-            —— 全部在你的裝置上算，不連網、不上傳。<br><br>
+            —— 全部在你的裝置上算，不連網、不上傳（只有登入贊助會員時才會連到雲端錢包）。<br><br>
             需要「解讀」的部分不內建模型，而是幫你把資料組成一段提示詞，
             你複製到任何 LLM，再把回覆貼回來存檔。
           </p>
@@ -108,6 +134,7 @@ export default {
   },
 
   mount(root) {
+    import('../walletui.js').then(w => w.bindWallet(root));
     // 看過就清掉新版提示
     store.setSettings({ seenVersion: APP_VERSION });
     document.documentElement.removeAttribute('data-updated');

@@ -14,6 +14,9 @@ import { transits } from '../engines/transit.js';
 import { isHourUnknown } from '../engines/unknown.js';
 import { todayPick, mountReco } from '../recommend.js';
 import { due, askedOf, daysAgo, setVerdict, snooze, VERDICTS, KINDS, kindOf, daysSetting } from '../verify.js';
+import { openShare } from '../shareui.js';
+import { tarotSpec } from '../sharespecs.js';
+import * as decks from '../decks.js';
 
 /* 首頁可自訂：哪些卡片要出現、工具區要放哪幾個 */
 export const HOME_CARDS = [
@@ -141,7 +144,7 @@ function tarotCard(profile, settings) {
   const img = settings.tarotImages !== false;
   return html`
     <section class="section">
-      ${raw(sectionHead('今日一張', `<a class="chip" href="#/tarot?tab=daily">塔羅</a>`))}
+      ${raw(sectionHead('今日一張', `<span class="row" style="gap:6px"><button class="chip press" id="home-daily-share">分享</button><a class="chip" href="#/tarot?tab=daily">塔羅</a></span>`))}
       <a class="card reveal track" href="#/tarot?tab=daily" style="display:block">
         <div class="cardrow ${img ? '' : 'cardrow--noimg'}">
           ${img ? html`<img class="tpic" src="assets/tarot/${c.img}.webp" alt="${c.full}"
@@ -296,6 +299,10 @@ export default {
     $$('#home-edit', root).forEach(b => b.addEventListener('click', () => openCustomise(settings)));
     // 臨時要幫人看一下，不必先跑到檔案頁填十幾個欄位
     $('#home-add', root)?.addEventListener('click', () => quickAdd({ settings, onSaved: () => resolve() }));
+    $('#home-daily-share', root)?.addEventListener('click', () => {
+      const c = dailyCard(store.current?.id || '');
+      openShare(tarotSpec({ cards: [c], spread: { name: '今日一張' } }, '', (x) => decks.srcOf(x.img), { label: '今日一張' }), '玄鑑-今日一張');
+    });
   },
 };
 

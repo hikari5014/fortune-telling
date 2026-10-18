@@ -17,8 +17,10 @@ import { haiden as hall, COINS, coinSVG, goshuin, hand } from './art.js';
 import { bell, saisen } from '../shrine.js';
 import { sleep, fast, hold, drag, mark, dayKey, wareki } from './kit.js';
 import { suzu, clap, coinDrop, knock, paper } from './sound.js';
-import { spend, NAME } from '../wallet.js';
-import { walletChip, bindWallet, ensure } from '../walletui.js';
+import { spend, balance, NAME } from '../wallet.js';
+import { bindWallet, coinIcon } from '../walletui.js';
+import { shareCardBtn, openShare } from '../shareui.js';
+import { goshuinSpec } from '../sharespecs.js';
 
 const STEPS = [
   { k: 'coin', t: '香油錢' }, { k: 'bell', t: '搖鈴' }, { k: 'bow2', t: '二拜' },
@@ -65,14 +67,14 @@ export function mount(root, { all }) {
     ctrl.innerHTML = html`
       <div class="jn-purse" id="hd-purse">
         ${COINS.map(c => html`<button class="jn-purse__coin press" data-k="${c.k}" aria-label="${c.name}">${raw(coinSVG(c.k))}<small>${c.name}</small></button>`)}
+        ${balance() > 0 ? html`<button class="jn-purse__coin jn-purse__coin--fu press" data-k="fu" aria-label="${NAME}">${raw(coinIcon(44))}<small>${NAME}</small></button>` : ''}
       </div>
-      <p class="hint jn-ctrl__hint" id="hd-coinhint">挑好之後，按住硬幣往上甩；或再點一次直接投。</p>
-      <div class="jn-wallet"><small>不論挑哪一枚，都用 1 枚${NAME}</small>${walletChip()}</div>`;
+      <p class="hint jn-ctrl__hint" id="hd-coinhint">挑好之後，按住硬幣往上甩；或再點一次直接投。</p>`;
     const pick = (b) => {
       $$('.jn-purse__coin', ctrl).forEach(x => x.classList.remove('is-picked'));
       b.classList.add('is-picked');
-      coinKind = Number(b.dataset.k);
-      const c = COINS.find(x => x.k === coinKind);
+      coinKind = b.dataset.k === 'fu' ? 'fu' : Number(b.dataset.k);
+      const c = coinKind === 'fu' ? { name: NAME, say: `贊助者的金色硬幣，投一枚扣一枚（剩 ${balance()} 枚）` } : COINS.find(x => x.k === coinKind);
       $('#hd-coinhint', ctrl).textContent = `${c.name}：${c.say}。往上甩，或再點一次。`;
       haptic(6);
     };
@@ -103,13 +105,13 @@ export function mount(root, { all }) {
 
   async function throwCoin(btn) {
     if (ctrl.dataset.busy) return;
-    if (!ensure(1)) return;
-    spend(1, '神社・賽錢');
     ctrl.dataset.busy = '1';
-    const k = Number(btn.dataset.k); coinKind = k;
+    const fu = btn.dataset.k === 'fu';
+    if (fu && !spend(1, '神社・賽錢')) { tell(`${NAME}用完了，挑一枚一般的硬幣吧。`); delete ctrl.dataset.busy; return; }
+    const k = fu ? 500 : Number(btn.dataset.k); coinKind = fu ? 'fu' : k;
     const from = btn.getBoundingClientRect(), to = boxEl.getBoundingClientRect(), base = stage.getBoundingClientRect();
     const fly = document.createElement('span');
-    fly.className = 'jn-fly'; fly.innerHTML = coinSVG(k);
+    fly.className = 'jn-fly'; fly.innerHTML = fu ? coinIcon(36) : coinSVG(k);
     stage.appendChild(fly);
     const x0 = from.left + from.width / 2 - base.left - 18, y0 = from.top - base.top;
     const x1 = to.left + to.width / 2 - base.left - 18, y1 = to.top - base.top - 4;
@@ -259,14 +261,16 @@ export function mount(root, { all }) {
       <div class="jn-stamp reveal is-in">
         <p class="card__label" style="text-align:center">御朱印</p>
         <div class="jn-stamp__page">${raw(goshuin(wareki()))}</div>
-        <p class="hint" style="text-align:center;margin-top:var(--sp-3)">已收進御朱印帳。${entry.coin ? `香油錢 ${entry.coin} 圓。` : ''}</p>
+        <p class="hint" style="text-align:center;margin-top:var(--sp-3)">已收進御朱印帳。${entry.coin === 'fu' ? `投了一枚${NAME}。` : entry.coin ? `香油錢 ${entry.coin} 圓。` : ''}</p>
         <div class="row" style="gap:var(--sp-2);justify-content:center;margin-top:var(--sp-3)">
           <button class="btn btn--primary press" data-at="kuji">${raw(icon('torii'))} 去求籤</button>
+          ${shareCardBtn('hd-card')}
           <button class="btn btn--ghost press" data-at="book">御朱印帳</button>
           <button class="btn btn--ghost press" data-at="">回到境內</button>
         </div>
       </div>`;
     $$('[data-at]', done).forEach(b => b.addEventListener('click', () => navigate(b.dataset.at ? `/omikuji?at=${b.dataset.at}` : '/omikuji')));
+    $('#hd-card', done).addEventListener('click', () => openShare(goshuinSpec(wareki()), '玄鑑-御朱印'));
     done.scrollIntoView({ behavior: fast() ? 'auto' : 'smooth', block: 'start' });
     // 墨字一欄一欄寫上去，最後兩顆章「蓋」下來
     const page = $('.jn-stamp__page', done);

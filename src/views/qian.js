@@ -13,6 +13,8 @@ import { navigate } from '../router.js';
 import { godOf } from '../temple/gods.js';
 import { tablet } from '../temple/art.js';
 import { tube as tubeLine, stick as stickLine, slip as slipArt, jiao as jiaoLine, tubePhoto, stickPhoto, jiaoPhoto, usePhoto } from '../relics.js';
+import { shareCardBtn, openShare } from '../shareui.js';
+import { qianSpec } from '../sharespecs.js';
 
 /* 法器：照片或線稿，看設定 */
 const tubeArt = (n) => (usePhoto(store.settings) ? tubePhoto() : tubeLine(n));
@@ -304,6 +306,7 @@ export default {
         <div class="row" style="gap:var(--sp-2);margin-top:var(--sp-4)">
           <button class="btn btn--primary press" id="ask">${raw(icon('prompt'))} 請 LLM 解籤</button>
           <button class="btn btn--ghost press" id="copy-q">${raw(icon('copy'))} 複製籤詩</button>
+          ${shareCardBtn('q-card')}
           ${shareBtn('q-share', '長圖')}
           <button class="btn btn--ghost press" id="again">${raw(icon('refresh'))} 重新求籤</button>
           ${trackBtn()}
@@ -326,6 +329,7 @@ export default {
       $('#copy-q', stage).addEventListener('click', () => copyText(plain, '籤詩已複製'));
       bindTrack(stage, () => ({ kind: 'qian', question: q, text: plain, profile: all?.profile || null }));
       $('#again', stage).addEventListener('click', reset);
+      $('#q-card', stage).addEventListener('click', () => openShare(qianSpec(poem, set, god, q), `玄鑑-第${poem.n}籤`));
       $('#q-share', stage).addEventListener('click', async () => {
         const { qianCard } = await import('../sharecards.js');
         doShare(() => qianCard(poem, q, set.name, set.source), `玄鑑-第${poem.n}籤.png`);

@@ -109,7 +109,7 @@ function book() {
       <div class="jn-book">
         ${log.map(e => html`<button class="jn-book__page press" data-id="${e.id}">
           ${raw(goshuin(wareki(new Date(e.date + 'T12:00:00'))))}
-          <small>${e.date}${e.coin ? `　${e.coin} 圓` : ''}</small>
+          <small>${e.date}${e.coin === 'fu' ? '　福幣' : e.coin ? `　${e.coin} 圓` : ''}</small>
         </button>`)}
       </div>
     </section>${DISCLAIMER}`;
@@ -122,7 +122,7 @@ function mountBook(root) {
     import('../ui.js').then(({ sheet }) => sheet({
       title: `${e.date} 的參拜`,
       body: html`<div class="jn-scope jn-book__big">${raw(goshuin(wareki(new Date(e.date + 'T12:00:00'))))}</div>
-        ${e.coin ? html`<p class="hint" style="margin-top:var(--sp-3)">香油錢 ${e.coin} 圓</p>` : ''}
+        ${e.coin ? html`<p class="hint" style="margin-top:var(--sp-3)">${e.coin === 'fu' ? '投了一枚福幣' : `香油錢 ${e.coin} 圓`}</p>` : ''}
         ${e.wish ? html`<p style="margin-top:var(--sp-2);line-height:1.8">當時許的願：${e.wish}</p>` : ''}`,
     }));
   }));

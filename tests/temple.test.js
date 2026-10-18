@@ -88,7 +88,7 @@ test('廟埕、祭拜、謝神、功德簿都畫得出來，標題跟著變', ()
     assert.ok(html.includes('mz-stage') && html.includes('恭請'), g.id);
     assert.equal(view.title(ctx({ god: g.id })), g.name);
     const th = String(view.render(ctx({ god: g.id, at: "thanks" })));
-    assert.ok(th.includes('功德箱') && th.includes('打賞開發者'), g.id);
+    assert.ok(th.includes('功德箱') && th.includes('贊助開發者'), g.id);
   }
   assert.equal(view.title(ctx({ at: 'book' })), '功德簿');
   assert.ok(String(view.render(ctx({ at: "book" }))).includes('功德簿還是空的'));

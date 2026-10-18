@@ -57,7 +57,13 @@ function pathOf(pts) { const p = new Path2D(); pts.forEach((q, i) => (i ? p.line
 const yRange = (pts) => [Math.min(...pts.map(p => p.y)), Math.max(...pts.map(p => p.y))];
 
 /* ── 硬幣 ─────────────────────────────────────────── */
-function drawCoin(ctx, cam, p, n, { under = 0, alpha = 1, glow = 0 } = {}) {
+/* 一般硬幣是銀色；贊助者的福幣是金色 */
+const METAL = {
+  gold:   { base: [232, 186, 80], edge: '#a87c26', mark: [150, 100, 24], ring: [120, 80, 20], glow: '255,214,120' },
+  silver: { base: [206, 212, 226], edge: '#8a90a2', mark: [120, 126, 142], ring: [100, 106, 122], glow: '220,230,255' },
+};
+function drawCoin(ctx, cam, p, n, { under = 0, alpha = 1, glow = 0, gold = true } = {}) {
+  const M = gold ? METAL.gold : METAL.silver;
   n = norm(n);
   const ref = Math.abs(n.y) < 0.9 ? { x: 0, y: 1, z: 0 } : { x: 1, y: 0, z: 0 };
   const e1 = norm(cross(n, ref)), e2 = cross(n, e1);
@@ -77,24 +83,24 @@ function drawCoin(ctx, cam, p, n, { under = 0, alpha = 1, glow = 0 } = {}) {
   const lit = 0.35 + 0.65 * Math.max(0, dot(nf, L));
   const H = norm({ x: L.x + toEye.x, y: L.y + toEye.y, z: L.z + toEye.z });
   const spec = Math.pow(Math.max(0, dot(nf, H)), 24);
-  const c = [232, 186, 80].map(v => Math.min(255, Math.round(v * lit + 255 * spec * 0.8)));
+  const c = M.base.map(v => Math.min(255, Math.round(v * lit + 255 * spec * 0.8)));
   ctx.save();
   ctx.globalAlpha = alpha;
   if (glow) {
     const q = cam.proj(p);
     const g = ctx.createRadialGradient(q.x, q.y, 0, q.x, q.y, q.s * DRAW_R * 3.2);
-    g.addColorStop(0, `rgba(255,214,120,${0.35 * glow})`); g.addColorStop(1, 'rgba(255,214,120,0)');
+    g.addColorStop(0, `rgba(${M.glow},${0.35 * glow})`); g.addColorStop(1, `rgba(${M.glow},0)`);
     ctx.fillStyle = g; ctx.beginPath(); ctx.arc(q.x, q.y, q.s * DRAW_R * 3.2, 0, Math.PI * 2); ctx.fill();
   }
   const back = face(-front), top = face(front);
-  ctx.fillStyle = '#a87c26';
+  ctx.fillStyle = M.edge;
   ctx.fill(pathOf(back));
   ctx.fillStyle = `rgb(${c[0]},${c[1]},${c[2]})`;
   ctx.fill(pathOf(top));
   // 浮雕：內圈＋中央的四芒星
-  ctx.strokeStyle = `rgba(120,80,20,${0.55 * lit + 0.2})`; ctx.lineWidth = 0.8;
+  ctx.strokeStyle = `rgba(${M.ring.join(',')},${0.55 * lit + 0.2})`; ctx.lineWidth = 0.8;
   ctx.stroke(pathOf(face(front, DRAW_R * 0.74, 20)));
-  ctx.fillStyle = `rgba(150,100,24,${0.5 * lit + 0.25})`;
+  ctx.fillStyle = `rgba(${M.mark.join(',')},${0.5 * lit + 0.25})`;
   ctx.fill(pathOf(face(front, DRAW_R * 0.5, 8, true)));
   if (under) { ctx.fillStyle = `rgba(60,130,170,${under})`; ctx.fill(pathOf(top)); ctx.fill(pathOf(back)); }
   ctx.restore();
@@ -207,7 +213,7 @@ function paintBackground(g, cam, w, h, coins, seed) {
   coins.forEach((c, i) => {
     const age = coins.length - 1 - i;
     const n = { x: Math.sin(c.yaw || 0) * (c.tilt || 0.06), y: 1, z: Math.cos(c.yaw || 0) * (c.tilt || 0.06) };
-    drawCoin(g, cam, { x: c.x, y: -POOL.DEPTH + 0.006, z: c.z }, n, { under: 0.22, alpha: 0.95, glow: 0.35 + 0.65 * Math.max(0, 1 - age / 12) });
+    drawCoin(g, cam, { x: c.x, y: -POOL.DEPTH + 0.006, z: c.z }, n, { under: 0.22, alpha: 0.95, gold: !!c.gold, glow: (c.gold ? 0.5 : 0.15) + 0.5 * Math.max(0, 1 - age / 12) });
   });
   // 石柱在水裡的那一段
   column(g, cam, -POOL.DEPTH, 0, true);
@@ -246,7 +252,7 @@ function column(g, cam, y0, y1, under) {
 }
 
 /** 石柱露出水面的部分、月盞，以及盞裡的硬幣 */
-function paintForeground(g, cam, bowlCoins) {
+function paintForeground(g, cam, bowl) {
   column(g, cam, 0, POOL.BOWL_Y - 0.06, false);
   g.strokeStyle = 'rgba(200,225,255,.45)'; g.lineWidth = 1;
   g.stroke(pathOf(ring(cam, POOL.COL_R, 0, 0, 0, 24)));            // 水線
@@ -268,9 +274,9 @@ function paintForeground(g, cam, bowlCoins) {
   g.fillStyle = inside; g.fill(pathOf(top));
   g.save(); g.clip(pathOf(top));
   const R = rng(7);
-  for (let i = 0; i < Math.min(bowlCoins, 14); i++) {
+  for (let i = 0; i < Math.min(bowl.length, 14); i++) {
     const a = R() * Math.PI * 2, r = Math.sqrt(R()) * 0.07;
-    drawCoin(g, cam, { x: r * Math.cos(a), y: topY - 0.035 + i * 0.002, z: r * Math.sin(a) }, { x: (R() - .5) * .3, y: 1, z: (R() - .5) * .3 }, {});
+    drawCoin(g, cam, { x: r * Math.cos(a), y: topY - 0.035 + i * 0.002, z: r * Math.sin(a) }, { x: (R() - .5) * .3, y: 1, z: (R() - .5) * .3 }, { gold: bowl[bowl.length - 1 - i] });
   }
   g.restore();
   g.strokeStyle = '#ffe3a0'; g.lineWidth = 1.6; g.stroke(pathOf(top));
@@ -281,13 +287,14 @@ function paintForeground(g, cam, bowlCoins) {
  * @param {HTMLElement} host
  * @param {object} o
  *   coins       池底已有的硬幣 [{x, z, yaw, tilt}]
- *   bowlCoins   月盞裡已有幾枚
- *   canThrow()  現在能不能投（例如錢包沒錢）
- *   onBeforeThrow()  出手的那一刻呼叫；回傳 false 就不投（硬幣回到手上）
+ *   bowlCoins   月盞裡的硬幣：[是否福幣, …]（也可以只給數量）
+ *   isGold()    手上這枚是不是福幣（畫面用）
+ *   canThrow()  現在能不能投
+ *   onBeforeThrow()  出手的那一刻呼叫；回傳 false 就不投（硬幣回到手上），回傳 { gold } 決定投哪一種
  *   onLand({spot, x, z, yaw, tilt})  停下來了：spot = 'pool' | 'bowl' | 'miss'
  *   onAim(aim|null)  瞄準中（給畫面下方的文字用）
  */
-export function mountPool(host, { coins = [], bowlCoins = 0, canThrow, onBeforeThrow, onLand, onAim } = {}) {
+export function mountPool(host, { coins = [], bowlCoins = 0, isGold = () => false, canThrow, onBeforeThrow, onLand, onAim } = {}) {
   host.innerHTML = '';
   const canvas = document.createElement('canvas');
   canvas.className = 'pool3d__cv';
@@ -297,7 +304,7 @@ export function mountPool(host, { coins = [], bowlCoins = 0, canThrow, onBeforeT
   const ctx = canvas.getContext('2d');
   const bgc = document.createElement('canvas'), fgc = document.createElement('canvas');
   let w = 0, h = 0, dpr = 1, cam = null;
-  let bottom = coins.slice(-120), inBowl = bowlCoins;
+  let bottom = coins.slice(-120), inBowl = Array.isArray(bowlCoins) ? bowlCoins.slice() : Array(bowlCoins).fill(false);
   const seed = 20261018;
 
   const layers = () => {
@@ -333,6 +340,10 @@ export function mountPool(host, { coins = [], bowlCoins = 0, canThrow, onBeforeT
     if (e.type === 'splash') {
       plop(e.speed); haptic([8, 20, 6]);
       ripples.push({ x: e.x, z: e.z, t: 0, amp: 1 });
+      if (coin?.gold) for (let i = 0; i < 14; i++) {              // 福幣落水：多一圈金色的光點
+        const a = Math.random() * Math.PI * 2, s = 0.15 + Math.random() * 0.35;
+        sparks.push({ p: { x: e.x, y: 0.02, z: e.z }, v: { x: Math.cos(a) * s, y: 0.5 + Math.random() * 0.8, z: Math.sin(a) * s }, life: 0.9 });
+      }
       for (let i = 0; i < 16; i++) {
         const a = Math.random() * Math.PI * 2, s = 0.25 + Math.random() * 0.5;
         drops.push({ p: { x: e.x, y: 0.01, z: e.z }, v: { x: Math.cos(a) * s, y: 0.9 + Math.random() * 1.1, z: Math.sin(a) * s } });
@@ -349,9 +360,9 @@ export function mountPool(host, { coins = [], bowlCoins = 0, canThrow, onBeforeT
   }
 
   function landed(c) {
-    const r = { spot: c.spot, x: +c.p.x.toFixed(3), z: +c.p.z.toFixed(3), yaw: +c.yaw.toFixed(2), tilt: +(c.tilt || 0).toFixed(2) };
+    const r = { spot: c.spot, gold: !!c.gold, x: +c.p.x.toFixed(3), z: +c.p.z.toFixed(3), yaw: +c.yaw.toFixed(2), tilt: +(c.tilt || 0).toFixed(2) };
     if (c.spot === 'pool') { bottom = [...bottom, r].slice(-120); layers(); }
-    if (c.spot === 'bowl') { inBowl++; layers(); }
+    if (c.spot === 'bowl') { inBowl.push(!!c.gold); layers(); }
     setTimeout(() => { if (coin === c) coin = null; }, c.spot === 'miss' ? 600 : 0);
     onLand?.(r);
   }
@@ -359,14 +370,17 @@ export function mountPool(host, { coins = [], bowlCoins = 0, canThrow, onBeforeT
   function launch(a) {
     if (coin && coin.phase !== 'rest') return false;
     if (canThrow && !canThrow()) return false;
-    if (onBeforeThrow && onBeforeThrow(a) === false) return false;
+    const opt = onBeforeThrow ? onBeforeThrow(a) : {};
+    if (opt === false) return false;
+    const gold = !!opt?.gold;
     const v = launchFor(targetOf(a));
     if (fastMode()) {
       const { coin: c, events } = simulate(v);
+      c.gold = gold;
       events.forEach(e => (e.type === 'splash' || e.type === 'bowl') && event(e));
       coin = c; landed(c); return true;
     }
-    coin = createCoin(v);
+    coin = createCoin(v); coin.gold = gold;
     acc = 0; trail = [];
     return true;
   }
@@ -410,7 +424,7 @@ export function mountPool(host, { coins = [], bowlCoins = 0, canThrow, onBeforeT
     ctx.drawImage(bgc, 0, 0, w, h);
     // ── 水裡與水面 ──
     ctx.save(); ctx.clip(openPath); ctx.clip(waterPath);
-    if (coin && coin.phase === 'sink') drawCoin(ctx, cam, coin.p, normalOf(coin), { under: 0.08 + 0.18 * clamp(-coin.p.y / POOL.DEPTH, 0, 1), glow: 0.6 });
+    if (coin && coin.phase === 'sink') drawCoin(ctx, cam, coin.p, normalOf(coin), { gold: coin.gold, under: 0.08 + 0.18 * clamp(-coin.p.y / POOL.DEPTH, 0, 1), glow: 0.6 });
     const wp = ring(cam, POOL.R, 0);
     const [wy0, wy1] = yRange(wp);
     const wg = ctx.createLinearGradient(0, wy0, 0, wy1);
@@ -471,17 +485,18 @@ export function mountPool(host, { coins = [], bowlCoins = 0, canThrow, onBeforeT
     if (coin && coin.phase === 'air') {
       // 一道淡淡的金色尾巴：飛遠了變小，也看得出它在哪
       trail.push({ ...coin.p }); if (trail.length > 14) trail.shift();
-      trail.forEach((q, i) => { const s = cam.proj(q); ctx.fillStyle = `rgba(255,214,120,${0.4 * i / trail.length})`; ctx.beginPath(); ctx.arc(s.x, s.y, Math.max(1, s.s * 0.03 * i / trail.length), 0, Math.PI * 2); ctx.fill(); });
-      drawCoin(ctx, cam, coin.p, normalOf(coin), { glow: 0.7 });
+      const tc = coin.gold ? '255,214,120' : '220,230,255';
+      trail.forEach((q, i) => { const s = cam.proj(q); ctx.fillStyle = `rgba(${tc},${0.4 * i / trail.length})`; ctx.beginPath(); ctx.arc(s.x, s.y, Math.max(1, s.s * 0.03 * i / trail.length), 0, Math.PI * 2); ctx.fill(); });
+      drawCoin(ctx, cam, coin.p, normalOf(coin), { gold: coin.gold, glow: 0.7 });
     }
-    if (coin && coin.phase === 'rest' && coin.spot === 'miss') drawCoin(ctx, cam, coin.p, { x: 0, y: 1, z: 0 }, { alpha: 0.5 });
+    if (coin && coin.phase === 'rest' && coin.spot === 'miss') drawCoin(ctx, cam, coin.p, { x: 0, y: 1, z: 0 }, { gold: coin.gold, alpha: 0.5 });
     // ── 手上的硬幣與瞄準 ──
     const cur = aim || motionAim;
     if (!coin || coin.phase === 'rest') {
       const pw = aim ? aim.power : 0;
       const hp = { x: START.x + (aim ? aim.yaw * 0.06 : 0), y: START.y - 0.04 * pw + 0.012 * Math.sin(t * 2.2), z: START.z + 0.1 * pw };
       const toEye = norm(sub(cam.E, hp));
-      drawCoin(ctx, cam, hp, norm({ x: toEye.x * 0.6, y: 1, z: toEye.z * 0.6 }), { glow: 0.6 });
+      drawCoin(ctx, cam, hp, norm({ x: toEye.x * 0.6, y: 1, z: toEye.z * 0.6 }), { gold: isGold(), glow: 0.6 });
     }
     if (cur && (!coin || coin.phase === 'rest')) drawAim(cur);
   }

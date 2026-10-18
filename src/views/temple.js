@@ -10,21 +10,23 @@ import { hold, sleep, fast, dayKey } from '../rites/kit.js';
 import { suzu, knock, paper, coinDrop } from '../rites/sound.js';
 import { mountJiao3D } from '../jiao3d.js';
 import { jiaoOf } from '../engines/qian.js';
-import { offer, tip } from '../payments.js';
+import { offer } from '../payments.js';
 import { spend, NAME } from '../wallet.js';
-import { walletChip, bindWallet, ensure, coinIcon } from '../walletui.js';
+import { walletChip, bindWallet, coinToggle, goldMode, sponsorLink } from '../walletui.js';
+import { shareCardBtn, openShare } from '../shareui.js';
+import { templeSpec } from '../sharespecs.js';
 
 /* 廟：選一位神明，照台灣廟裡的方式拜拜，再求一支籤
    ──────────────────────────────────────────────────────────
    廟埕（首頁）先問「想求什麼」，對到六位主神之一。進到神明座前：
      恭請移駕 → 備供品 → 點香 → 稟告 → 三拜 → 插香 → 擲筊請示
    聖筊才能求籤；求籤沿用「求籤」頁（3D 籤筒＋擲筊確認），帶著這位神明的籤詩集。
-   求完回來謝神、添香油錢（用福幣，象徵性的，不扣真錢 —— 見 src/wallet.js、src/payments.js），記進功德簿。
+   求完回來謝神、添香油錢（象徵性的，免費；贊助者可以另外投一枚福幣 —— 見 src/wallet.js），記進功德簿。
 
    網址：/temple（廟埕）、?god=wenchang（祭拜）、?god=…&at=thanks（謝神）、?at=book（功德簿） */
 
 const STEPS = ['恭請', '供品', '點香', '稟告', '三拜', '插香', '請示'];
-const OIL = [1, 3, 6, 12];                  // 香油錢：幾枚福幣（象徵性，不扣真錢）
+const OIL = [100, 200, 600, 1200];          // 香油錢的常見吉祥數目（象徵性，不扣任何錢）
 const smoke = (n = 3) => `<span class="mz-smoke" aria-hidden="true">${'<i></i>'.repeat(n)}</span>`;
 
 /* ── 廟埕 ───────────────────────────────────────── */
@@ -50,10 +52,10 @@ function hub() {
       <div class="stack" style="gap:8px">
         <button class="tmpl press" data-go="/qian"><b>直接求籤</b><small>不拜拜，直接搖籤筒（六十籤或觀音一百籤）</small></button>
         <button class="tmpl press" data-go="/temple?at=book"><b>功德簿</b><small>${n ? `拜過 ${n} 次` : '拜完、添過香油錢就會記在這裡'}</small></button>
-        <button class="tmpl press" data-go="/wish"><b>許願池</b><small>出了廟，到星空下的水池投一枚${NAME}</small></button>
+        <button class="tmpl press" data-go="/wish"><b>許願池</b><small>出了廟，到星空下的水池投一枚硬幣</small></button>
       </div>
       <p class="hint" style="margin-top:var(--sp-3)">
-        拜拜的方式依台灣廟宇最常見的作法；各廟不盡相同。香油錢用的是 App 裡的${NAME}，不會扣真錢。
+        拜拜的方式依台灣廟宇最常見的作法；各廟不盡相同。這裡的香油錢是象徵性的，不會扣任何錢。
       </p>
     </section>
     ${DISCLAIMER}`;
@@ -275,47 +277,47 @@ function thanks(g, q) {
       <p class="mz-say is-on">${e?.poem ? `求得${e.poem}，感謝${g.name}指點。` : `感謝${g.name}。`}</p>
       <div class="mz-ctrl">
         <div style="display:flex;justify-content:center;margin-bottom:var(--sp-2)">${walletChip()}</div>
-        <p class="hint" style="color:rgba(243,233,207,.75)">添香油錢，隨喜就好（用${NAME}，不會扣真錢）</p>
-        <div class="mz-oil" id="mz-oil">${OIL.map((n, i) => html`<button class="chip press" data-n="${n}" aria-pressed="${i === 0}">${raw(coinIcon(16))} ${n} 枚</button>`)}</div>
+        <p class="hint" style="color:rgba(243,233,207,.75)">添香油錢，隨喜就好（象徵性的，不會扣任何錢）</p>
+        <div class="mz-oil" id="mz-oil">${OIL.map((n, i) => html`<button class="chip press" data-n="${n}" aria-pressed="${i === 0}">${n} 元</button>`)}</div>
+        ${coinToggle()}
         <div class="mz-box" id="mz-box"><b>功德箱</b><span class="mz-hongbao" id="mz-hb" hidden></span></div>
         <button class="btn btn--primary press" id="mz-give">${raw(icon('heart'))} 投入功德箱</button>
+        <div class="row" style="justify-content:center;margin-top:var(--sp-2)">${shareCardBtn('mz-card', '分享這次參拜')}</div>
       </div>
     </section>
     <section class="section">
       <div class="stack" style="gap:8px">
-        <button class="tmpl press" id="mz-tip"><b>打賞開發者</b><small>喜歡這個 App 的話，可以支持一下開發者（即將開放）</small></button>
+        <button class="tmpl press" data-wallet><b>贊助開發者</b><small>喜歡這個 App 的話，可以支持一下開發者（30 天內無條件退費）</small></button>
         <button class="tmpl press" data-go="/temple?at=book"><b>功德簿</b><small>看看拜過的紀錄</small></button>
         <button class="tmpl press" data-go="/temple"><b>回到廟埕</b><small>再拜別的神明</small></button>
       </div>
-      <p class="hint" style="margin-top:var(--sp-3)">香油錢只是儀式的一部分，用的是 App 裡的${NAME}。「打賞開發者」與${NAME}儲值之後才會是真的付款，錢是給做這個 App 的人，不是給任何一間廟。</p>
+      <p class="hint" style="margin-top:var(--sp-3)">香油錢只是儀式的一部分，不會扣任何錢。「贊助開發者」之後才會是真的付款，錢是給做這個 App 的人，不是給任何一間廟。</p>
     </section>
     ${DISCLAIMER}`;
 }
 
 function mountThanks(root, g, q) {
   bindWallet(root);
+  $('#mz-card', root).addEventListener('click', () => openShare(templeSpec(g, store.meritLog.find(x => x.id === q.m) || store.meritLog.find(x => x.god === g.id)), `玄鑑-${g.short}`));
   let amount = OIL[0];
   $$('#mz-oil .chip', root).forEach(c => c.addEventListener('click', () => {
     $$('#mz-oil .chip', root).forEach(x => x.setAttribute('aria-pressed', 'false'));
     c.setAttribute('aria-pressed', 'true'); amount = Number(c.dataset.n);
   }));
   $('#mz-give', root).addEventListener('click', async (e) => {
-    if (!ensure(amount)) return;
-    spend(amount, `香油錢・${g.short}`);
+    const fu = goldMode(root) && spend(1, `香油錢・${g.short}`);      // 贊助者另外投的一枚福幣
     e.currentTarget.disabled = true;
     const hb = $('#mz-hb', root); hb.hidden = false; hb.textContent = amount;
+    hb.classList.toggle('is-gold', !!fu);
     hb.classList.add('is-in');
     paper();
     await sleep(900);
     coinDrop(500); haptic([10, 40, 10]);
     await offer({ amount, purpose: '香油錢', to: g.name });
-    if (q.m && store.meritLog.some(x => x.id === q.m)) store.updateMerit(q.m, { coins: (store.meritLog.find(x => x.id === q.m)?.coins || 0) + amount });
-    else store.addMerit({ id: uid('mr'), date: dayKey(), god: g.id, godName: g.name, domain: g.domain, coins: amount, offerings: [] });
-    toast(`添了 ${amount} 枚${NAME}的香油錢，記進功德簿了`);
-  });
-  $('#mz-tip', root).addEventListener('click', async () => {
-    const r = await tip({});
-    if (!r.ok) toast('打賞功能還在準備中，謝謝你的心意');
+    const prev = store.meritLog.find(x => x.id === q.m);
+    if (prev) store.updateMerit(q.m, { oil: (prev.oil || 0) + amount, fu: (prev.fu || 0) + (fu ? 1 : 0) });
+    else store.addMerit({ id: uid('mr'), date: dayKey(), god: g.id, godName: g.name, domain: g.domain, oil: amount, fu: fu ? 1 : 0, offerings: [] });
+    toast(fu ? `添了 ${amount} 元香油錢，還有一枚${NAME}` : `添了 ${amount} 元香油錢，記進功德簿了`);
   });
 }
 
@@ -325,16 +327,16 @@ function book() {
   if (!log.length) return html`<div class="empty reveal">${raw(icon('records'))}
     <p>功德簿還是空的。<br>到廟埕選一位神明，拜完就會記在這裡。</p>
     <button class="btn btn--primary press" data-go="/temple">去廟埕</button></div>${DISCLAIMER}`;
-  const total = log.reduce((s, e) => s + (e.coins || 0), 0);
-  const oldYuan = log.reduce((s, e) => s + (e.oil || 0), 0);      // 0.40 版記的是「元」
+  const total = log.reduce((s, e) => s + (e.oil || 0), 0);
+  const fu = log.reduce((s, e) => s + (e.fu || 0) + (e.coins || 0), 0);   // coins：0.41 版用福幣記的香油錢
   return html`
     <section class="section" style="margin-top:0">
-      <p class="hint">共 ${log.length} 筆，香油錢合計 ${total} 枚${NAME}${oldYuan ? `（另有舊紀錄 ${oldYuan} 元）` : ''}。</p>
+      <p class="hint">共 ${log.length} 筆，香油錢合計 ${total} 元（象徵性）${fu ? `，另有${NAME} ${fu} 枚` : ''}。</p>
       <div class="stack" style="gap:8px;margin-top:var(--sp-3)">
         ${log.map(e => html`<div class="card mz-merit">
           <p class="card__label">${e.date}　${e.godName}</p>
           <p style="margin-top:4px">${e.ask || '謝神'}${e.wish ? `：${e.wish}` : ''}</p>
-          <p class="hint" style="margin-top:4px">${e.offerings?.length ? `供品：${e.offerings.join('、')}　` : ''}${e.poem ? `求得${e.poem}　` : ''}${e.coins ? `香油錢 ${e.coins} 枚${NAME}` : e.oil ? `香油錢 ${e.oil} 元` : ''}</p>
+          <p class="hint" style="margin-top:4px">${e.offerings?.length ? `供品：${e.offerings.join('、')}　` : ''}${e.poem ? `求得${e.poem}　` : ''}${e.oil ? `香油錢 ${e.oil} 元` : ''}${e.fu || e.coins ? `　${NAME} ${(e.fu || 0) + (e.coins || 0)} 枚` : ''}</p>
         </div>`)}
       </div>
       <button class="tmpl press" data-go="/temple" style="margin-top:var(--sp-4)"><b>回到廟埕</b><small>再拜別的神明</small></button>
