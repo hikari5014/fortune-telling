@@ -54,7 +54,7 @@ export function toText(result, question = '') {
   return [
     question ? `問題：${question}` : '',
     `籤詩集：${result.set.name}（${result.set.source}）`,
-    `第 ${p.n} 首　${p.gz}籤　${p.luck}`,
+    `第 ${p.n} 首　${p.gz ? `${p.gz}籤　` : ""}${p.luck}`,
     '',
     ...p.lines,
     '',
@@ -63,4 +63,5 @@ export function toText(result, question = '') {
   ].filter(x => x !== '').join('\n');
 }
 
+export { GUANYIN_SET } from '../data/guanyin.js';
 export { BUILTIN_SET, LUCK_ORDER, LUCK_SCORE, normalizeSet, SET_SCHEMA };

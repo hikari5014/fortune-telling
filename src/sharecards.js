@@ -84,7 +84,7 @@ export function qianCard(poem, question, setName, source) {
   return {
     blocks: [
       { t: 'eyebrow', text: 'ORACLE POEM' },
-      { t: 'title', text: `第 ${poem.n} 籤　${poem.gz}　${poem.luck}` },
+      { t: 'title', text: `第 ${poem.n} 籤　${poem.gz ? poem.gz + '　' : ''}${poem.luck}` },
       { t: 'poem', lines: poem.lines },
       { t: 'rule' },
       ...(poem.gist ? [{ t: 'p', text: poem.gist }] : []),

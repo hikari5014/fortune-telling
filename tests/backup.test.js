@@ -26,7 +26,7 @@ test('內容清單的每一項都自己說得出怎麼讀、怎麼寫', () => {
   }
   // 含個資的那幾項要標出來 —— 傳給別人之前會想取消勾的就是這些
   const personal = EXPORT_PARTS.filter(p => p.personal).map(p => p.key);
-  assert.deepEqual(personal.sort(), ['candidates', 'orgs', 'profiles', 'records', 'shrineLog']);   // 御朱印帳裡有寫下的願望
+  assert.deepEqual(personal.sort(), ['candidates', 'meritLog', 'orgs', 'profiles', 'records', 'shrineLog']);   // 御朱印帳裡有寫下的願望
 });
 
 test('沒勾的項目絕對不會出現在檔案裡', () => {
