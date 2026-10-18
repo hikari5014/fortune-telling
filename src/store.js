@@ -48,7 +48,8 @@ const DEFAULT_SETTINGS = {
   advancedPrompt: false,
   dailyReco: true,
   relicStyle: 'photo',
-  jiaoStyle: '3d',           // 擲筊：3d 物理模擬 | flip 原本的翻轉動畫
+  jiaoStyle: '3d',
+  tubeStyle: '3d',           // 求籤的籤筒：3d 可傾斜搖晃、用手抽 | flat 原本的平面圖           // 擲筊：3d 物理模擬 | flip 原本的翻轉動畫
   omikujiShake: 'mid',
   shrineSound: true,         // 神社的鈴聲、拍手、水聲（Web Audio 合成）       // 神籤頁搖手機的靈敏度：soft | mid | hard | off（只用點的）       // 求籤的籤筒、籤枝、筊杯：photo 照片 | line 線稿           // 首頁每天跳一次「今日推薦」
   verifyDays: 7,             // 卜卦／塔羅／求籤存下來幾天後回頭問準不準（0＝不提醒）
