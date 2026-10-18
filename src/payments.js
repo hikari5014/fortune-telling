@@ -25,4 +25,11 @@ export function tip({ amount } = {}) {
   return Promise.resolve({ ok: false, reason: 'not-configured' });
 }
 
+/** 贊助儲值福幣：現在是示範，按了就加（不扣款）。
+    接真錢時跟 tip() 一樣走金流，成功與否要以伺服器確認為準，前端不能自己加幣 */
+export function topUp({ pack } = {}) {
+  if (MODE !== 'live') return Promise.resolve({ ok: true, symbolic: true, coins: pack?.coins || 0 });
+  return Promise.resolve({ ok: false, reason: 'not-configured' });
+}
+
 export const isLive = () => MODE === 'live';

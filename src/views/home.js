@@ -38,6 +38,7 @@ const TILES = [
   { p: '/tarot',   t: '塔羅',   icon: 'star',    d: '五種牌陣 · 正逆位' },
   { p: '/temple',  t: '廟',     icon: 'temple',  d: '六位主神 · 拜拜 · 求籤' },
   { p: '/omikuji', t: '神社',   icon: 'torii',   d: '手水 · 參拜 · 御神籤' },
+  { p: '/wish',    t: '許願池', icon: 'pool',    d: '投一枚福幣 · 許一個願' },
   { p: '/synastry',t: '合盤',   icon: 'link',    d: '相位 · 刑沖合害 · 宮位對照' },
   { p: '/naming',  t: '姓名',   icon: 'naming',  d: '五格三才 · 81 靈動 · 取名' },
   { p: '/numbers', t: '數字',   icon: 'numbers', d: '磁場 · 車牌 · 幸運數' },

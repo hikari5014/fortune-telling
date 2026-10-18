@@ -1626,3 +1626,56 @@ body.cer-open { overflow: hidden; }
 @keyframes mz-hb { 0% { transform: translateY(-30px) rotate(-8deg); opacity: 0; } 30% { opacity: 1; } 70% { transform: translateY(40px) rotate(0); opacity: 1; } 100% { transform: translateY(60px) scaleY(.2); opacity: 0; } }
 :root[data-motion="off"] .mz-smoke i, :root[data-motion="off"] .mz-lantern, :root[data-motion="off"] .mz-flame, :root[data-motion="off"] .mz-sky i { animation: none; }
 @media (prefers-reduced-motion: reduce) { .mz-smoke i, .mz-lantern, .mz-flame, .mz-sky i { animation: none; } }
+
+/* ── 福幣錢包 ───────────────────────────────────────── */
+.fu-chip { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px 0 8px; border-radius: 99px;
+  background: rgba(10,12,30,.55); color: #f6dc9a; box-shadow: inset 0 0 0 1px rgba(227,180,90,.45); font-variant-numeric: tabular-nums; }
+.fu-chip b { font-size: 14px; letter-spacing: .02em; }
+.fu-chip.is-bump .fu-coin { animation: fu-bump 600ms cubic-bezier(.3,1.6,.5,1); }
+@keyframes fu-bump { 0% { transform: rotateY(0) scale(1); } 50% { transform: rotateY(180deg) scale(1.25); } 100% { transform: rotateY(360deg) scale(1); } }
+.fu-sheet { display: grid; gap: var(--sp-3); }
+.fu-note { text-align: center; color: var(--gold, #d9b25f); font-weight: 700; }
+.fu-bal { display: flex; align-items: center; justify-content: center; gap: 10px; padding: var(--sp-3) 0; }
+.fu-bal b { font-size: 40px; font-family: var(--font-display); color: #f1c968; font-variant-numeric: tabular-nums; }
+.fu-bal small { color: var(--muted); }
+.fu-sec { font-size: var(--step--1); letter-spacing: .2em; color: var(--muted); margin-top: var(--sp-2); }
+.fu-packs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.fu-pack { display: grid; justify-items: center; gap: 2px; padding: 12px 6px; border-radius: 14px; background: var(--surface-2, rgba(255,255,255,.04));
+  box-shadow: inset 0 0 0 1px rgba(227,180,90,.3); color: inherit; }
+.fu-pack__n { display: inline-flex; align-items: center; gap: 4px; font-size: 20px; font-weight: 700; color: #f1c968; }
+.fu-pack b { font-size: 13px; } .fu-pack small { font-size: 11px; color: var(--gold, #d9b25f); }
+.fu-pack__p { margin-top: 4px; font-size: 12px; color: var(--muted); }
+.fu-log { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: var(--step--1); }
+.fu-log li { display: flex; justify-content: space-between; padding: 6px 2px; border-bottom: 1px dashed rgba(255,255,255,.08); }
+.fu-log b { color: var(--muted); font-variant-numeric: tabular-nums; } .fu-log b.is-in { color: #f1c968; }
+
+/* ── 星空許願池 ─────────────────────────────────────── */
+.wish { position: relative; padding: var(--sp-3) var(--sp-3) var(--sp-4); border-radius: var(--r-3);
+  background: linear-gradient(#0b0f26, #121735); color: #efe6cf; box-shadow: inset 0 0 0 1px rgba(227,180,90,.18); }
+.wish__top { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--sp-2); }
+.wish__eyebrow { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-display); letter-spacing: .3em; color: #f1d58f; font-size: var(--step--1); }
+.wish__eyebrow svg { width: 18px; height: 18px; }
+.pool3d { position: relative; width: 100%; border-radius: 16px; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none;
+  box-shadow: 0 10px 30px rgba(0,0,0,.35), inset 0 0 0 1px rgba(227,180,90,.15); background: #0a0d22; cursor: grab; }
+.pool3d:active { cursor: grabbing; }
+.pool3d__cv { display: block; }
+.wish__float { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
+.wish__line { position: absolute; left: 50%; top: 52%; translate: -50% 0; white-space: nowrap; max-width: 90%; overflow: hidden; text-overflow: ellipsis;
+  font-family: var(--font-display); font-size: 17px; letter-spacing: .12em; color: #ffe9b0; text-shadow: 0 0 12px rgba(255,214,120,.9);
+  animation: wish-rise 4.2s cubic-bezier(.3,0,.3,1) forwards; }
+@keyframes wish-rise { 0% { opacity: 0; transform: translateY(20px) scale(.9); filter: blur(4px); } 15% { opacity: 1; filter: blur(0); }
+  70% { opacity: .9; } 100% { opacity: 0; transform: translateY(-200px) scale(.7); filter: blur(3px); letter-spacing: .6em; } }
+.wish__say { min-height: 3.4em; margin: var(--sp-3) auto 0; max-width: 30em; text-align: center; line-height: 1.8; font-size: var(--step--1); color: #f3e9cf; opacity: .55; transition: opacity .5s; }
+.wish__say.is-on { opacity: 1; }
+.wish__aim { min-height: 1.4em; text-align: center; font-size: 12px; letter-spacing: .12em; color: #f1c968; font-variant-numeric: tabular-nums; }
+.wish__field { margin: var(--sp-2) 0 var(--sp-3); } .wish__field label { color: rgba(243,233,207,.7) !important; }
+.wish__hint { margin-top: var(--sp-3); color: rgba(243,233,207,.6); }
+.wish__stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.wish__stats div { display: grid; justify-items: center; padding: var(--sp-3) 4px; border-radius: 14px; background: var(--surface); }
+.wish__stats b { font-size: 26px; font-family: var(--font-display); color: var(--gold, #d9b25f); }
+.wish__stats small { font-size: 11px; color: var(--muted); }
+.wish__entry { display: flex; gap: var(--sp-3); align-items: center; }
+.wish__entry.is-bowl { box-shadow: inset 0 0 0 1px rgba(227,180,90,.55); }
+:root[data-motion="off"] .wish__line { animation-duration: 1ms; }
+.jn-wallet { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: var(--sp-2); }
+.jn-wallet small { font-size: 11px; color: rgba(239,230,207,.6); }

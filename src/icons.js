@@ -33,6 +33,7 @@ const P = {
   dice: '<rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="9" cy="9" r="1.2" fill="currentColor" stroke="none"/><circle cx="15" cy="15" r="1.2" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/>',
   // 廟：燕尾脊的屋頂＋兩根柱
   temple: '<path d="M2.5 9.2 4 7.6q8-2.6 16 0l1.5 1.6"/><path d="M4.5 9.4q7.5-2 15 0"/><path d="M6.5 10v9.5M17.5 10v9.5M4 19.5h16"/><path d="M10 19.5v-5h4v5"/><path d="M12 5.2V3.6"/>',
+  pool: '<ellipse cx="12" cy="16" rx="9.2" ry="3.8"/><ellipse cx="12" cy="16" rx="4.4" ry="1.6" stroke-opacity=".55"/><circle cx="12" cy="6.2" r="2.7"/><path d="M12 9.8v2.4" stroke-dasharray="1 1.2"/>',
   heart: '<path d="M12 19.5s-7.5-4.4-7.5-9.6A4.1 4.1 0 0 1 12 7.6a4.1 4.1 0 0 1 7.5 2.3c0 5.2-7.5 9.6-7.5 9.6z"/>',
   // 鳥居：上翹的笠木、貫、兩根柱、額束
   torii: '<path d="M2.8 5.2q9.2 2 18.4 0l-.6 2q-8.6 1.6-17.2 0z"/><path d="M5 10.2h14"/><path d="M7.2 7.4 6.6 20.5M16.8 7.4l.6 13.1"/><path d="M12 7.6v2.6"/>',
