@@ -8,13 +8,13 @@
    一個圓投影到畫面上是橢圓 —— 直接拿圓周上的點去投影成多邊形，透視一定對。
 
    怎麼投（細操作）：
-   ・手指：按住畫面往上拉 —— 往上拉多長決定多遠，往左右偏決定方向。
-     拉的時候會畫出前半段的弧線，跟水面上的落點圈；放手就照那條線飛出去。
-     空中沒有亂數：落點就是你瞄的地方。要投進中央的月盞，得自己算好它比水面高。
+   ・手指：像寶可夢 GO 丟球 —— 按住畫面下方的硬幣，它會跟著手指走，往上一甩放開就飛出去。
+     甩多快決定多遠、往哪個方向甩決定左右、在哪裡放開就從哪裡出手。不用旋轉。
+     空中沒有亂數：同樣的甩法一定落在同一個地方。要投進中央的月盞，得自己抓好力道。
    ・手機：左右傾斜瞄方向、前後傾斜調遠近，落點圈會跟著動；往前輕輕一甩就投出。
      用的是「甩之前那一瞬間」的瞄準，甩的動作本身不會把準頭帶偏。 */
 
-import { POOL, START, targetOf, launchFor, predict, zoneOf, createCoin, stepCoin, simulate, normalOf } from './engines/pool.js';
+import { POOL, START, targetOf, launchFor, predict, zoneOf, createCoin, stepCoin, simulate, normalOf, flickAim } from './engines/pool.js';
 import { clink, plop, chime } from './rites/sound.js';
 import { haptic } from './ui.js';
 import { askMotion } from './rites/kit.js';
@@ -31,15 +31,27 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 function rng(seed) { let s = seed >>> 0; return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296); }
 
 function camera(w, h) {
-  const E = { x: 0, y: 1.35, z: 2.75 }, T = { x: 0, y: -0.1, z: -0.35 };
+  // 越細長的畫面（手機直拿），鏡頭越往上抬、越往下看 —— 池子才會撐滿畫面，不會只縮在底下
+  const k = clamp((h / w - 1.1) / 0.9, 0, 1);
+  const E = { x: 0, y: 1.35 + 1.05 * k, z: 2.75 - 0.2 * k }, T = { x: 0, y: -0.1 - 0.15 * k, z: -0.35 + 0.1 * k };
   const f = norm(sub(T, E)), r = norm(cross(f, { x: 0, y: 1, z: 0 })), u = cross(r, f);
-  const F = w * 1.05;
+  // 全螢幕：寬的畫面用高度定比例，免得池子被切掉
+  const F = Math.min(w * 1.05, h * 0.95);
+  // 手上那枚硬幣固定在畫面下方 80% 的地方（拇指搆得到），其他照透視排
+  const dS = sub(START, E), cy = h * 0.8 + F * dot(dS, u) / dot(dS, f);
   return {
     E,
     proj(p) {
       const d = sub(p, E);
       const zc = dot(d, f);
-      return { x: w / 2 + F * dot(d, r) / zc, y: h * 0.6 - F * dot(d, u) / zc, z: zc, s: F / zc };
+      return { x: w / 2 + F * dot(d, r) / zc, y: cy - F * dot(d, u) / zc, z: zc, s: F / zc };
+    },
+    /** 畫面上的一點 → 世界裡 z = z0 那個直立平面上的點（手指拿著硬幣時用） */
+    unproject(sx, sy, z0) {
+      const a = (sx - w / 2) / F, b = -(sy - cy) / F;
+      const dir = { x: f.x + a * r.x + b * u.x, y: f.y + a * r.y + b * u.y, z: f.z + a * r.z + b * u.z };
+      const k = (z0 - E.z) / dir.z;
+      return { x: E.x + k * dir.x, y: E.y + k * dir.y, z: z0 };
     },
   };
 }
@@ -119,7 +131,7 @@ function paintBackground(g, cam, w, h, coins, seed) {
     g.fillStyle = `rgba(240,235,215,${0.3 + R() * 0.6})`; g.beginPath(); g.arc(x, y, s, 0, Math.PI * 2); g.fill();
   }
   // 月亮
-  const mx = w * 0.76, my = hz * 0.32, mr = w * 0.045;
+  const mr = Math.min(w * 0.045, hz * 0.16), mx = w * 0.76, my = Math.max(mr * 1.6, hz * 0.32);
   const halo = g.createRadialGradient(mx, my, mr * 0.6, mx, my, mr * 5);
   halo.addColorStop(0, 'rgba(255,236,190,.35)'); halo.addColorStop(1, 'rgba(255,236,190,0)');
   g.fillStyle = halo; g.beginPath(); g.arc(mx, my, mr * 5, 0, Math.PI * 2); g.fill();
@@ -127,7 +139,7 @@ function paintBackground(g, cam, w, h, coins, seed) {
   g.fillStyle = 'rgba(200,185,150,.35)';
   [[-.3, -.2, .22], [.25, .15, .18], [-.05, .35, .12]].forEach(([dx, dy, r]) => { g.beginPath(); g.arc(mx + dx * mr, my + dy * mr, r * mr, 0, Math.PI * 2); g.fill(); });
   // 遠山與樹影，林間點著幾盞燈
-  const k = w / 390;
+  const k = Math.min(w / 390, hz / 300, 1.6);       // 樹與燈的大小跟著天空的高度走（寬螢幕不會變成巨樹）
   g.fillStyle = '#0d1230';
   g.beginPath(); g.moveTo(0, hz);
   for (let x = 0; x <= w; x += 6) g.lineTo(x, hz - (16 + 10 * Math.sin(x * 0.011 + 1) + 6 * Math.sin(x * 0.037)) * k);
@@ -164,7 +176,8 @@ function paintBackground(g, cam, w, h, coins, seed) {
   g.fillStyle = glow; g.fillRect(0, hz, w, h - hz);
 
   // 池子後面左右各一座石燈籠
-  for (const x of [-1.85, 1.85]) lantern(g, cam, x, -1.45);
+  // 一條往遠處延伸的石燈籠參道：越遠越小，畫面縱深才出得來（由遠畫到近）
+  for (const [x, z] of [[-1.25, -5.2], [1.25, -5.2], [-1.4, -3.6], [1.4, -3.6], [-1.85, -1.45], [1.85, -1.45]]) lantern(g, cam, x, z);
 
   // 石池的外牆：先畫底圈，再蓋上頂圈 —— 前面露出來的就是牆
   const RO = POOL.R + POOL.RIM_W;
@@ -292,7 +305,7 @@ function paintForeground(g, cam, bowl) {
  *   canThrow()  現在能不能投
  *   onBeforeThrow()  出手的那一刻呼叫；回傳 false 就不投（硬幣回到手上），回傳 { gold } 決定投哪一種
  *   onLand({spot, x, z, yaw, tilt})  停下來了：spot = 'pool' | 'bowl' | 'miss'
- *   onAim(aim|null)  瞄準中（給畫面下方的文字用）
+ *   onAim(aim|null)  用手機瞄準時，現在瞄到哪裡（給畫面上的文字用）
  */
 export function mountPool(host, { coins = [], bowlCoins = 0, isGold = () => false, canThrow, onBeforeThrow, onLand, onAim } = {}) {
   host.innerHTML = '';
@@ -316,7 +329,7 @@ export function mountPool(host, { coins = [], bowlCoins = 0, isGold = () => fals
   let waterPath = null, openPath = null, refl = [];
   const size = () => {
     dpr = Math.min(2, devicePixelRatio || 1);
-    w = host.clientWidth || 360; h = Math.round(w * 1.06);
+    w = host.clientWidth || 360; h = host.clientHeight || Math.round(w * 1.06);
     canvas.width = w * dpr; canvas.height = h * dpr;
     canvas.style.width = `${w}px`; canvas.style.height = `${h}px`;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -330,7 +343,7 @@ export function mountPool(host, { coins = [], bowlCoins = 0, isGold = () => fals
   size();
 
   /* 狀態 */
-  let coin = null, aim = null, aimFrom = null, motionAim = null, trail = [];
+  let coin = null, held = null, back = null, motionAim = null, trail = [];
   let ripples = [], drops = [], sparks = [], pillar = 0, nextAmbient = 1.5;
   const flies = Array.from({ length: 9 }, (_, i) => ({ a: i * 0.7, r: 0.4 + (i % 4) * 0.22, y: 0.25 + (i % 3) * 0.18, ph: i * 1.3 }));
   let raf = 0, last = performance.now(), acc = 0, t = 0, alive = true;
@@ -367,20 +380,20 @@ export function mountPool(host, { coins = [], bowlCoins = 0, isGold = () => fals
     onLand?.(r);
   }
 
-  function launch(a) {
+  function launch(a, from = START) {
     if (coin && coin.phase !== 'rest') return false;
     if (canThrow && !canThrow()) return false;
     const opt = onBeforeThrow ? onBeforeThrow(a) : {};
     if (opt === false) return false;
     const gold = !!opt?.gold;
-    const v = launchFor(targetOf(a));
+    const v = launchFor(targetOf(a, from), from);
     if (fastMode()) {
-      const { coin: c, events } = simulate(v);
+      const { coin: c, events } = simulate(v, { from });
       c.gold = gold;
       events.forEach(e => (e.type === 'splash' || e.type === 'bowl') && event(e));
       coin = c; landed(c); return true;
     }
-    coin = createCoin(v); coin.gold = gold;
+    coin = createCoin(v, {}, from); coin.gold = gold;
     acc = 0; trail = [];
     return true;
   }
@@ -490,15 +503,25 @@ export function mountPool(host, { coins = [], bowlCoins = 0, isGold = () => fals
       drawCoin(ctx, cam, coin.p, normalOf(coin), { gold: coin.gold, glow: 0.7 });
     }
     if (coin && coin.phase === 'rest' && coin.spot === 'miss') drawCoin(ctx, cam, coin.p, { x: 0, y: 1, z: 0 }, { gold: coin.gold, alpha: 0.5 });
-    // ── 手上的硬幣與瞄準 ──
-    const cur = aim || motionAim;
+    // ── 手上的硬幣 ──
     if (!coin || coin.phase === 'rest') {
-      const pw = aim ? aim.power : 0;
-      const hp = { x: START.x + (aim ? aim.yaw * 0.06 : 0), y: START.y - 0.04 * pw + 0.012 * Math.sin(t * 2.2), z: START.z + 0.1 * pw };
+      const rest = { x: START.x, y: START.y + 0.012 * Math.sin(t * 2.2), z: START.z };
+      let hp = rest;
+      if (held) hp = held.p;
+      else if (back) {                                   // 甩得不夠力：硬幣滑回手上
+        const k = Math.min(1, (performance.now() - back.t0) / 260), e = 1 - Math.pow(1 - k, 3);
+        hp = { x: back.from.x + (rest.x - back.from.x) * e, y: back.from.y + (rest.y - back.from.y) * e, z: START.z };
+        if (k >= 1) back = null;
+      }
+      if (!held && !back && !motionAim) {                // 一圈慢慢呼吸的光：「拿起我」
+        const q = cam.proj(rest), rr = q.s * DRAW_R * (1.9 + 0.25 * Math.sin(t * 3));
+        ctx.strokeStyle = `rgba(255,214,120,${0.35 + 0.2 * Math.sin(t * 3)})`; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(q.x, q.y, rr, 0, Math.PI * 2); ctx.stroke();
+      }
       const toEye = norm(sub(cam.E, hp));
-      drawCoin(ctx, cam, hp, norm({ x: toEye.x * 0.6, y: 1, z: toEye.z * 0.6 }), { gold: isGold(), glow: 0.6 });
+      drawCoin(ctx, cam, hp, norm({ x: toEye.x * 0.6, y: 1, z: toEye.z * 0.6 }), { gold: isGold(), glow: held ? 0.9 : 0.6 });
+      if (motionAim && !held) drawAim(motionAim);
     }
-    if (cur && (!coin || coin.phase === 'rest')) drawAim(cur);
   }
 
   function drawAim(a) {
@@ -521,27 +544,45 @@ export function mountPool(host, { coins = [], bowlCoins = 0, isGold = () => fals
     ctx.fillStyle = `rgba(${col},.95)`; ctx.beginPath(); ctx.arc(c.x, c.y, 1.8, 0, Math.PI * 2); ctx.fill();
   }
 
-  /* ── 手指：按住往上拉 ── */
-  const aimOf = (e) => {
-    const dx = e.clientX - aimFrom.x, dy = e.clientY - aimFrom.y;
-    return { yaw: clamp(dx / (w * 0.5), -1, 1), power: clamp(-dy / (h * 0.62), 0, 1) };
-  };
+  /* ── 手指：像寶可夢 GO 丟球 ──
+     按住硬幣（或畫面下半部任何地方），硬幣跟著手指走；往上一甩放開就飛出去。
+     放開前約 0.1 秒的速度決定遠近，甩的方向決定左右，放開的位置就是出手點。
+     甩太慢、或往下拉，硬幣就滑回手上。 */
   const busy = () => !!coin && coin.phase !== 'rest';
+  const local = (e) => { const b = canvas.getBoundingClientRect(); return { x: e.clientX - b.left, y: e.clientY - b.top }; };
+  const holdAt = (q) => {
+    const p = cam.unproject(q.x, q.y, START.z);
+    return { x: clamp(p.x, -1.2, 1.2), y: clamp(p.y, 0.04, 2.2), z: START.z };
+  };
   canvas.addEventListener('pointerdown', (e) => {
     if (busy() || (canThrow && !canThrow())) return;
-    aimFrom = { x: e.clientX, y: e.clientY }; aim = { yaw: 0, power: 0 };
+    const q = local(e), c = cam.proj(START);
+    const near = Math.hypot(q.x - c.x, q.y - c.y) < Math.max(80, w * 0.22);
+    if (!near && q.y < h * 0.55) return;                 // 上半部留給看風景（點了不會拿起硬幣）
+    held = { p: holdAt(q), s: [{ ...q, t: performance.now() }] };
+    back = null;
     canvas.setPointerCapture?.(e.pointerId);
-    onAim?.(aim);
+    haptic(5);
   });
   canvas.addEventListener('pointermove', (e) => {
-    if (!aimFrom) return;
-    aim = aimOf(e); onAim?.(aim);
+    if (!held) return;
+    const q = local(e), now = performance.now();
+    held.p = holdAt(q);
+    held.s.push({ ...q, t: now });
+    while (held.s.length > 2 && now - held.s[0].t > 140) held.s.shift();
   });
   const release = (e, cancel) => {
-    if (!aimFrom) return;
-    const a = cancel ? null : aimOf(e);
-    aimFrom = null; aim = null; onAim?.(null);
-    if (a && a.power > 0.03) launch(a);
+    if (!held) return;
+    const q = local(e), now = performance.now(), from = held.p;
+    const s = [...held.s, { ...q, t: now }].filter(x => now - x.t <= 110);
+    held = null;
+    let a = null;
+    if (!cancel && s.length >= 2) {
+      const dt = Math.max(16, s[s.length - 1].t - s[0].t) / 1000;
+      a = flickAim((s[s.length - 1].x - s[0].x) / dt, (s[s.length - 1].y - s[0].y) / dt, h);
+    }
+    if (a && launch(a, from)) return;
+    back = { from, t0: now };
   };
   canvas.addEventListener('pointerup', (e) => release(e, false));
   canvas.addEventListener('pointercancel', (e) => release(e, true));
@@ -564,7 +605,7 @@ export function mountPool(host, { coins = [], bowlCoins = 0, isGold = () => fals
         sm = sm ? { yaw: sm.yaw + (raw.yaw - sm.yaw) * 0.18, power: sm.power + (raw.power - sm.power) * 0.18 } : raw;
         motionAim = { ...sm };
         hist.push({ t: performance.now(), a: { ...sm } }); if (hist.length > 40) hist.shift();
-        if (!aim) onAim?.(motionAim);
+        if (!held) onAim?.(motionAim);
       };
       const mot = (e) => {
         const a = e.acceleration && e.acceleration.x != null ? e.acceleration : null;
@@ -588,7 +629,9 @@ export function mountPool(host, { coins = [], bowlCoins = 0, isGold = () => fals
     });
   }
 
-  const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => { const ow = w; if ((host.clientWidth || 360) !== ow) size(); }) : null;
+  const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => {
+    if ((host.clientWidth || 360) !== w || (host.clientHeight || h) !== h) size();
+  }) : null;
   ro?.observe(host);
   raf = requestAnimationFrame(frame);
 
@@ -596,7 +639,7 @@ export function mountPool(host, { coins = [], bowlCoins = 0, isGold = () => fals
     armMotion,
     busy,
     /** 測試與鍵盤用：直接照某個瞄準投出去 */
-    throwAt: (a) => launch(a),
+    throwAt: (a, from) => launch(a, from),
     destroy() { alive = false; cancelAnimationFrame(raf); ro?.disconnect(); stopMotion(); },
   };
 }

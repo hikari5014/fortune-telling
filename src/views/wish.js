@@ -7,13 +7,14 @@ import { mountPool } from '../pool3d.js';
 import { targetOf, START } from '../engines/pool.js';
 import { dayKey, fast } from '../rites/kit.js';
 import { spend, refund, NAME } from '../wallet.js';
-import { walletChip, bindWallet, coinIcon, coinToggle, goldMode, sponsorLink } from '../walletui.js';
+import { walletChip, bindWallet, coinIcon, coinToggle, goldMode } from '../walletui.js';
 import { shareCardBtn, openShare } from '../shareui.js';
 import { wishSpec } from '../sharespecs.js';
 
 /* 星空許願池
    ──────────────────────────────────────────────────────────
    寫下（或默念）一個願望，用手指或手機把一枚硬幣投進池裡 —— 免費，投多少都可以。
+   整支手機都是池子（全螢幕）；手指投法像寶可夢 GO 丟球：按住硬幣、往上一甩。
    贊助者可以改投金色的福幣（扣一枚，畫面多一點光）。
    落進水裡：硬幣沉到池底，一直留在那裡 —— 投越多，池底越亮。
    投進中央的月盞：算你厲害，多一句祝福。
@@ -48,36 +49,38 @@ function aimText(a) {
 }
 
 function hub() {
+  // 全螢幕：整支手機都是許願池，按鈕浮在夜空上
   return html`
-    <section class="wish reveal" data-noswipe>
-      <div class="wish__top">
-        <p class="wish__eyebrow">${raw(icon('pool'))} 星空許願池</p>
-        ${walletChip()}
+    <section class="wishfs" data-noswipe>
+      <div class="pool3d pool3d--fs" id="pool"><div class="wish__float" id="wfloat" aria-hidden="true"></div></div>
+      <header class="wishfs__top">
+        <button class="wishfs__btn press" id="wback" aria-label="返回">${raw(icon('back'))}</button>
+        <p class="wishfs__title">${raw(icon('pool'))} 星空許願池</p>
+        <span class="wishfs__right">${walletChip()}<button class="wishfs__btn press" data-go="/wish?at=log" aria-label="許願簿">${raw(icon('records'))}</button></span>
+      </header>
+      <div class="wishfs__wish">
+        <input class="wishfs__input" id="wwish" maxlength="40" placeholder="寫下願望（可以不寫，默念也行）" value="${store.drafts.wish || ''}" aria-label="你的願望">
+        ${coinToggle()}
       </div>
-      <div class="pool3d" id="pool"><div class="wish__float" id="wfloat" aria-hidden="true"></div></div>
-      <p class="wish__say" id="wsay" aria-live="polite">寫下願望，然後按住水池往上拉 —— 放手就投出一枚硬幣。</p>
-      ${coinToggle()}
+      <p class="wish__say" id="wsay" aria-live="polite"></p>
       <p class="wish__aim" id="waim"></p>
-      <div class="field wish__field">
-        <label for="wwish">你的願望（可以不寫，默念也行）</label>
-        <input class="input" id="wwish" maxlength="40" placeholder="例如：明年順利畢業" value="${store.drafts.wish || ''}">
+      <p class="wishfs__hint" id="whint">按住硬幣，往上一甩</p>
+      <div class="wishfs__bottom">
+        <button class="wishfs__chip press" id="wmotion">${raw(icon('spark'))} 用手機投</button>
+        <span id="wcardrow" hidden>${shareCardBtn('wcard', '分享')}</span>
       </div>
-      <div class="row" style="gap:var(--sp-2);justify-content:center;flex-wrap:wrap">
-        <button class="chip press" id="wmotion">${raw(icon('spark'))} 用手機投</button>
-        <button class="chip press" data-go="/wish?at=log">${raw(icon('records'))} 許願簿</button>
-      </div>
-      <div class="row" id="wcardrow" style="justify-content:center;margin-top:var(--sp-2)" hidden>${shareCardBtn('wcard', '分享這個願望')}</div>
-      <div class="wish__sponsor">${sponsorLink()}</div>
-      <p class="hint wish__hint">
-        往上拉越長、投越遠；往左右偏就改方向。拉的時候會畫出前半段的弧線和水面上的落點圈 ——
-        空中沒有風、沒有運氣，落點就是你瞄的地方。中央的月盞比水面高，要投進去得自己抓好。
-      </p>
-    </section>
-    ${DISCLAIMER}`;
+    </section>`;
 }
 
-function mountHub(root) {
+function mountHub(page) {
+  // 全螢幕那一層搬到 <body> 底下：頁面容器有轉場動畫（transform），
+  // 留在裡面的話 position: fixed 會被困在容器裡，蓋不過 App 的頂欄與底欄
+  const root = $('.wishfs', page);
+  document.body.appendChild(root);
   bindWallet(root);
+  // 全螢幕期間：頁面不捲動、不被下拉重新整理
+  document.documentElement.classList.add('is-wishfs');
+  $('#wback', root).addEventListener('click', () => (history.length > 1 ? history.back() : navigate('/')));
   const say = $('#wsay', root), aimEl = $('#waim', root), input = $('#wwish', root), float = $('#wfloat', root);
   const tell = (t) => { say.classList.remove('is-on'); void say.offsetWidth; say.textContent = t; say.classList.add('is-on'); };
   input.addEventListener('input', () => store.setDraft('wish', input.value));
@@ -94,6 +97,7 @@ function mountHub(root) {
       const gold = goldMode(root) && spend(1, '許願池');
       wish = input.value.trim();
       tell('……');
+      $('#whint', root).classList.add('is-gone');
       return { gold };
     },
     onLand: (r) => {
@@ -122,9 +126,13 @@ function mountHub(root) {
     if (ok) {
       b.disabled = true; b.textContent = '手機已就緒';
       tell('左右傾斜手機瞄方向、前後傾斜調遠近，看好落點圈，往前輕輕一甩就投出。');
+      $('#whint', root).classList.add('is-gone');
     } else toast('沒辦法讀取手機的動作感測，用手指拉也可以');
   });
-  addEventListener('hashchange', function off() { pool.destroy(); removeEventListener('hashchange', off); });
+  addEventListener('hashchange', function off() {
+    pool.destroy(); root.remove(); document.documentElement.classList.remove('is-wishfs');
+    removeEventListener('hashchange', off);
+  });
 }
 
 function book() {

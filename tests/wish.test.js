@@ -90,7 +90,7 @@ test('付款仍是象徵性的；錢包不進備份', async () => {
 test('許願池與許願簿畫得出來', () => {
   const ctx = (query) => ({ settings: {}, profile: null, all: null, query });
   const hub = String(view.render(ctx({})));
-  assert.ok(hub.includes('id="pool"') && hub.includes('data-wallet') && hub.includes('用手機投'));
+  assert.ok(hub.includes('id="pool"') && hub.includes('wishfs') && hub.includes('用手機投'));
   assert.equal(view.title(ctx({})), '許願池');
   assert.equal(view.title(ctx({ at: 'log' })), '許願簿');
   localStorage.removeItem('xj.wishes');
@@ -109,4 +109,24 @@ test('儀式全免費：只有選了福幣才扣，初穗料不扣', () => {
     assert.doesNotMatch(src, /ensure\(/, `${f} 不能因為沒有福幣就擋人`);
     assert.match(src, /spend\(1/, f);
   }
+});
+
+test('寶可夢 GO 式的甩：太慢不投；甩越快越遠；往右甩往右偏；同樣的甩法同樣的結果', () => {
+  const h = 800;
+  assert.equal(P.flickAim(0, -300, h), null, '太慢 → 回到手上');
+  assert.equal(P.flickAim(0, 900, h), null, '往下拉 → 回到手上');
+  const slow = P.flickAim(0, -1200, h), fast = P.flickAim(0, -2800, h);
+  assert.ok(fast.power > slow.power);
+  assert.equal(P.flickAim(0, -9000, h).power, 1);
+  assert.ok(P.flickAim(400, -2000, h).yaw > 0 && P.flickAim(-400, -2000, h).yaw < 0);
+  assert.deepEqual(P.flickAim(300, -2000, h), P.flickAim(300, -2000, h));
+});
+
+test('從手指放開的位置出手：預覽落點仍然準', () => {
+  const from = { x: 0.4, y: 0.6, z: P.START.z };
+  const t = P.targetOf({ yaw: -0.3, power: 0.4 }, from);
+  const { land } = P.predict(P.launchFor(t, from), 1 / 120, from);
+  assert.ok(Math.hypot(land.x - t.x, land.z - t.z) < 0.03);
+  const { coin } = P.simulate(P.launchFor(t, from), { from });
+  assert.equal(coin.spot, 'pool');
 });
