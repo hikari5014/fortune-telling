@@ -86,6 +86,10 @@ export default {
             籤筒、籤枝、筊杯的照片經過去背、轉向與抹除籤上原有文字，
             修改後的圖同樣以 <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh-hant" target="_blank" rel="noopener" style="text-decoration:underline">CC BY-SA 4.0</a> 釋出。
           </p>
+          <p class="hint" style="margin-top:var(--sp-3)">
+            許願池的 3D 畫面用 <a href="https://threejs.org/" target="_blank" rel="noopener" style="text-decoration:underline">three.js</a>（MIT 授權，授權全文在 vendor/three.LICENSE）；
+            池子、神獸、燈籠都是用基本形狀在手機上即時組出來的，貼圖也是當場畫的。
+          </p>
         </div>
       </section>
 

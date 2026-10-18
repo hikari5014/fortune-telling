@@ -64,13 +64,14 @@ export function ichingSpec(r, lines, moving, question) {
   };
 }
 
+const ANIMAL_NAME = { frog: '金蟾的嘴', turtle: '靈龜的碗', koi: '錦鯉的嘴', rabbit: '玉兔的臼' };
 /** 許願池：願望本身是私事 —— 放在 ask，勾了才印 */
 export function wishSpec(e, blessing) {
-  const bowl = e.spot === 'bowl';
+  const hit = e.spot === 'animal' ? (ANIMAL_NAME[e.k] || '') : e.spot === 'bowl' ? '月盞' : '';
   return {
     kicker: '星空許願池', label: '今晚，在星空許願池',
-    title: bowl ? '正中月盞' : '投下一枚硬幣', big: '願', badge: bowl ? '中' : '',
-    hero: { type: 'coin', gold: !!e.gold, text: bowl ? '正中月盞！' : '' },
+    title: hit ? `投進${hit}` : '投下一枚硬幣', big: '願', badge: hit ? '必成' : '',
+    hero: { type: 'coin', gold: !!e.gold, text: hit ? '願望必定實現' : '' },
     gist: blessing || '願望沉進池底了。', ask: askOf(e.wish, '願望'), date: today(),
     link: `${base()}#/wish`, cta: '掃描，免費許一個願',
   };

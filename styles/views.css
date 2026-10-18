@@ -1742,3 +1742,11 @@ html.is-wishfs, html.is-wishfs body { overflow: hidden; overscroll-behavior: non
 .wishfs__chip:disabled { opacity: .7; }
 .wishfs .wish__line { top: 40%; }
 :root[data-motion="off"] .wishfs__hint { animation: none; }
+.wishfs__face { position: absolute; left: 16px; right: 16px; top: calc(env(safe-area-inset-top) + 116px); text-align: center; font-size: 12px; letter-spacing: .12em;
+  color: rgba(255,226,160,.9); text-shadow: 0 1px 8px rgba(0,0,0,.9); opacity: 0; transition: opacity .4s; pointer-events: none; }
+.wishfs__face.is-on { opacity: 1; }
+.wishfs .wish__say { top: calc(env(safe-area-inset-top) + 146px); }
+.pool3d__no { position: absolute; inset: 40% 24px auto; text-align: center; color: #f1d58f; }
+.pool3d--fs canvas { display: block; touch-action: none; }
+.wishfs .wish__aim { bottom: auto; top: 68%; font-size: 13px; }
+.wishfs__hint { letter-spacing: .12em; padding: 0 16px; line-height: 1.6; }
