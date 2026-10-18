@@ -1,588 +1,429 @@
-/* 許願池的 3D 畫面與操作
+/* 許願池的 3D 畫面與操作（three.js / WebGL）
    ──────────────────────────────────────────────────────────
-   物理在 src/engines/pool.js；這支負責「畫」與「怎麼投」。
+   物理在 src/engines/pool.js、模型在 src/pool/models.js、貼圖在 src/pool/textures.js。
 
-   畫法跟擲筊一樣：Canvas 2D 自己做透視投影，不用 WebGL。
-   不會動的東西（夜空、廣場、石池、池底的硬幣、石柱與月盞）先畫在兩張離屏畫布上，
-   每一格只重畫會動的：水面的倒影與漣漪、飛在空中或正在下沉的硬幣、水花。
-   一個圓投影到畫面上是橢圓 —— 直接拿圓周上的點去投影成多邊形，透視一定對。
+   場景：星空（也是水面倒影的環境貼圖）、遠方樹林、石板廣場、一圈石燈籠、
+   石池（金色嵌線、馬賽克池底）、會動的水面、中央石島上的四隻動物（金蟾、玉兔、靈龜、錦鯉）。
 
-   怎麼投（細操作）：
-   ・手指：像寶可夢 GO 丟球 —— 按住畫面下方的硬幣，它會跟著手指走，往上一甩放開就飛出去。
-     甩多快決定多遠、往哪個方向甩決定左右、在哪裡放開就從哪裡出手。不用旋轉。
-     空中沒有亂數：同樣的甩法一定落在同一個地方。要投進中央的月盞，得自己抓好力道。
-   ・手機：左右傾斜瞄方向、前後傾斜調遠近，落點圈會跟著動；往前輕輕一甩就投出。
-     用的是「甩之前那一瞬間」的瞄準，甩的動作本身不會把準頭帶偏。 */
+   怎麼玩：
+   ・繞著池子走：在畫面上半部左右滑，就繞著池子轉到另一邊 —— 從哪一邊丟，決定瞄得到哪隻動物
+   ・祈禱：按住畫面下方的硬幣不放，越久光越強（最多約 3 秒）
+   ・投：像寶可夢 GO 丟球，往上一甩放開。甩多快決定多遠、往哪甩決定左右、空中沒有亂數
+   ・飛出去的硬幣拖著流星般的光；落水之後光慢慢退掉，回到一枚普通的硬幣
+   ・投進動物的嘴、碗、臼：願望一定會實現 —— 動物會亮起來，之後一直輕輕閃著
+   ・手機：左右傾斜瞄方向、前後傾斜調遠近，往前一甩投出 */
 
-import { POOL, START, targetOf, launchFor, predict, zoneOf, createCoin, stepCoin, simulate, normalOf, flickAim } from './engines/pool.js';
+import * as THREE from '../vendor/three.module.min.js';
+import { POOL, ANIMALS, standAt, targetOf, launchFor, zoneOf, createCoin, stepCoin, simulate, normalOf, flickAim, catchOf } from './engines/pool.js';
+import * as MD from './pool/models.js';
+import * as TX from './pool/textures.js';
 import { clink, plop, chime } from './rites/sound.js';
 import { haptic } from './ui.js';
 import { askMotion } from './rites/kit.js';
 
 const fastMode = () => document.documentElement.dataset.motion === 'off'
   || matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-/* ── 小工具 ───────────────────────────────────────── */
-const sub = (a, b) => ({ x: a.x - b.x, y: a.y - b.y, z: a.z - b.z });
-const dot = (a, b) => a.x * b.x + a.y * b.y + a.z * b.z;
-const cross = (a, b) => ({ x: a.y * b.z - a.z * b.y, y: a.z * b.x - a.x * b.z, z: a.x * b.y - a.y * b.x });
-const norm = (a) => { const l = Math.hypot(a.x, a.y, a.z) || 1; return { x: a.x / l, y: a.y / l, z: a.z / l }; };
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-function rng(seed) { let s = seed >>> 0; return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296); }
+const UP = new THREE.Vector3(0, 1, 0);
+const PRAY_MS = 3000;                                  // 祈禱集滿光的時間
 
-function camera(w, h) {
-  // 越細長的畫面（手機直拿），鏡頭越往上抬、越往下看 —— 池子才會撐滿畫面，不會只縮在底下
-  const k = clamp((h / w - 1.1) / 0.9, 0, 1);
-  const E = { x: 0, y: 1.35 + 1.05 * k, z: 2.75 - 0.2 * k }, T = { x: 0, y: -0.1 - 0.15 * k, z: -0.35 + 0.1 * k };
-  const f = norm(sub(T, E)), r = norm(cross(f, { x: 0, y: 1, z: 0 })), u = cross(r, f);
-  // 全螢幕：寬的畫面用高度定比例，免得池子被切掉
-  const F = Math.min(w * 1.05, h * 0.95);
-  // 手上那枚硬幣固定在畫面下方 80% 的地方（拇指搆得到），其他照透視排
-  const dS = sub(START, E), cy = h * 0.8 + F * dot(dS, u) / dot(dS, f);
-  return {
-    E,
-    proj(p) {
-      const d = sub(p, E);
-      const zc = dot(d, f);
-      return { x: w / 2 + F * dot(d, r) / zc, y: cy - F * dot(d, u) / zc, z: zc, s: F / zc };
-    },
-    /** 畫面上的一點 → 世界裡 z = z0 那個直立平面上的點（手指拿著硬幣時用） */
-    unproject(sx, sy, z0) {
-      const a = (sx - w / 2) / F, b = -(sy - cy) / F;
-      const dir = { x: f.x + a * r.x + b * u.x, y: f.y + a * r.y + b * u.y, z: f.z + a * r.z + b * u.z };
-      const k = (z0 - E.z) / dir.z;
-      return { x: E.x + k * dir.x, y: E.y + k * dir.y, z: z0 };
-    },
-  };
+export function webglOK() {
+  try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch { return false; }
 }
 
-const L = norm({ x: 0.5, y: 1, z: -0.4 });      // 月光從右後方照過來
-const DRAW_R = 0.07;                              // 畫面上的硬幣半徑（比物理的大一點，才看得清楚）
-
-/** 水平圓（y 固定）投影成多邊形 */
-function ring(cam, r, y, cx = 0, cz = 0, n = 72) {
-  const pts = [];
-  for (let i = 0; i < n; i++) { const a = (i / n) * Math.PI * 2; pts.push(cam.proj({ x: cx + r * Math.cos(a), y, z: cz + r * Math.sin(a) })); }
-  return pts;
-}
-function pathOf(pts) { const p = new Path2D(); pts.forEach((q, i) => (i ? p.lineTo(q.x, q.y) : p.moveTo(q.x, q.y))); p.closePath(); return p; }
-const yRange = (pts) => [Math.min(...pts.map(p => p.y)), Math.max(...pts.map(p => p.y))];
-
-/* ── 硬幣 ─────────────────────────────────────────── */
-/* 一般硬幣是銀色；贊助者的福幣是金色 */
-const METAL = {
-  gold:   { base: [232, 186, 80], edge: '#a87c26', mark: [150, 100, 24], ring: [120, 80, 20], glow: '255,214,120' },
-  silver: { base: [206, 212, 226], edge: '#8a90a2', mark: [120, 126, 142], ring: [100, 106, 122], glow: '220,230,255' },
-};
-function drawCoin(ctx, cam, p, n, { under = 0, alpha = 1, glow = 0, gold = true } = {}) {
-  const M = gold ? METAL.gold : METAL.silver;
-  n = norm(n);
-  const ref = Math.abs(n.y) < 0.9 ? { x: 0, y: 1, z: 0 } : { x: 1, y: 0, z: 0 };
-  const e1 = norm(cross(n, ref)), e2 = cross(n, e1);
-  const th = 0.012;
-  const face = (sgn, rad = DRAW_R, k = 20, star = false) => {
-    const pts = [];
-    for (let i = 0; i < k; i++) {
-      const a = (i / k) * Math.PI * 2, rr = star ? (i % 2 ? rad * 0.3 : rad) : rad;
-      pts.push(cam.proj({ x: p.x + sgn * n.x * th / 2 + rr * (Math.cos(a) * e1.x + Math.sin(a) * e2.x),
-        y: p.y + sgn * n.y * th / 2 + rr * (Math.cos(a) * e1.y + Math.sin(a) * e2.y),
-        z: p.z + sgn * n.z * th / 2 + rr * (Math.cos(a) * e1.z + Math.sin(a) * e2.z) }));
-    }
-    return pts;
-  };
-  const toEye = sub(cam.E, p), front = dot(n, toEye) >= 0 ? 1 : -1;
-  const nf = { x: n.x * front, y: n.y * front, z: n.z * front };
-  const lit = 0.35 + 0.65 * Math.max(0, dot(nf, L));
-  const H = norm({ x: L.x + toEye.x, y: L.y + toEye.y, z: L.z + toEye.z });
-  const spec = Math.pow(Math.max(0, dot(nf, H)), 24);
-  const c = M.base.map(v => Math.min(255, Math.round(v * lit + 255 * spec * 0.8)));
-  ctx.save();
-  ctx.globalAlpha = alpha;
-  if (glow) {
-    const q = cam.proj(p);
-    const g = ctx.createRadialGradient(q.x, q.y, 0, q.x, q.y, q.s * DRAW_R * 3.2);
-    g.addColorStop(0, `rgba(${M.glow},${0.35 * glow})`); g.addColorStop(1, `rgba(${M.glow},0)`);
-    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(q.x, q.y, q.s * DRAW_R * 3.2, 0, Math.PI * 2); ctx.fill();
-  }
-  const back = face(-front), top = face(front);
-  ctx.fillStyle = M.edge;
-  ctx.fill(pathOf(back));
-  ctx.fillStyle = `rgb(${c[0]},${c[1]},${c[2]})`;
-  ctx.fill(pathOf(top));
-  // 浮雕：內圈＋中央的四芒星
-  ctx.strokeStyle = `rgba(${M.ring.join(',')},${0.55 * lit + 0.2})`; ctx.lineWidth = 0.8;
-  ctx.stroke(pathOf(face(front, DRAW_R * 0.74, 20)));
-  ctx.fillStyle = `rgba(${M.mark.join(',')},${0.5 * lit + 0.25})`;
-  ctx.fill(pathOf(face(front, DRAW_R * 0.5, 8, true)));
-  if (under) { ctx.fillStyle = `rgba(60,130,170,${under})`; ctx.fill(pathOf(top)); ctx.fill(pathOf(back)); }
-  ctx.restore();
-}
-
-/* ── 不會動的部分 ─────────────────────────────────── */
-function paintBackground(g, cam, w, h, coins, seed) {
-  const R = rng(seed);
-  // 夜空
-  const hz = cam.proj({ x: 0, y: 0, z: -40 }).y;
-  const sky = g.createLinearGradient(0, 0, 0, hz);
-  sky.addColorStop(0, '#070a1c'); sky.addColorStop(.7, '#121838'); sky.addColorStop(1, '#232a55');
-  g.fillStyle = sky; g.fillRect(0, 0, w, hz + 2);
-  for (let i = 0; i < 90; i++) {
-    const x = R() * w, y = R() * hz * 0.95, s = R() < 0.1 ? 1.4 : 0.7;
-    g.fillStyle = `rgba(240,235,215,${0.3 + R() * 0.6})`; g.beginPath(); g.arc(x, y, s, 0, Math.PI * 2); g.fill();
-  }
-  // 月亮
-  const mr = Math.min(w * 0.045, hz * 0.16), mx = w * 0.76, my = Math.max(mr * 1.6, hz * 0.32);
-  const halo = g.createRadialGradient(mx, my, mr * 0.6, mx, my, mr * 5);
-  halo.addColorStop(0, 'rgba(255,236,190,.35)'); halo.addColorStop(1, 'rgba(255,236,190,0)');
-  g.fillStyle = halo; g.beginPath(); g.arc(mx, my, mr * 5, 0, Math.PI * 2); g.fill();
-  g.fillStyle = '#f6ecd0'; g.beginPath(); g.arc(mx, my, mr, 0, Math.PI * 2); g.fill();
-  g.fillStyle = 'rgba(200,185,150,.35)';
-  [[-.3, -.2, .22], [.25, .15, .18], [-.05, .35, .12]].forEach(([dx, dy, r]) => { g.beginPath(); g.arc(mx + dx * mr, my + dy * mr, r * mr, 0, Math.PI * 2); g.fill(); });
-  // 遠山與樹影，林間點著幾盞燈
-  const k = Math.min(w / 390, hz / 300, 1.6);       // 樹與燈的大小跟著天空的高度走（寬螢幕不會變成巨樹）
-  g.fillStyle = '#0d1230';
-  g.beginPath(); g.moveTo(0, hz);
-  for (let x = 0; x <= w; x += 6) g.lineTo(x, hz - (16 + 10 * Math.sin(x * 0.011 + 1) + 6 * Math.sin(x * 0.037)) * k);
-  g.lineTo(w, hz + 2); g.lineTo(0, hz + 2); g.fill();
-  g.fillStyle = '#080c22';
-  for (let i = 0; i < 26; i++) {
-    const x = (i + R() * 0.6) / 26 * w, th = (12 + R() * 22) * k, tw = (7 + R() * 7) * k;
-    g.beginPath(); g.moveTo(x - tw, hz + 1); g.quadraticCurveTo(x - tw * 0.4, hz - th * 0.6, x, hz - th); g.quadraticCurveTo(x + tw * 0.4, hz - th * 0.6, x + tw, hz + 1); g.fill();
-  }
-  for (const fx of [0.12, 0.31, 0.66, 0.88]) {
-    const x = fx * w, y = hz - 4 * k;
-    const lg = g.createRadialGradient(x, y, 0, x, y, 14 * k);
-    lg.addColorStop(0, 'rgba(255,196,110,.75)'); lg.addColorStop(.25, 'rgba(255,170,80,.25)'); lg.addColorStop(1, 'rgba(255,170,80,0)');
-    g.fillStyle = lg; g.beginPath(); g.arc(x, y, 14 * k, 0, Math.PI * 2); g.fill();
-  }
-  // 地平線上一層薄霧
-  const mist = g.createLinearGradient(0, hz - 12 * k, 0, hz + 40 * k);
-  mist.addColorStop(0, 'rgba(120,130,190,0)'); mist.addColorStop(.4, 'rgba(120,130,190,.12)'); mist.addColorStop(1, 'rgba(120,130,190,0)');
-  g.fillStyle = mist; g.fillRect(0, hz - 12 * k, w, 52 * k);
-  // 廣場：石板地，往遠處淡入夜色
-  const gr = g.createLinearGradient(0, hz, 0, h);
-  gr.addColorStop(0, '#141a33'); gr.addColorStop(.5, '#1d2340'); gr.addColorStop(1, '#262c4a');
-  g.fillStyle = gr; g.fillRect(0, hz, w, h - hz);
-  // 石板：一圈一圈鋪開，越遠越淡
-  [1.6, 2.05, 2.6, 3.3].forEach((r, i) => { g.strokeStyle = `rgba(160,170,210,${0.1 - i * 0.02})`; g.lineWidth = 1; g.stroke(pathOf(ring(cam, r, POOL.GROUND))); });
-  for (let i = 0; i < 32; i++) {
-    const a = i / 32 * Math.PI * 2, p1 = cam.proj({ x: 1.3 * Math.cos(a), y: POOL.GROUND, z: 1.3 * Math.sin(a) }), p2 = cam.proj({ x: 2.6 * Math.cos(a), y: POOL.GROUND, z: 2.6 * Math.sin(a) });
-    g.strokeStyle = 'rgba(160,170,210,.05)'; g.beginPath(); g.moveTo(p1.x, p1.y); g.lineTo(p2.x, p2.y); g.stroke();
-  }
-  // 地上的柔光（月光照在池子周圍）
-  const c0 = cam.proj({ x: 0, y: POOL.GROUND, z: 0 });
-  const glow = g.createRadialGradient(c0.x, c0.y, 0, c0.x, c0.y, w * 0.62);
-  glow.addColorStop(0, 'rgba(120,140,220,.14)'); glow.addColorStop(1, 'rgba(120,140,220,0)');
-  g.fillStyle = glow; g.fillRect(0, hz, w, h - hz);
-
-  // 池子後面左右各一座石燈籠
-  // 一條往遠處延伸的石燈籠參道：越遠越小，畫面縱深才出得來（由遠畫到近）
-  for (const [x, z] of [[-1.25, -5.2], [1.25, -5.2], [-1.4, -3.6], [1.4, -3.6], [-1.85, -1.45], [1.85, -1.45]]) lantern(g, cam, x, z);
-
-  // 石池的外牆：先畫底圈，再蓋上頂圈 —— 前面露出來的就是牆
-  const RO = POOL.R + POOL.RIM_W;
-  const outerBot = ring(cam, RO, POOL.GROUND), outerTop = ring(cam, RO, POOL.RIM_H);
-  g.fillStyle = 'rgba(0,0,0,.35)'; g.fill(pathOf(ring(cam, RO + 0.08, POOL.GROUND)));
-  const [, yb] = yRange(outerBot);
-  const wall = g.createLinearGradient(0, yRange(outerTop)[1] - 20, 0, yb);
-  wall.addColorStop(0, '#4a4f68'); wall.addColorStop(1, '#2a2e44');
-  g.fillStyle = wall; g.fill(pathOf(outerBot));
-  // 牆面的石塊縫：只畫朝向鏡頭的那半圈
-  g.strokeStyle = 'rgba(15,18,35,.45)'; g.lineWidth = 1;
-  for (let i = 0; i < 28; i++) {
-    const a = (i + 0.5) / 28 * Math.PI * 2;
-    if (Math.sin(a) < 0.1) continue;
-    const t = cam.proj({ x: RO * Math.cos(a), y: POOL.RIM_H, z: RO * Math.sin(a) }), b = cam.proj({ x: RO * Math.cos(a), y: POOL.GROUND, z: RO * Math.sin(a) });
-    g.beginPath(); g.moveTo(t.x, t.y); g.lineTo(b.x, b.y); g.stroke();
-  }
-  // 石緣頂
-  const [ty0, ty1] = yRange(outerTop);
-  const top = g.createLinearGradient(0, ty0, 0, ty1);
-  top.addColorStop(0, '#6f7593'); top.addColorStop(.5, '#8a90ab'); top.addColorStop(1, '#a3a8bf');
-  g.fillStyle = top; g.fill(pathOf(outerTop));
-  g.strokeStyle = 'rgba(255,240,200,.25)'; g.lineWidth = 1.2; g.stroke(pathOf(outerTop));
-  for (let i = 0; i < 28; i++) {                    // 石緣上的接縫
-    const a = i / 28 * Math.PI * 2;
-    const p1 = cam.proj({ x: POOL.R * Math.cos(a), y: POOL.RIM_H, z: POOL.R * Math.sin(a) }), p2 = cam.proj({ x: RO * Math.cos(a), y: POOL.RIM_H, z: RO * Math.sin(a) });
-    g.strokeStyle = 'rgba(30,34,56,.35)'; g.beginPath(); g.moveTo(p1.x, p1.y); g.lineTo(p2.x, p2.y); g.stroke();
-  }
-  // 池口：內壁（後半圈看得到）
-  const opening = ring(cam, POOL.R, POOL.RIM_H);
-  const [oy0, oy1] = yRange(opening);
-  const inner = g.createLinearGradient(0, oy0, 0, oy1);
-  inner.addColorStop(0, '#2b3150'); inner.addColorStop(1, '#151a32');
-  g.fillStyle = inner; g.fill(pathOf(opening));
-  // 池底（水裡）：深藍的磁磚圈
-  g.save(); g.clip(pathOf(opening)); g.clip(pathOf(ring(cam, POOL.R, 0)));
-  const bot = ring(cam, POOL.R, -POOL.DEPTH);
-  const [by0, by1] = yRange(bot);
-  const bg = g.createLinearGradient(0, by0, 0, by1);
-  bg.addColorStop(0, '#16285a'); bg.addColorStop(1, '#1f3a73');
-  g.fillStyle = '#122045'; g.fill(pathOf(ring(cam, POOL.R, 0)));
-  g.fillStyle = bg; g.fill(pathOf(bot));
-  g.strokeStyle = 'rgba(140,190,255,.12)';
-  for (const r of [0.25, 0.45, 0.65, 0.85]) g.stroke(pathOf(ring(cam, r, -POOL.DEPTH)));
-  // 池底的硬幣：越新的越亮
-  coins.forEach((c, i) => {
-    const age = coins.length - 1 - i;
-    const n = { x: Math.sin(c.yaw || 0) * (c.tilt || 0.06), y: 1, z: Math.cos(c.yaw || 0) * (c.tilt || 0.06) };
-    drawCoin(g, cam, { x: c.x, y: -POOL.DEPTH + 0.006, z: c.z }, n, { under: 0.22, alpha: 0.95, gold: !!c.gold, glow: (c.gold ? 0.5 : 0.15) + 0.5 * Math.max(0, 1 - age / 12) });
-  });
-  // 石柱在水裡的那一段
-  column(g, cam, -POOL.DEPTH, 0, true);
-  g.restore();
-}
-
-/** 石燈籠：台座、竿、火袋（亮著）、笠 —— 用那個深度的「每公尺幾像素」畫在畫面上 */
-function lantern(g, cam, x, z) {
-  const b = cam.proj({ x, y: POOL.GROUND, z }), s = b.s;
-  const glow = g.createRadialGradient(b.x, b.y, 0, b.x, b.y, s * 0.6);
-  glow.addColorStop(0, 'rgba(255,190,110,.18)'); glow.addColorStop(1, 'rgba(255,190,110,0)');
-  g.fillStyle = glow; g.beginPath(); g.ellipse(b.x, b.y, s * 0.6, s * 0.2, 0, 0, Math.PI * 2); g.fill();
-  const stone = (y0, y1, hw, c) => { g.fillStyle = c; g.fillRect(b.x - hw * s, b.y - y1 * s, hw * 2 * s, (y1 - y0) * s); };
-  stone(0, 0.06, 0.13, '#3c4260');                 // 台座
-  stone(0.06, 0.42, 0.045, '#4a5070');             // 竿
-  stone(0.42, 0.47, 0.11, '#3c4260');              // 中台
-  const ly = b.y - 0.62 * s;                       // 火袋
-  const lg = g.createRadialGradient(b.x, ly + 0.07 * s, 0, b.x, ly + 0.07 * s, s * 0.45);
-  lg.addColorStop(0, 'rgba(255,200,120,.55)'); lg.addColorStop(1, 'rgba(255,200,120,0)');
-  g.fillStyle = lg; g.beginPath(); g.arc(b.x, ly + 0.07 * s, s * 0.45, 0, Math.PI * 2); g.fill();
-  stone(0.47, 0.62, 0.085, '#2e3350');
-  g.fillStyle = '#ffd08a'; g.fillRect(b.x - 0.045 * s, b.y - 0.6 * s, 0.09 * s, 0.11 * s);
-  g.fillStyle = '#3c4260';                         // 笠：兩端微微翹起
-  g.beginPath(); g.moveTo(b.x - 0.2 * s, b.y - 0.62 * s); g.quadraticCurveTo(b.x, b.y - 0.66 * s, b.x + 0.2 * s, b.y - 0.62 * s);
-  g.lineTo(b.x + 0.1 * s, b.y - 0.72 * s); g.lineTo(b.x - 0.1 * s, b.y - 0.72 * s); g.closePath(); g.fill();
-  g.beginPath(); g.arc(b.x, b.y - 0.75 * s, 0.035 * s, 0, Math.PI * 2); g.fill();
-}
-
-function column(g, cam, y0, y1, under) {
-  const a = cam.proj({ x: -POOL.COL_R, y: y0, z: 0 }), b = cam.proj({ x: POOL.COL_R, y: y0, z: 0 });
-  const c = cam.proj({ x: POOL.COL_R, y: y1, z: 0 }), d = cam.proj({ x: -POOL.COL_R, y: y1, z: 0 });
-  const gr = g.createLinearGradient(a.x, 0, b.x, 0);
-  gr.addColorStop(0, under ? '#22305a' : '#4c5272'); gr.addColorStop(.6, under ? '#3a4a78' : '#959ab4'); gr.addColorStop(1, under ? '#253460' : '#5d6383');
-  g.fillStyle = gr;
-  g.beginPath(); g.moveTo(a.x, a.y); g.lineTo(b.x, b.y); g.lineTo(c.x, c.y); g.lineTo(d.x, d.y); g.closePath(); g.fill();
-}
-
-/** 石柱露出水面的部分、月盞，以及盞裡的硬幣 */
-function paintForeground(g, cam, bowl) {
-  column(g, cam, 0, POOL.BOWL_Y - 0.06, false);
-  g.strokeStyle = 'rgba(200,225,255,.45)'; g.lineWidth = 1;
-  g.stroke(pathOf(ring(cam, POOL.COL_R, 0, 0, 0, 24)));            // 水線
-  const topY = POOL.BOWL_Y, botY = POOL.BOWL_Y - 0.075;
-  const top = ring(cam, POOL.BOWL_R, topY, 0, 0, 40), bot = ring(cam, 0.06, botY, 0, 0, 24);
-  // 盞身：兩圈的外輪廓用凸包連起來
-  const all = [...top, ...bot];
-  const left = all.reduce((m, p) => (p.x < m.x ? p : m)), right = all.reduce((m, p) => (p.x > m.x ? p : m));
-  const lb = bot.reduce((m, p) => (p.x < m.x ? p : m)), rb = bot.reduce((m, p) => (p.x > m.x ? p : m));
-  const body = g.createLinearGradient(left.x, 0, right.x, 0);
-  body.addColorStop(0, '#8a6420'); body.addColorStop(.55, '#f0cb74'); body.addColorStop(1, '#a87a26');
-  g.fillStyle = body;
-  g.beginPath(); g.moveTo(left.x, left.y); g.lineTo(lb.x, lb.y); g.lineTo(rb.x, rb.y); g.lineTo(right.x, right.y); g.closePath(); g.fill();
-  g.fill(pathOf(bot));
-  // 盞口：裡面深、邊緣亮
-  const [y0, y1] = yRange(top);
-  const inside = g.createLinearGradient(0, y0, 0, y1);
-  inside.addColorStop(0, '#3a2708'); inside.addColorStop(1, '#6b4a14');
-  g.fillStyle = inside; g.fill(pathOf(top));
-  g.save(); g.clip(pathOf(top));
-  const R = rng(7);
-  for (let i = 0; i < Math.min(bowl.length, 14); i++) {
-    const a = R() * Math.PI * 2, r = Math.sqrt(R()) * 0.07;
-    drawCoin(g, cam, { x: r * Math.cos(a), y: topY - 0.035 + i * 0.002, z: r * Math.sin(a) }, { x: (R() - .5) * .3, y: 1, z: (R() - .5) * .3 }, { gold: bowl[bowl.length - 1 - i] });
-  }
-  g.restore();
-  g.strokeStyle = '#ffe3a0'; g.lineWidth = 1.6; g.stroke(pathOf(top));
-}
-
-/* ── 掛到畫面上 ───────────────────────────────────── */
 /**
  * @param {HTMLElement} host
  * @param {object} o
- *   coins       池底已有的硬幣 [{x, z, yaw, tilt}]
- *   bowlCoins   月盞裡的硬幣：[是否福幣, …]（也可以只給數量）
- *   isGold()    手上這枚是不是福幣（畫面用）
- *   canThrow()  現在能不能投
- *   onBeforeThrow()  出手的那一刻呼叫；回傳 false 就不投（硬幣回到手上），回傳 { gold } 決定投哪一種
- *   onLand({spot, x, z, yaw, tilt})  停下來了：spot = 'pool' | 'bowl' | 'miss'
- *   onAim(aim|null)  用手機瞄準時，現在瞄到哪裡（給畫面上的文字用）
+ *   coins         池底已有的硬幣 [{x, z, yaw, tilt, gold}]
+ *   animalCoins   各動物容器裡已有的硬幣 { frog: [是否福幣…], … }
+ *   isGold()      手上這枚是不是福幣
+ *   onBeforeThrow(aim)  出手那一刻；回傳 false 不投，回傳 { gold } 決定投哪一種
+ *   onLand(r)     停下來了：{ spot: 'pool'|'animal'|'miss', k, gold, pray, x, z, … }
+ *   onAim(aim|null)、onFacing(animal|null)、onCharge(0..1|null)
  */
-export function mountPool(host, { coins = [], bowlCoins = 0, isGold = () => false, canThrow, onBeforeThrow, onLand, onAim } = {}) {
-  host.innerHTML = '';
-  const canvas = document.createElement('canvas');
+export function mountPool(host, { coins = [], animalCoins = {}, isGold = () => false, canThrow, onBeforeThrow, onLand, onAim, onFacing, onCharge } = {}) {
+  host.querySelectorAll('canvas, .pool3d__no').forEach(n => n.remove());   // 留著願望升空的那一層
+  if (!webglOK()) {
+    host.insertAdjacentHTML('beforeend', '<p class="pool3d__no">這台裝置不支援 3D 畫面，許願池暫時無法顯示。</p>');
+    return { armMotion: async () => false, busy: () => false, throwAt: () => false, walkTo() {}, destroy() {} };
+  }
+  const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.75));
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.15;
+  renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  const canvas = renderer.domElement;
   canvas.className = 'pool3d__cv';
   canvas.setAttribute('role', 'img');
-  canvas.setAttribute('aria-label', '星空許願池：按住畫面往上拉瞄準，放手投出硬幣');
+  canvas.setAttribute('aria-label', '星空許願池：按住硬幣祈禱，往上一甩投出；左右滑動畫面上方可以繞著池子走');
   host.appendChild(canvas);
-  const ctx = canvas.getContext('2d');
-  const bgc = document.createElement('canvas'), fgc = document.createElement('canvas');
-  let w = 0, h = 0, dpr = 1, cam = null;
-  let bottom = coins.slice(-120), inBowl = Array.isArray(bowlCoins) ? bowlCoins.slice() : Array(bowlCoins).fill(false);
-  const seed = 20261018;
 
-  const layers = () => {
-    for (const [cv, fn] of [[bgc, (g) => paintBackground(g, cam, w, h, bottom, seed)], [fgc, (g) => paintForeground(g, cam, inBowl)]]) {
-      cv.width = w * dpr; cv.height = h * dpr;
-      const g = cv.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, h); fn(g);
+  /* ── 場景 ── */
+  const scene = new THREE.Scene();
+  const skyTex = TX.sky();
+  scene.background = skyTex;
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  const env = pmrem.fromEquirectangular(skyTex).texture;
+  scene.environment = env;
+  scene.fog = new THREE.FogExp2(0x0a0e26, 0.055);
+
+  scene.add(new THREE.HemisphereLight(0x8a98e8, 0x2a2236, 1.05));
+  const moon = new THREE.DirectionalLight(0xdbe2ff, 1.7);
+  moon.position.copy(TX.MOON_DIR).multiplyScalar(8);
+  moon.castShadow = true; moon.shadow.mapSize.set(1024, 1024);
+  Object.assign(moon.shadow.camera, { left: -2, right: 2, top: 2, bottom: -2, near: 1, far: 20 });
+  moon.shadow.bias = -0.0008;
+  scene.add(moon);
+  const warm = new THREE.PointLight(0xffc27a, 1.6, 3.2, 1.6); warm.position.set(0, 1.1, 0); scene.add(warm);
+
+  const M = MD.materials();
+  scene.add(MD.ground(M), MD.pool(M), MD.island(M));
+  const wat = MD.water(env); scene.add(wat.mesh);
+  // 石燈籠：一圈，離池子遠一點；擋到鏡頭的那座先藏起來
+  const lanterns = [];
+  const glowTex = TX.glow();
+  for (let i = 0; i < 8; i++) {
+    const a = (i + 0.5) / 8 * Math.PI * 2, l = MD.lantern(M);
+    l.position.set(3.3 * Math.sin(a), POOL.GROUND, 3.3 * Math.cos(a)); l.rotation.y = a;
+    const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: 0xffbe6a, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false }));
+    halo.scale.set(0.9, 0.9, 1); halo.position.y = 0.6; l.add(halo);
+    scene.add(l); lanterns.push(l);
+  }
+  const beasts = MD.animals(M);
+  beasts.forEach(b => scene.add(b.group));
+
+  /* ── 硬幣 ── */
+  const kit = MD.coinKit();
+  const metal = (gold) => (gold ? kit.gold : kit.silver);
+  const MAXC = 160;
+  const rest = { gold: new THREE.InstancedMesh(kit.geo, kit.gold, MAXC), silver: new THREE.InstancedMesh(kit.geo, kit.silver, MAXC) };
+  Object.values(rest).forEach(m => { m.count = 0; m.receiveShadow = true; scene.add(m); });
+  const tmp = new THREE.Object3D();
+  function placeRest(list) {
+    const by = { gold: [], silver: [] };
+    list.slice(-MAXC).forEach(c => by[c.gold ? 'gold' : 'silver'].push(c));
+    for (const k of ['gold', 'silver']) {
+      by[k].forEach((c, i) => {
+        tmp.position.set(c.x, -POOL.DEPTH + 0.006, c.z);
+        tmp.quaternion.setFromUnitVectors(UP, new THREE.Vector3(Math.sin(c.yaw || 0) * (c.tilt || 0.05), 1, Math.cos(c.yaw || 0) * (c.tilt || 0.05)).normalize());
+        tmp.updateMatrix(); rest[k].setMatrixAt(i, tmp.matrix);
+      });
+      rest[k].count = by[k].length; rest[k].instanceMatrix.needsUpdate = true;
     }
-  };
-  let waterPath = null, openPath = null, refl = [];
-  const size = () => {
-    dpr = Math.min(2, devicePixelRatio || 1);
-    w = host.clientWidth || 360; h = host.clientHeight || Math.round(w * 1.06);
-    canvas.width = w * dpr; canvas.height = h * dpr;
-    canvas.style.width = `${w}px`; canvas.style.height = `${h}px`;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    cam = camera(w, h);
-    openPath = pathOf(ring(cam, POOL.R, POOL.RIM_H));
-    waterPath = pathOf(ring(cam, POOL.R, 0));
-    const R = rng(99);
-    refl = Array.from({ length: 70 }, () => { const a = R() * Math.PI * 2, r = Math.sqrt(R()) * POOL.R * 0.97; return { x: r * Math.cos(a), z: r * Math.sin(a), ph: R() * 6.3, s: R() < .15 ? 1.4 : .8 }; });
-    layers();
-  };
-  size();
+  }
+  let bottom = coins.slice(-MAXC);
+  placeRest(bottom);
+  // 容器裡的硬幣：每隻最多看得到三枚
+  const inBox = {};
+  function boxCoins(k) {
+    inBox[k]?.forEach(m => scene.remove(m));
+    const a = ANIMALS.find(x => x.k === k), q = catchOf(a), list = (animalCoins[k] || []).slice(-3);
+    inBox[k] = list.map((gold, i) => {
+      const m = new THREE.Mesh(kit.geo, metal(gold)), d = 0.035 - i * 0.008;
+      m.position.set(q.c.x - q.n.x * d, q.c.y - q.n.y * d, q.c.z - q.n.z * d);
+      m.quaternion.setFromUnitVectors(UP, new THREE.Vector3(q.n.x + (i - 1) * 0.15, q.n.y, q.n.z + (i % 2) * 0.1).normalize());
+      m.scale.setScalar(0.8); scene.add(m); return m;
+    });
+  }
+  ANIMALS.forEach(a => boxCoins(a.k));
+  const lit = {};                                     // 被投中過的動物：之後一直輕輕閃
+  ANIMALS.forEach(a => { lit[a.k] = (animalCoins[a.k] || []).length > 0; });
+  const pulse = {};
 
-  /* 狀態 */
-  let coin = null, held = null, back = null, motionAim = null, trail = [];
-  let ripples = [], drops = [], sparks = [], pillar = 0, nextAmbient = 1.5;
-  const flies = Array.from({ length: 9 }, (_, i) => ({ a: i * 0.7, r: 0.4 + (i % 4) * 0.22, y: 0.25 + (i % 3) * 0.18, ph: i * 1.3 }));
-  let raf = 0, last = performance.now(), acc = 0, t = 0, alive = true;
+  // 手上的硬幣、飛行中的硬幣（材質各自一份，才能各自發光）
+  const own = (mats) => mats.map(m => m.clone());
+  const handMats = { gold: own(kit.gold), silver: own(kit.silver) }, flyMats = { gold: own(kit.gold), silver: own(kit.silver) };
+  const hand = new THREE.Mesh(kit.geo, handMats.silver); hand.castShadow = true; scene.add(hand);
+  const flying = new THREE.Mesh(kit.geo, flyMats.silver); flying.castShadow = true; flying.visible = false; scene.add(flying);
+  const addSprite = (color, opacity = 1) => {
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color, transparent: true, opacity, blending: THREE.AdditiveBlending, depthWrite: false }));
+    scene.add(s); return s;
+  };
+  const handGlow = addSprite(0xffd98a, 0);
+  const coinGlow = addSprite(0xffe1a0, 0); coinGlow.visible = false;
+  const TRAIL = 36, trail = Array.from({ length: TRAIL }, () => { const s = addSprite(0xffcf7a, 0); s.visible = false; return s; });
+  const trailPos = [];
 
+  /* 粒子：水花、星火、祈禱的光點、螢火蟲 —— 都用同一種點雲 */
+  function points(n, color, size) {
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(n * 3), 3));
+    const mat = new THREE.PointsMaterial({ map: glowTex, color, size, transparent: true, opacity: 1, blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true });
+    const p = new THREE.Points(geo, mat); p.frustumCulled = false; scene.add(p);
+    return { p, arr: geo.attributes.position.array, attr: geo.attributes.position, n, items: [] };
+  }
+  const drops = points(60, 0xcfe4ff, 0.035);
+  const sparks = points(140, 0xffd27a, 0.06);
+  const prayer = points(24, 0xfff0c0, 0.04);
+  const flies = points(22, 0xffe2a0, 0.07);
+  const flyItems = Array.from({ length: 22 }, (_, i) => ({ a: i * 0.9, r: 0.6 + (i % 5) * 0.35, y: 0.25 + (i % 4) * 0.25, ph: i * 1.7 }));
+  function flush(P, list, fn) {
+    for (let i = 0; i < P.n; i++) {
+      const it = list[i];
+      if (it !== undefined) { const [x, y, z] = fn(it); P.arr[i * 3] = x; P.arr[i * 3 + 1] = y; P.arr[i * 3 + 2] = z; } else P.arr[i * 3 + 1] = -99;
+    }
+    P.attr.needsUpdate = true;
+  }
+  // 漣漪
+  let ripples = [];
+  const ringGeo = new THREE.RingGeometry(0.94, 1, 64);
+  function ripple(x, z, amp = 1) {
+    const m = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color: 0xd8e8ff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }));
+    m.rotation.x = -Math.PI / 2; m.position.set(x, 0.004, z); m.renderOrder = 3; scene.add(m);
+    ripples.push({ m, t: 0, amp });
+  }
+  // 手機瞄準時的落點圈
+  const reticle = new THREE.Mesh(new THREE.RingGeometry(0.07, 0.085, 48), new THREE.MeshBasicMaterial({ color: 0xffd27a, transparent: true, opacity: 0.9, depthWrite: false }));
+  reticle.rotation.x = -Math.PI / 2; reticle.visible = false; reticle.renderOrder = 4; scene.add(reticle);
+
+  /* ── 鏡頭：繞著池子走 ── */
+  const camera = new THREE.PerspectiveCamera(60, 1, 0.05, 80);
+  // 跟著人走的一盞暖光（像手上提著燈）：石緣、動物、手上的硬幣才看得清楚
+  const fill = new THREE.PointLight(0xffe2b8, 2.4, 7, 1.1); fill.position.set(0, 0.5, 0.2);
+  camera.add(fill); scene.add(camera);
+  let w = 1, h = 1, angle = 0, angleGoal = 0;
+  function size() {
+    w = host.clientWidth || 360; h = host.clientHeight || 640;
+    renderer.setSize(w, h, false);
+    canvas.style.width = '100%'; canvas.style.height = '100%';
+    camera.aspect = w / h;
+    // 池子寬度要裝得下：直拿的手機視角較寬
+    camera.fov = clamp(2 * Math.atan(Math.tan(27 * Math.PI / 180) / camera.aspect) * 180 / Math.PI, 42, 88);
+    camera.updateProjectionMatrix();
+  }
+  const tall = () => clamp((h / w - 1.1) / 0.9, 0, 1);
+  function placeCamera() {
+    const k = tall(), D = 2.85 - 0.3 * k, H = 1.45 + 0.6 * k, look = 0.05 + 0.1 * k;
+    camera.position.set(D * Math.sin(angle), H, D * Math.cos(angle));
+    camera.lookAt(-look * Math.sin(angle), -0.05, -look * Math.cos(angle));   // 看向池中心偏遠一點，手上的硬幣才在畫面下方
+    lanterns.forEach(l => { l.visible = Math.hypot(l.position.x - camera.position.x, l.position.z - camera.position.z) > 1.4; });
+  }
+  /** 畫面上的一點，在鏡頭前方 dist 處的世界座標（拿著硬幣用） */
+  const ray = new THREE.Vector3(), fwdV = new THREE.Vector3();
+  function atScreen(sx, sy, dist = 0.95) {
+    ray.set((sx / w) * 2 - 1, -(sy / h) * 2 + 1, 0.5).unproject(camera).sub(camera.position).normalize();
+    camera.getWorldDirection(fwdV);
+    return camera.position.clone().addScaledVector(ray, dist / Math.max(0.2, ray.dot(fwdV)));
+  }
+  const restScreen = () => ({ x: w / 2, y: h * 0.8 });
+
+  /* ── 狀態 ── */
+  let coin = null, held = null, back = null, orbit = null, motionAim = null, charge = 0, flightCharge = 0;
+  let raf = 0, last = performance.now(), acc = 0, t = 0, alive = true, facing = null;
+
+  function burst(at, n, up = 1) {
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * Math.PI * 2, s = 0.15 + Math.random() * 0.5;
+      sparks.items.push({ p: at.clone(), v: new THREE.Vector3(Math.cos(a) * s, (0.5 + Math.random() * 1.2) * up, Math.sin(a) * s), life: 1 });
+    }
+  }
   function event(e) {
     if (e.type === 'clink') { clink(e.speed); haptic(6); }
+    if (e.type === 'ground') clink(1.5);
     if (e.type === 'splash') {
       plop(e.speed); haptic([8, 20, 6]);
-      ripples.push({ x: e.x, z: e.z, t: 0, amp: 1 });
-      if (coin?.gold) for (let i = 0; i < 14; i++) {              // 福幣落水：多一圈金色的光點
-        const a = Math.random() * Math.PI * 2, s = 0.15 + Math.random() * 0.35;
-        sparks.push({ p: { x: e.x, y: 0.02, z: e.z }, v: { x: Math.cos(a) * s, y: 0.5 + Math.random() * 0.8, z: Math.sin(a) * s }, life: 0.9 });
+      ripple(e.x, e.z, 1); setTimeout(() => alive && ripple(e.x, e.z, 0.6), 180);
+      for (let i = 0; i < 26; i++) {
+        const a = Math.random() * Math.PI * 2, s = 0.2 + Math.random() * 0.5;
+        drops.items.push({ p: new THREE.Vector3(e.x, 0.01, e.z), v: new THREE.Vector3(Math.cos(a) * s, 0.9 + Math.random() * 1.2, Math.sin(a) * s) });
       }
-      for (let i = 0; i < 16; i++) {
-        const a = Math.random() * Math.PI * 2, s = 0.25 + Math.random() * 0.5;
-        drops.push({ p: { x: e.x, y: 0.01, z: e.z }, v: { x: Math.cos(a) * s, y: 0.9 + Math.random() * 1.1, z: Math.sin(a) * s } });
-      }
+      if (coin?.gold || flightCharge > 0.3) burst(new THREE.Vector3(e.x, 0.03, e.z), 10 + Math.round(flightCharge * 16), 0.5);
     }
-    if (e.type === 'bowl') {
-      chime(); haptic([12, 50, 12, 50, 20]); pillar = 1;
-      for (let i = 0; i < 28; i++) {
-        const a = Math.random() * Math.PI * 2, s = 0.2 + Math.random() * 0.6;
-        sparks.push({ p: { x: 0, y: POOL.BOWL_Y + 0.02, z: 0 }, v: { x: Math.cos(a) * s, y: 0.6 + Math.random() * 1.4, z: Math.sin(a) * s }, life: 1 });
-      }
+    if (e.type === 'catch') {
+      chime(); haptic([12, 50, 12, 50, 20]);
+      pulse[e.k] = 1.6; lit[e.k] = true;
+      const q = catchOf(ANIMALS.find(a => a.k === e.k));
+      burst(new THREE.Vector3(q.c.x, q.c.y, q.c.z), 46, 1.2);
     }
-    if (e.type === 'ground') clink(1.5);
   }
 
   function landed(c) {
-    const r = { spot: c.spot, gold: !!c.gold, x: +c.p.x.toFixed(3), z: +c.p.z.toFixed(3), yaw: +c.yaw.toFixed(2), tilt: +(c.tilt || 0).toFixed(2) };
-    if (c.spot === 'pool') { bottom = [...bottom, r].slice(-120); layers(); }
-    if (c.spot === 'bowl') { inBowl.push(!!c.gold); layers(); }
+    const r = { spot: c.spot, k: c.k || null, gold: !!c.gold, pray: +flightCharge.toFixed(2),
+      x: +c.p.x.toFixed(3), z: +c.p.z.toFixed(3), yaw: +c.yaw.toFixed(2), tilt: +(c.tilt || 0).toFixed(2) };
+    if (c.spot === 'pool') { bottom = [...bottom, r].slice(-MAXC); placeRest(bottom); flying.visible = false; }
+    if (c.spot === 'animal') { (animalCoins[c.k] ||= []).push(!!c.gold); boxCoins(c.k); flying.visible = false; }
+    if (c.spot === 'miss') setTimeout(() => { flying.visible = false; }, 600);
     setTimeout(() => { if (coin === c) coin = null; }, c.spot === 'miss' ? 600 : 0);
     onLand?.(r);
   }
 
-  function launch(a, from = START) {
+  function launch(a, from, lateral = 0) {
     if (coin && coin.phase !== 'rest') return false;
     if (canThrow && !canThrow()) return false;
     const opt = onBeforeThrow ? onBeforeThrow(a) : {};
     if (opt === false) return false;
     const gold = !!opt?.gold;
-    const v = launchFor(targetOf(a, from), from);
+    const st = standAt(angle);
+    const tg = targetOf(a, st.from, st.fwd);
+    tg.x += -st.fwd.z * lateral; tg.z += st.fwd.x * lateral;    // 放開的位置偏左偏右，落點跟著偏
+    from = from || st.from;
+    const v = launchFor(tg, from);
+    flightCharge = charge; charge = 0; onCharge?.(null);
+    flying.material = gold ? flyMats.gold : flyMats.silver;
     if (fastMode()) {
       const { coin: c, events } = simulate(v, { from });
-      c.gold = gold;
-      events.forEach(e => (e.type === 'splash' || e.type === 'bowl') && event(e));
-      coin = c; landed(c); return true;
+      c.gold = gold; coin = c;
+      events.forEach(e => (e.type === 'splash' || e.type === 'catch') && event(e));
+      flying.visible = false; landed(c); return true;
     }
     coin = createCoin(v, {}, from); coin.gold = gold;
-    acc = 0; trail = [];
+    acc = 0; trailPos.length = 0; flying.visible = true;
     return true;
   }
 
-  /* 每一格 */
+  /* ── 每一格 ── */
+  const nrm = new THREE.Vector3();
   function frame(now) {
     if (!alive) return;
     raf = requestAnimationFrame(frame);
     const dt = Math.min(0.05, (now - last) / 1000); last = now;
     if (document.hidden) return;
     t += dt;
-    // 物理：固定步長，跟瞄準預覽用的步長一樣
-    if (coin && coin.phase !== 'rest') {
+    angle += (angleGoal - angle) * (1 - Math.exp(-dt * 10));          // 繞池：平滑地轉過去
+    placeCamera();
+    let best = null, bd = 0.6;                                         // 眼前是哪一隻
+    for (const a of ANIMALS) { const d = Math.abs(Math.atan2(Math.sin(angle - a.phi), Math.cos(angle - a.phi))); if (d < bd) { bd = d; best = a; } }
+    if (best !== facing) { facing = best; onFacing?.(best); }
+    if (held) {                                                        // 祈禱：按著越久越亮
+      const c0 = charge;
+      charge = Math.min(1, (now - held.t0) / PRAY_MS);
+      if (Math.floor(c0 * 3) !== Math.floor(charge * 3)) haptic(8 + Math.floor(charge * 3) * 4);
+      onCharge?.(charge);
+    }
+    if (coin && coin.phase !== 'rest') {                               // 物理（固定步長）
       acc += dt;
       while (acc >= 1 / 120 && coin.phase !== 'rest') {
         acc -= 1 / 120;
-        const ev = stepCoin(coin, 1 / 120);
-        ev.forEach(event);
+        stepCoin(coin, 1 / 120).forEach(event);
         if (coin.phase === 'rest') { landed(coin); break; }
       }
     }
-    // 水花、星火、漣漪
-    for (const d of drops) { d.v.y -= POOL.G * dt; d.p.x += d.v.x * dt; d.p.y += d.v.y * dt; d.p.z += d.v.z * dt; }
-    drops = drops.filter(d => d.p.y > 0);
-    for (const s of sparks) { s.v.y -= 1.6 * dt; s.p.x += s.v.x * dt; s.p.y += s.v.y * dt; s.p.z += s.v.z * dt; s.life -= dt * 0.7; }
-    sparks = sparks.filter(s => s.life > 0);
-    ripples.forEach(r => { r.t += dt; });
-    ripples = ripples.filter(r => r.t < 2.6);
-    pillar = Math.max(0, pillar - dt * 0.45);
-    nextAmbient -= dt;
-    if (nextAmbient < 0) {                           // 偶爾一滴露水，水面才是活的
-      nextAmbient = 2 + Math.random() * 3;
-      const a = Math.random() * Math.PI * 2, r = 0.3 + Math.random() * 0.6;
-      ripples.push({ x: r * Math.cos(a), z: r * Math.sin(a), t: 0, amp: 0.3 });
+    // 飛行中的硬幣：翻轉、流星尾巴、光暈（落水後慢慢退掉，回到普通的硬幣）
+    if (coin && flying.visible) {
+      flying.position.set(coin.p.x, coin.p.y, coin.p.z);
+      const n = normalOf(coin); nrm.set(n.x, n.y, n.z).normalize();
+      flying.quaternion.setFromUnitVectors(UP, nrm);
+      const inAir = coin.phase === 'air';
+      if (!inAir) flightCharge *= Math.exp(-dt * 2.2);
+      const bright = inAir ? 0.35 + 0.65 * flightCharge : flightCharge;
+      coinGlow.visible = bright > 0.02; coinGlow.position.copy(flying.position);
+      coinGlow.scale.setScalar(0.18 + 0.4 * bright); coinGlow.material.opacity = Math.min(1, bright * 1.2);
+      flying.material[1].emissive.setRGB(0.6 * bright, 0.45 * bright, 0.15 * bright);
+      if (inAir) { trailPos.unshift(flying.position.clone()); if (trailPos.length > TRAIL) trailPos.pop(); }
+      else trailPos.length = Math.max(0, trailPos.length - 2);
+      trail.forEach((s, i) => {
+        const p = trailPos[i];
+        s.visible = !!p && bright > 0.02;
+        if (!p) return;
+        const k = 1 - i / TRAIL;
+        s.position.copy(p); s.scale.setScalar((0.04 + 0.16 * bright) * k + 0.01);
+        s.material.opacity = Math.min(1, (0.25 + 0.75 * bright) * k * k);
+      });
+    } else { coinGlow.visible = false; trail.forEach(s => { s.visible = false; }); }
+    // 手上的硬幣：跟著手指，按越久越亮
+    const ready = !coin || coin.phase === 'rest';
+    hand.visible = ready;
+    if (ready) {
+      hand.material = isGold() ? handMats.gold : handMats.silver;
+      const rs = restScreen();
+      let p;
+      if (held) p = held.p;
+      else {
+        const home = atScreen(rs.x, rs.y + Math.sin(t * 2.2) * 3);
+        if (back) {
+          const k = Math.min(1, (now - back.t0) / 260), e = 1 - Math.pow(1 - k, 3);
+          p = back.from.clone().lerp(home, e); if (k >= 1) back = null;
+        } else p = home;
+      }
+      hand.position.copy(p);
+      const toCam = camera.position.clone().sub(p).normalize();
+      hand.quaternion.setFromUnitVectors(UP, toCam.lerp(UP, 0.25).normalize());
+      const c = held ? charge : 0;
+      handGlow.position.copy(p);
+      handGlow.scale.setScalar(0.16 + 0.45 * c + 0.02 * Math.sin(t * 3));
+      handGlow.material.opacity = held ? 0.35 + 0.65 * c : 0.25 + 0.1 * Math.sin(t * 3);
+      hand.material[1].emissive.setRGB(0.7 * c, 0.5 * c, 0.15 * c);
+      const np = held && c > 0.05 ? Math.round(6 + 18 * c) : 0;
+      flush(prayer, Array.from({ length: np }, (_, i) => i), (i) => {
+        const a = t * (1.2 + (i % 3) * 0.5) + i * 0.8, r = 0.07 + 0.05 * c + 0.02 * Math.sin(t * 4 + i);
+        return [p.x + r * Math.cos(a), p.y + 0.03 * Math.sin(t * 3 + i) + (i % 4) * 0.012, p.z + r * Math.sin(a)];
+      });
+      prayer.p.material.opacity = 0.4 + 0.6 * c;
+    } else { handGlow.material.opacity = 0; flush(prayer, [], () => [0, 0, 0]); }
+    // 粒子
+    for (const d of drops.items) { d.v.y -= POOL.G * dt; d.p.addScaledVector(d.v, dt); }
+    drops.items = drops.items.filter(d => d.p.y > 0);
+    flush(drops, drops.items, d => [d.p.x, d.p.y, d.p.z]);
+    for (const s of sparks.items) { s.v.y -= 1.4 * dt; s.p.addScaledVector(s.v, dt); s.life -= dt * 0.6; }
+    sparks.items = sparks.items.filter(s => s.life > 0).slice(-sparks.n);
+    for (const a of ANIMALS) if (lit[a.k] && Math.random() < dt * 2.2) {      // 被投中過的動物：身邊偶爾冒一顆小星光
+      const q = catchOf(a);
+      sparks.items.push({ p: new THREE.Vector3(q.c.x + (Math.random() - 0.5) * 0.25, q.c.y + Math.random() * 0.15, q.c.z + (Math.random() - 0.5) * 0.25), v: new THREE.Vector3(0, 0.12, 0), life: 0.6 });
     }
-    paint();
-  }
-
-  function paint() {
-    ctx.clearRect(0, 0, w, h);
-    ctx.drawImage(bgc, 0, 0, w, h);
-    // ── 水裡與水面 ──
-    ctx.save(); ctx.clip(openPath); ctx.clip(waterPath);
-    if (coin && coin.phase === 'sink') drawCoin(ctx, cam, coin.p, normalOf(coin), { gold: coin.gold, under: 0.08 + 0.18 * clamp(-coin.p.y / POOL.DEPTH, 0, 1), glow: 0.6 });
-    const wp = ring(cam, POOL.R, 0);
-    const [wy0, wy1] = yRange(wp);
-    const wg = ctx.createLinearGradient(0, wy0, 0, wy1);
-    wg.addColorStop(0, 'rgba(70,90,160,.5)'); wg.addColorStop(.35, 'rgba(25,45,100,.42)'); wg.addColorStop(1, 'rgba(12,28,70,.3)');
-    ctx.fillStyle = wg; ctx.fill(waterPath);
-    // 天上的星星倒映在水裡，水面輕輕晃
-    for (const s of refl) {
-      const q = cam.proj({ x: s.x + 0.012 * Math.sin(t * 1.4 + s.z * 9), y: 0, z: s.z });
-      const a = 0.25 + 0.35 * (0.5 + 0.5 * Math.sin(t * 1.7 + s.ph));
-      ctx.fillStyle = `rgba(235,230,210,${a})`;
-      ctx.fillRect(q.x - s.s * 0.8, q.y - 0.4, s.s * 1.6, 0.8);
-    }
-    // 月亮的倒影：一道碎成好幾段的光
-    const m = cam.proj({ x: 0.5, y: 0, z: -0.5 }), k = w / 390;
-    const mg = ctx.createRadialGradient(m.x, m.y + 10 * k, 0, m.x, m.y + 10 * k, 30 * k);
-    mg.addColorStop(0, 'rgba(255,236,190,.28)'); mg.addColorStop(1, 'rgba(255,236,190,0)');
-    ctx.fillStyle = mg; ctx.beginPath(); ctx.ellipse(m.x, m.y + 10 * k, 16 * k, 30 * k, 0, 0, Math.PI * 2); ctx.fill();
-    for (let i = 0; i < 7; i++) {                     // 碎成幾段、跟著水波晃的光
-      const yy = m.y + i * 5 * k, ww = (12 - i * 1.2) * k * (0.7 + 0.35 * Math.sin(t * 2.1 + i * 1.9));
-      ctx.fillStyle = `rgba(255,240,205,${0.32 - i * 0.04})`;
-      ctx.beginPath(); ctx.ellipse(m.x + 2.5 * k * Math.sin(t * 1.6 + i * 1.3), yy, ww / 2, 1.1 * k, 0, 0, Math.PI * 2); ctx.fill();
-    }
-    // 漣漪
+    flush(sparks, sparks.items, s => [s.p.x, s.p.y, s.p.z]);
+    flush(flies, flyItems, f => { const a = f.a + t * 0.1; return [f.r * 1.4 * Math.cos(a), f.y + 0.08 * Math.sin(t * 1.3 + f.ph), f.r * 1.4 * Math.sin(a)]; });
+    flies.p.material.opacity = 0.55 + 0.3 * Math.sin(t * 2);
+    beasts.forEach((b, i) => {                                         // 動物的光：剛投中大亮、之後輕輕閃
+      pulse[b.k] = Math.max(0, (pulse[b.k] || 0) - dt * 0.8);
+      b.glow(pulse[b.k] * 0.6 + (lit[b.k] ? 0.06 + 0.06 * Math.sin(t * 2.4 + i) : 0));
+    });
     for (const r of ripples) {
-      for (let k = 0; k < 3; k++) {
-        const rad = 0.03 + r.t * 0.42 - k * 0.07;
-        if (rad <= 0.01) continue;
-        const a = r.amp * 0.55 * Math.pow(1 - r.t / 2.6, 2) * (1 - k * 0.28);
-        ctx.strokeStyle = `rgba(210,230,255,${a})`; ctx.lineWidth = 1.2;
-        ctx.stroke(pathOf(ring(cam, rad, 0, r.x, r.z, 36)));
-      }
+      r.t += dt; const s = 0.04 + r.t * 0.45;
+      r.m.scale.set(s, s, 1); r.m.material.opacity = r.amp * 0.6 * Math.pow(Math.max(0, 1 - r.t / 2.4), 2);
+      if (r.t > 2.4) { scene.remove(r.m); r.m.material.dispose(); }
     }
-    ctx.restore();
-    // ── 石柱與月盞 ──
-    ctx.drawImage(fgc, 0, 0, w, h);
-    const b = cam.proj({ x: 0, y: POOL.BOWL_Y, z: 0 });
-    const pulse = 0.5 + 0.5 * Math.sin(t * 2);
-    const halo = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, b.s * 0.32);
-    halo.addColorStop(0, `rgba(255,220,140,${0.18 + 0.1 * pulse})`); halo.addColorStop(1, 'rgba(255,220,140,0)');
-    ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(b.x, b.y, b.s * 0.32, 0, Math.PI * 2); ctx.fill();
-    if (pillar > 0) {
-      const top = cam.proj({ x: 0, y: 3, z: 0 });
-      const pg = ctx.createLinearGradient(0, top.y, 0, b.y);
-      pg.addColorStop(0, 'rgba(255,230,160,0)'); pg.addColorStop(1, `rgba(255,230,160,${0.55 * pillar})`);
-      ctx.fillStyle = pg; ctx.fillRect(b.x - b.s * 0.12, top.y, b.s * 0.24, b.y - top.y);
+    ripples = ripples.filter(r => r.t <= 2.4);
+    if (Math.random() < dt * 0.35) { const a = Math.random() * 6.28, rr = 0.45 + Math.random() * 0.6; ripple(rr * Math.cos(a), rr * Math.sin(a), 0.25); }
+    wat.tick(t);
+    reticle.visible = !!motionAim && ready && !held;                   // 手機瞄準的落點圈
+    if (reticle.visible) {
+      const st = standAt(angle), tg = targetOf(motionAim, st.from, st.fwd), z = zoneOf(tg);
+      reticle.position.set(tg.x, z === 'isle' ? POOL.ISLE_H + 0.005 : 0.006, tg.z);
+      reticle.material.color.set(z === 'out' ? 0xf07a6e : 0xffd27a);
+      reticle.scale.setScalar(1 + 0.08 * Math.sin(t * 6));
     }
-    // 螢火
-    for (const f of flies) {
-      const a = f.a + t * 0.12, q = cam.proj({ x: f.r * Math.cos(a) * 1.3, y: f.y + 0.06 * Math.sin(t * 1.3 + f.ph), z: f.r * Math.sin(a) });
-      const al = 0.35 + 0.35 * Math.sin(t * 2.1 + f.ph);
-      const fg = ctx.createRadialGradient(q.x, q.y, 0, q.x, q.y, 5);
-      fg.addColorStop(0, `rgba(255,230,150,${al})`); fg.addColorStop(1, 'rgba(255,230,150,0)');
-      ctx.fillStyle = fg; ctx.beginPath(); ctx.arc(q.x, q.y, 5, 0, Math.PI * 2); ctx.fill();
-    }
-    // ── 空中的東西 ──
-    for (const d of drops) { const q = cam.proj(d.p); ctx.fillStyle = 'rgba(210,230,255,.8)'; ctx.beginPath(); ctx.arc(q.x, q.y, Math.max(0.8, q.s * 0.008), 0, Math.PI * 2); ctx.fill(); }
-    for (const s of sparks) { const q = cam.proj(s.p); ctx.fillStyle = `rgba(255,225,140,${s.life})`; ctx.beginPath(); ctx.arc(q.x, q.y, 1.6, 0, Math.PI * 2); ctx.fill(); }
-    if (coin && coin.phase === 'air') {
-      // 一道淡淡的金色尾巴：飛遠了變小，也看得出它在哪
-      trail.push({ ...coin.p }); if (trail.length > 14) trail.shift();
-      const tc = coin.gold ? '255,214,120' : '220,230,255';
-      trail.forEach((q, i) => { const s = cam.proj(q); ctx.fillStyle = `rgba(${tc},${0.4 * i / trail.length})`; ctx.beginPath(); ctx.arc(s.x, s.y, Math.max(1, s.s * 0.03 * i / trail.length), 0, Math.PI * 2); ctx.fill(); });
-      drawCoin(ctx, cam, coin.p, normalOf(coin), { gold: coin.gold, glow: 0.7 });
-    }
-    if (coin && coin.phase === 'rest' && coin.spot === 'miss') drawCoin(ctx, cam, coin.p, { x: 0, y: 1, z: 0 }, { gold: coin.gold, alpha: 0.5 });
-    // ── 手上的硬幣 ──
-    if (!coin || coin.phase === 'rest') {
-      const rest = { x: START.x, y: START.y + 0.012 * Math.sin(t * 2.2), z: START.z };
-      let hp = rest;
-      if (held) hp = held.p;
-      else if (back) {                                   // 甩得不夠力：硬幣滑回手上
-        const k = Math.min(1, (performance.now() - back.t0) / 260), e = 1 - Math.pow(1 - k, 3);
-        hp = { x: back.from.x + (rest.x - back.from.x) * e, y: back.from.y + (rest.y - back.from.y) * e, z: START.z };
-        if (k >= 1) back = null;
-      }
-      if (!held && !back && !motionAim) {                // 一圈慢慢呼吸的光：「拿起我」
-        const q = cam.proj(rest), rr = q.s * DRAW_R * (1.9 + 0.25 * Math.sin(t * 3));
-        ctx.strokeStyle = `rgba(255,214,120,${0.35 + 0.2 * Math.sin(t * 3)})`; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.arc(q.x, q.y, rr, 0, Math.PI * 2); ctx.stroke();
-      }
-      const toEye = norm(sub(cam.E, hp));
-      drawCoin(ctx, cam, hp, norm({ x: toEye.x * 0.6, y: 1, z: toEye.z * 0.6 }), { gold: isGold(), glow: held ? 0.9 : 0.6 });
-      if (motionAim && !held) drawAim(motionAim);
-    }
+    renderer.render(scene, camera);
   }
 
-  function drawAim(a) {
-    const tg = targetOf(a), v = launchFor(tg), { pts, land } = predict(v, 1 / 60);
-    const zone = zoneOf(land);
-    const col = zone === 'water' ? '255,214,120' : zone === 'rim' ? '255,170,90' : '240,120,110';
-    // 只畫前四成的弧線 —— 方向與力道看得出來，剩下要靠自己的眼光
-    const n = Math.max(2, Math.floor(pts.length * 0.42));
-    for (let i = 2; i < n; i += 2) {
-      const q = cam.proj(pts[i]);
-      ctx.fillStyle = `rgba(${col},${0.85 * (1 - i / n)})`;
-      ctx.beginPath(); ctx.arc(q.x, q.y, Math.max(1.2, q.s * 0.012), 0, Math.PI * 2); ctx.fill();
-    }
-    const rr = 0.085 + 0.008 * Math.sin(t * 6);
-    ctx.strokeStyle = `rgba(${col},.95)`; ctx.lineWidth = 1.6;
-    ctx.stroke(pathOf(ring(cam, rr, 0, land.x, land.z, 36)));
-    ctx.strokeStyle = `rgba(${col},.4)`; ctx.lineWidth = 1;
-    ctx.stroke(pathOf(ring(cam, rr * 1.6, 0, land.x, land.z, 36)));
-    const c = cam.proj(land);
-    ctx.fillStyle = `rgba(${col},.95)`; ctx.beginPath(); ctx.arc(c.x, c.y, 1.8, 0, Math.PI * 2); ctx.fill();
-  }
-
-  /* ── 手指：像寶可夢 GO 丟球 ──
-     按住硬幣（或畫面下半部任何地方），硬幣跟著手指走；往上一甩放開就飛出去。
-     放開前約 0.1 秒的速度決定遠近，甩的方向決定左右，放開的位置就是出手點。
-     甩太慢、或往下拉，硬幣就滑回手上。 */
+  /* ── 手指 ──
+     畫面下方（硬幣附近）按住：拿起硬幣、祈禱、往上甩投出。
+     其他地方左右滑：繞著池子走。 */
   const busy = () => !!coin && coin.phase !== 'rest';
   const local = (e) => { const b = canvas.getBoundingClientRect(); return { x: e.clientX - b.left, y: e.clientY - b.top }; };
-  const holdAt = (q) => {
-    const p = cam.unproject(q.x, q.y, START.z);
-    return { x: clamp(p.x, -1.2, 1.2), y: clamp(p.y, 0.04, 2.2), z: START.z };
-  };
   canvas.addEventListener('pointerdown', (e) => {
-    if (busy() || (canThrow && !canThrow())) return;
-    const q = local(e), c = cam.proj(START);
-    const near = Math.hypot(q.x - c.x, q.y - c.y) < Math.max(80, w * 0.22);
-    if (!near && q.y < h * 0.55) return;                 // 上半部留給看風景（點了不會拿起硬幣）
-    held = { p: holdAt(q), s: [{ ...q, t: performance.now() }] };
-    back = null;
+    const q = local(e), rs = restScreen();
+    const near = Math.hypot(q.x - rs.x, q.y - rs.y) < Math.max(80, w * 0.22) || q.y > h * 0.66;
     canvas.setPointerCapture?.(e.pointerId);
-    haptic(5);
+    if (near && !busy() && !(canThrow && !canThrow())) {
+      const now = e.timeStamp || performance.now();     // 用事件自己的時間：畫面卡一下也量得準
+      held = { p: atScreen(q.x, q.y), s: [{ ...q, t: now }], t0: now };
+      back = null; haptic(5);
+    } else orbit = { x0: q.x, a0: angleGoal };
   });
   canvas.addEventListener('pointermove', (e) => {
-    if (!held) return;
-    const q = local(e), now = performance.now();
-    held.p = holdAt(q);
-    held.s.push({ ...q, t: now });
-    while (held.s.length > 2 && now - held.s[0].t > 140) held.s.shift();
+    const q = local(e), now = e.timeStamp || performance.now();
+    if (held) {
+      held.p = atScreen(q.x, q.y);
+      held.s.push({ ...q, t: now });
+      while (held.s.length > 2 && now - held.s[0].t > 140) held.s.shift();
+    } else if (orbit) angleGoal = orbit.a0 - ((q.x - orbit.x0) / w) * Math.PI * 1.1;
   });
   const release = (e, cancel) => {
+    if (orbit) { orbit = null; return; }
     if (!held) return;
-    const q = local(e), now = performance.now(), from = held.p;
-    const s = [...held.s, { ...q, t: now }].filter(x => now - x.t <= 110);
+    const q = local(e), now = e.timeStamp || performance.now(), from = held.p;
+    const all = [...held.s, { ...q, t: now }];
+    let s = all.filter(x => now - x.t <= 110);
+    if (s.length < 2) s = all.slice(-2);              // 手機卡了一下、點太少：用最後兩個點
     held = null;
     let a = null;
     if (!cancel && s.length >= 2) {
       const dt = Math.max(16, s[s.length - 1].t - s[0].t) / 1000;
       a = flickAim((s[s.length - 1].x - s[0].x) / dt, (s[s.length - 1].y - s[0].y) / dt, h);
     }
-    if (a && launch(a, from)) return;
-    back = { from, t0: now };
+    if (a && launch(a, from, clamp((q.x / w - 0.5) * 0.6, -0.3, 0.3))) return;
+    charge = 0; onCharge?.(null);
+    back = { from, t0: performance.now() };
   };
   canvas.addEventListener('pointerup', (e) => release(e, false));
   canvas.addEventListener('pointercancel', (e) => release(e, true));
@@ -590,8 +431,7 @@ export function mountPool(host, { coins = [], bowlCoins = 0, isGold = () => fals
   /* ── 手機：傾斜瞄準、往前一甩投出 ── */
   let stopMotion = () => {};
   function armMotion() {
-    // iOS：兩種權限都要在點擊當下「同步」要
-    const pm = askMotion();
+    const pm = askMotion();                         // iOS：兩種權限都要在點擊當下「同步」要
     const DO = typeof DeviceOrientationEvent !== 'undefined' ? DeviceOrientationEvent : null;
     const po = DO && typeof DO.requestPermission === 'function' ? DO.requestPermission().then(r => r === 'granted').catch(() => false) : Promise.resolve(!!DO);
     return Promise.all([pm, po]).then(([okM, okO]) => {
@@ -610,15 +450,13 @@ export function mountPool(host, { coins = [], bowlCoins = 0, isGold = () => fals
       const mot = (e) => {
         const a = e.acceleration && e.acceleration.x != null ? e.acceleration : null;
         if (!a) return;
-        const m = Math.hypot(a.x, a.y, a.z || 0);
-        const now = performance.now();
+        const m = Math.hypot(a.x, a.y, a.z || 0), now = performance.now();
         if (now < cool) return;
         if (m > peak) peak = m;
         if (peak > 11 && m < peak * 0.4) {
           peak = 0; cool = now + 1500;
-          // 用甩之前約 0.2 秒的瞄準：甩的動作會讓手機歪掉
-          const old = hist.filter(x => x.t < now - 200).pop() || hist[0];
-          if (old) launch(old.a);
+          const old = hist.filter(x => x.t < now - 200).pop() || hist[0];   // 用甩之前那一瞬間的瞄準
+          if (old) launch(old.a, hand.position.clone());
         }
         if (m < 3) peak *= 0.9;
       };
@@ -629,17 +467,25 @@ export function mountPool(host, { coins = [], bowlCoins = 0, isGold = () => fals
     });
   }
 
-  const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => {
-    if ((host.clientWidth || 360) !== w || (host.clientHeight || h) !== h) size();
-  }) : null;
+  size(); placeCamera();
+  const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => size()) : null;
   ro?.observe(host);
   raf = requestAnimationFrame(frame);
 
-  return {
+  const api = {
     armMotion,
     busy,
-    /** 測試與鍵盤用：直接照某個瞄準投出去 */
-    throwAt: (a, from) => launch(a, from),
-    destroy() { alive = false; cancelAnimationFrame(raf); ro?.disconnect(); stopMotion(); },
+    /** 測試與鍵盤用：照某個瞄準投出去 */
+    throwAt: (a) => launch(a, null),
+    /** 繞到某個角度（弧度） */
+    walkTo: (a) => { angleGoal = a; },
+    destroy() {
+      alive = false; cancelAnimationFrame(raf); ro?.disconnect(); stopMotion();
+      scene.traverse(o => { o.geometry?.dispose?.(); });
+      pmrem.dispose(); env.dispose(); renderer.dispose();
+      canvas.remove();
+    },
   };
+  Object.defineProperty(host, '__pool', { value: api, configurable: true });   // 給自動測試用
+  return api;
 }

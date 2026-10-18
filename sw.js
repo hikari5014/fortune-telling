@@ -1,10 +1,10 @@
 /* 玄鑑 Service Worker：應用程式外殼快取 + 執行期快取 */
-const VERSION = 'xj-0.43.0';   // 與 src/data/changelog.js 的 APP_VERSION 同步
+const VERSION = 'xj-0.44.0';   // 與 src/data/changelog.js 的 APP_VERSION 同步
 const SHELL = [
   './', './index.html', './manifest.webmanifest',
   './styles/tokens.css', './styles/base.css', './styles/motion.css',
   './styles/components.css', './styles/views.css',
-  './src/app.js', './src/router.js', './src/store.js', './src/ui.js', './src/palette.js', './src/platform.js', './src/install.js', './src/onboarding.js', './src/qrcode.js', './src/starfield.js', './src/tarotdraw.js', './src/orbcast.js', './src/decks.js', './src/relics.js', './src/llm.js', './src/verify.js', './src/recommend.js', './src/shrine.js', './src/jiao3d.js', './src/qian3d.js', './src/payments.js', './src/wallet.js', './src/walletui.js', './src/account.js', './src/pool3d.js', './src/temple/gods.js', './src/temple/art.js', './src/rites/kit.js', './src/rites/sound.js', './src/rites/art.js', './src/rites/temizu.js', './src/rites/haiden.js', './src/rites/kuji.js', './src/sharelink.js', './src/privacy.js', './src/navmenu.js', './src/quickadd.js', './src/share.js', './src/sharecards.js', './src/sharecard.js', './src/sharespecs.js', './src/shareui.js', './src/motion.js', './src/icons.js',
+  './src/app.js', './src/router.js', './src/store.js', './src/ui.js', './src/palette.js', './src/platform.js', './src/install.js', './src/onboarding.js', './src/qrcode.js', './src/starfield.js', './src/tarotdraw.js', './src/orbcast.js', './src/decks.js', './src/relics.js', './src/llm.js', './src/verify.js', './src/recommend.js', './src/shrine.js', './src/jiao3d.js', './src/qian3d.js', './src/payments.js', './src/wallet.js', './src/walletui.js', './src/account.js', './src/pool3d.js', './src/pool/models.js', './src/pool/textures.js', './src/temple/gods.js', './src/temple/art.js', './src/rites/kit.js', './src/rites/sound.js', './src/rites/art.js', './src/rites/temizu.js', './src/rites/haiden.js', './src/rites/kuji.js', './src/sharelink.js', './src/privacy.js', './src/navmenu.js', './src/quickadd.js', './src/share.js', './src/sharecards.js', './src/sharecard.js', './src/sharespecs.js', './src/shareui.js', './src/motion.js', './src/icons.js',
   './src/engines/calendar.js', './src/engines/planets.js', './src/engines/bazi.js', './src/engines/unknown.js', './src/engines/astro.js', './src/engines/ziwei.js', './src/engines/pool.js',
   './src/engines/naming.js', './src/engines/numbers.js', './src/engines/fortune.js', './src/engines/synastry.js', './src/engines/iching.js', './src/engines/tarot.js', './src/engines/qian.js', './src/engines/daily.js', './src/engines/bagua.js', './src/engines/transit.js', './src/engines/omikuji.js', './src/engines/jiao.js', './src/engines/tube.js',
   './src/data/strokes.js', './src/data/kangxi.js', './src/data/lucky81.js', './src/data/magnetic.js', './src/data/changelog.js', './src/data/wenyan.js', './src/data/hexagrams.js', './src/data/tarot.js', './src/data/qian.js', './src/data/cities.js', './src/data/nav.js', './src/data/omikuji.js', './src/data/guanyin.js',
@@ -60,7 +60,8 @@ self.addEventListener('fetch', (e) => {
   // 放在跟版號無關的快取，改版時不用重抓。不進安裝外殼 ——
   // 圖還沒放進去的時候，addAll 遇到 404 會讓整個 Service Worker 裝不起來。
   // 求籤的法器照片（籤筒、籤枝、筊杯）也一樣。
-  if (url.pathname.includes('/assets/ceremony/') || url.pathname.includes('/assets/relics/')) {
+  // 3D 函式庫（vendor/three）：檔名帶版號、內容不會變，第一次用到許願池時才下載，之後離線也能用
+  if (url.pathname.includes('/assets/ceremony/') || url.pathname.includes('/assets/relics/') || url.pathname.includes('/vendor/')) {
     e.respondWith(caches.open('xj-art').then(async (c) => {
       const hit = await c.match(req);
       if (hit) return hit;

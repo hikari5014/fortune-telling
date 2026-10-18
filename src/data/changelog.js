@@ -2,11 +2,22 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.43.0';
+export const APP_VERSION = '0.44.0';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.44.0', date: '2026-10-18', title: '許願池 3D 重製：四隻神獸、繞池走、祈禱與流星',
+    items: [
+      { kind: 'change', text: '許願池改成真正的 3D（WebGL）：石池有金色嵌線、馬賽克池底，水面會倒映星空和月亮，四周一圈石燈籠' },
+      { kind: 'add', text: '池子中央的石島上坐著四隻神獸：張口的金蟾（財運）、背著碗的靈龜（長壽平安）、躍出水面的錦鯉（學業事業）、抱著搗藥臼的玉兔（團圓姻緣）' },
+      { kind: 'add', text: '把硬幣投進牠們的嘴、碗、臼，願望一定會實現 —— 神獸會亮起來，之後一直輕輕閃著，容器裡也看得到你投進去的硬幣' },
+      { kind: 'add', text: '可以繞著池子走：在畫面上半部左右滑，就走到池子另一邊；畫面上會提示眼前是哪一隻（金蟾的嘴朝前，要站在牠面前才好投）' },
+      { kind: 'add', text: '祈禱：按住硬幣不放，越久光越強（約 3 秒集滿），手機會一下一下輕輕震；丟出去的硬幣拖著流星般的光，落水後光慢慢退去，回到一枚普通的硬幣' },
+      { kind: 'change', text: '甩的速度改用觸控事件自己的時間計算，手機卡一下也不會把快甩誤判成慢甩' },
+    ],
+  },
   {
     v: '0.43.0', date: '2026-10-18', title: '許願池：全螢幕，像寶可夢 GO 一樣丟硬幣',
     items: [

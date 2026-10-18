@@ -40,23 +40,45 @@ test('太近、太遠都會掉到池外', () => {
   assert.equal(P.simulate(P.launchFor(P.targetOf({ yaw: 0, power: 1 }))).coin.spot, 'miss');
 });
 
-test('月盞投得進，但要瞄得準：能投進的範圍只占一小塊', () => {
-  let hit = 0, total = 0;
-  for (let yaw = -1; yaw <= 1; yaw += 0.02) for (let power = 0; power <= 1; power += 0.02) {
-    total++;
-    if (P.simulate(P.launchFor(P.targetOf({ yaw, power })), { dt: 1 / 120 }).coin.spot === 'bowl') hit++;
+test('四隻動物都投得進，但要瞄得準；金蟾的嘴朝前，只有站在牠面前才好投', () => {
+  const hits = {}, frogFrom = {};
+  let total = 0;
+  for (const ang of [0, Math.PI / 2, Math.PI, Math.PI * 1.5]) {
+    const { from, fwd } = P.standAt(ang);
+    for (let yaw = -1; yaw <= 1; yaw += 0.025) for (let power = 0; power <= 1; power += 0.025) {
+      total++;
+      const { coin } = P.simulate(P.launchFor(P.targetOf({ yaw, power }, from, fwd), from), { from });
+      if (coin.spot === 'animal') { hits[coin.k] = (hits[coin.k] || 0) + 1; if (coin.k === 'frog') frogFrom[ang] = (frogFrom[ang] || 0) + 1; }
+    }
   }
-  assert.ok(hit > 0, '一定要投得進');
-  assert.ok(hit / total < 0.03, `太好中了：${hit}/${total}`);
+  for (const a of P.ANIMALS) assert.ok(hits[a.k] > 0, `${a.t} 投不進`);
+  const all = Object.values(hits).reduce((x, y) => x + y, 0);
+  assert.ok(all / total < 0.06, `太好中了：${all}/${total}`);
+  assert.ok((frogFrom[0] || 0) > (frogFrom[Math.PI] || 0), '金蟾要站在牠面前投');
 });
 
-test('落點分區：水、石緣、池外', () => {
-  assert.equal(P.zoneOf({ x: 0, z: 0.5 }), 'water');
-  assert.equal(P.zoneOf({ x: 0, z: 1.1 }), 'rim');
-  assert.equal(P.zoneOf({ x: 0, z: 1.6 }), 'out');
+test('容器口的位置就是模型上的嘴、碗、臼：往外、離水面有高度', () => {
+  for (const a of P.ANIMALS) {
+    const q = P.catchOf(a);
+    assert.ok(q.c.y > 0.1 && q.r >= 0.08, a.k);
+    assert.ok(Math.hypot(q.c.x, q.c.z) > P.POOL.ISLE_R * 0.9, `${a.k} 要在石島邊上`);
+  }
 });
 
-beforeEach(() => { localStorage.removeItem('xj.wallet'); });
+test('落點分區：石島、水、石緣、池外', () => {
+  assert.equal(P.zoneOf({ x: 0, z: 0.1 }), 'isle');
+  assert.equal(P.zoneOf({ x: 0, z: 0.7 }), 'water');
+  assert.equal(P.zoneOf({ x: 0, z: 1.25 }), 'rim');
+  assert.equal(P.zoneOf({ x: 0, z: 1.8 }), 'out');
+});
+
+test('繞著池子走：站在哪一邊，就面朝池中心', () => {
+  for (const ang of [0, 1, 2.5, 4]) {
+    const { from, fwd } = P.standAt(ang);
+    assert.ok(Math.abs(Math.hypot(from.x, from.z) - P.HAND.r) < 1e-9);
+    assert.ok(Math.abs(from.x * fwd.x + from.z * fwd.z + P.HAND.r) < 1e-9, '朝向中心');
+  }
+});
 
 test('福幣：只給贊助者 —— 沒登入不能儲值，扣不夠就不扣，退回會加回來', async () => {
   assert.equal(W.balance(), 0);
@@ -129,4 +151,11 @@ test('從手指放開的位置出手：預覽落點仍然準', () => {
   assert.ok(Math.hypot(land.x - t.x, land.z - t.z) < 0.03);
   const { coin } = P.simulate(P.launchFor(t, from), { from });
   assert.equal(coin.spot, 'pool');
+});
+
+test('3D 函式庫放在 App 裡（離線可用），並附上授權', () => {
+  const lib = readFileSync(new URL('../vendor/three.module.min.js', import.meta.url), 'utf8');
+  assert.match(lib.slice(0, 200), /Three\.js Authors/);
+  assert.match(readFileSync(new URL('../vendor/three.LICENSE', import.meta.url), 'utf8'), /MIT/);
+  assert.match(readFileSync(new URL('../sw.js', import.meta.url), 'utf8'), /\/vendor\//);
 });
