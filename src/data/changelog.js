@@ -2,11 +2,21 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.38.0';
+export const APP_VERSION = '0.39.0';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.39.0', date: '2026-10-18', title: '3D 籤筒：跟著手機搖，也能用手抽',
+    items: [
+      { kind: 'change', text: '求籤的籤筒改成 3D 竹筒，裡面插著所有的籤（六十甲子籤就六十支），每支高低不一、紅頭朝上' },
+      { kind: 'add', text: '按「用手機搖」之後：手機往哪邊傾斜，籤筒就往哪邊歪；搖一搖，籤在筒裡喀啦喀啦跳，搖久了會有一支被擠出來' },
+      { kind: 'add', text: '也可以憑感覺，直接按住一支往上抽 —— 拉出筒口就是抽中它；抽出來的籤會拿在手上，看得到是第幾首' },
+      { kind: 'add', text: '電腦上拖著筒身左右甩就是搖，往自己這邊拉會往前傾、比較容易倒出來；「搖出一支籤」會自動搖' },
+      { kind: 'change', text: '每次都重新洗籤：抽哪一支、搖出哪一支，抽中每一首的機會都一樣；設定 → 外觀「籤筒」可以換回平面圖' },
+    ],
+  },
   {
     v: '0.38.0', date: '2026-10-18', title: '擲筊：3D 筊杯與物理模擬',
     items: [

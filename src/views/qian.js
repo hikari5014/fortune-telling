@@ -7,6 +7,8 @@ import { observeReveal } from '../motion.js';
 import { DISCLAIMER, sectionHead, kv, shareBtn, doShare, askPrompt } from './_shared.js';
 import { trackBtn, bindTrack } from '../verify.js';
 import { mountJiao3D } from '../jiao3d.js';
+import { mountTube3D } from '../qian3d.js';
+import { zhNum } from '../relics.js';
 import { tube as tubeLine, stick as stickLine, slip as slipArt, jiao as jiaoLine, tubePhoto, stickPhoto, jiaoPhoto, usePhoto } from '../relics.js';
 
 /* 法器：照片或線稿，看設定 */
@@ -77,13 +79,16 @@ export default {
     const fast = () => document.documentElement.dataset.motion === 'off';
     // 擲筊：3D 物理（預設）或原本的翻轉動畫
     const use3d = () => (store.settings.jiaoStyle || '3d') === '3d' && typeof document.createElement('canvas').getContext === 'function';
-    let j3d = null;
-    addEventListener('hashchange', function off() { j3d?.destroy(); removeEventListener('hashchange', off); });
+    let j3d = null, t3d = null;
+    // 籤筒：3D（預設）或原本的平面圖
+    const useTube3d = () => (store.settings.tubeStyle || '3d') === '3d' && typeof document.createElement('canvas').getContext === 'function';
+    addEventListener('hashchange', function off() { j3d?.destroy(); t3d?.destroy(); removeEventListener('hashchange', off); });
     const sleep = (ms) => new Promise(r => setTimeout(r, fast() ? 10 : ms));
 
     /* ── 第一步：搖籤筒 ─────────────────────────── */
     function reset() {
       poem = null; log = []; streak = 0;
+      if (useTube3d()) return reset3d();
       stage.innerHTML = html`
         ${raw(sectionHead('搖籤'))}
         <div class="qstep reveal is-in">
@@ -96,6 +101,37 @@ export default {
           </button>
         </div>`;
       $('#shake', stage).addEventListener('click', doShake);
+    }
+
+    /* 3D 籤筒：手機傾斜／搖晃、拖著甩、或直接用手抽一支 */
+    function reset3d() {
+      stage.innerHTML = html`
+        ${raw(sectionHead('搖籤'))}
+        <div class="qstep reveal is-in">
+          <p class="qstep__hint">默念姓名、出生年月日與要問的事，然後搖籤筒 ——
+            搖到有一支自己跳出來；或是憑感覺，直接按住一支往上抽。</p>
+          <div class="tube3d" id="tube3d" data-noswipe></div>
+          <p class="qstep__hint" id="t3tip">拖著籤筒左右甩就是搖；往自己這邊拉，筒會往前傾、比較容易倒出來。</p>
+          <div class="row" style="gap:var(--sp-2);justify-content:center">
+            <button class="btn btn--primary press" id="shake">${raw(icon('dice'))} 搖出一支籤</button>
+            <button class="btn btn--ghost press" id="t3motion">${raw(icon('spark'))} 用手機搖</button>
+          </div>
+        </div>`;
+      t3d?.destroy();
+      t3d = mountTube3D($('#tube3d', stage), {
+        count: set.poems.length,
+        labelOf: (i) => `第${zhNum(set.poems[i].n)}首`,
+        onPick: (i) => { poem = set.poems[i]; toJiao(); },
+      });
+      $('#shake', stage).addEventListener('click', (e) => { e.currentTarget.disabled = true; t3d.autoShake(); });
+      $('#t3motion', stage).addEventListener('click', async (e) => {
+        const btn = e.currentTarget;
+        const ok = await t3d.armMotion();
+        if (ok) {
+          btn.disabled = true; btn.textContent = '手機已就緒';
+          $('#t3tip', stage).textContent = '拿著手機傾斜，籤筒就跟著歪；搖一搖，籤會在筒裡跳，搖久了會有一支被擠出來。';
+        } else toast('沒辦法讀取手機的動作感測，用拖曳或按鈕也可以');
+      });
     }
 
     async function doShake() {
@@ -118,6 +154,7 @@ export default {
 
     /* ── 第二步：擲筊請示 ───────────────────────── */
     function toJiao() {
+      t3d?.destroy(); t3d = null;
       stage.innerHTML = html`
         ${raw(sectionHead('擲筊請示'))}
         <div class="qstep reveal is-in">

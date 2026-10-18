@@ -1494,3 +1494,10 @@ body.cer-open { overflow: hidden; }
 .jiao3d__cv { display: block; cursor: grab; }
 .jiao3d__cv:active { cursor: grabbing; }
 .jiao3d__tip { margin-top: 0; }
+
+/* 3D 籤筒 */
+.tube3d { position: relative; width: min(100%, 400px); margin: var(--sp-3) auto var(--sp-2); border-radius: var(--r-3); overflow: hidden;
+  background: radial-gradient(110% 80% at 50% 10%, #1d2550, #0a0d1f 72%); box-shadow: inset 0 0 0 1px rgba(217,178,95,.18);
+  touch-action: none; user-select: none; -webkit-user-select: none; }
+.tube3d__cv { display: block; cursor: grab; }
+.tube3d__cv:active { cursor: grabbing; }
