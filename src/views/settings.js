@@ -46,7 +46,7 @@ const select = (id, list, value) => html`<select class="select" id="${id}" style
    各分類的內容照樣全部 render，只是不是這一類的先 hidden ——
    mount 裡的綁定不用跟著拆，也不會漏綁。 */
 const GROUPS = [
-  { k: 'look',   t: '外觀',       icon: 'moon',    d: '主題、字級、介面密度、法器樣式、神社音效與搖晃、今日推薦、語調' },
+  { k: 'look',   t: '外觀',       icon: 'moon',    d: '主題、字級、介面密度、法器樣式、擲筊動畫、神社音效與搖晃、今日推薦、語調' },
   { k: 'motion', t: '動態',       icon: 'spark',   d: '動畫強度、滑動切頁、觸覺回饋、背景星空、命盤特效' },
   { k: 'calc',   t: '命理參數',   icon: 'compass', d: '時區與城市、真太陽時、子時換日、姓名學算法' },
   { k: 'tarot',  t: '塔羅',       icon: 'star',    d: '預設牌組、牌面圖像、抽牌儀式、對照本命盤' },
@@ -86,8 +86,12 @@ export default {
           ${raw(row('法器樣式',
             '求籤的籤筒、籤枝與筊杯要用實物照片還是線稿。照片取自 Wikimedia Commons（授權見「關於」頁）。',
             seg('set-relic', [['photo', '照片'], ['line', '線稿']], s.relicStyle || 'photo')))}
+          ${raw(row('擲筊動畫',
+            '「3D 物理」是真的把兩片筊杯丟出去、在地上彈跳翻滾，停下來哪一面朝上就是結果；手機還可以捧著往上拋。'
+            + '「翻轉」是原本的簡單動畫，比較省電。動畫強度設為關閉時，兩種都直接出結果。',
+            seg('set-jiao', [['3d', '3D 物理'], ['flip', '翻轉']], s.jiaoStyle || '3d')))}
           ${raw(row('神社音效',
-            '鈴聲、拍手、投錢、水聲與籤棒的聲音（當場合成，不下載音檔）。手機靜音時可能聽不到。',
+            '鈴聲、拍手、投錢、水聲、籤棒與擲筊落地的聲音（當場合成，不下載音檔）。手機靜音時可能聽不到。',
             sw('set-shrinesnd', s.shrineSound !== false)))}
           ${raw(row('神籤：搖手機',
             '在神籤頁搖手機就能搖籤箱。太容易誤觸就調「用力」，不想用就關掉（照樣可以點籤箱）。',
@@ -252,6 +256,7 @@ export default {
     bindSeg('set-theme', 'theme');
     bindSeg('set-density', 'density');
     bindSeg('set-relic', 'relicStyle');
+    bindSeg('set-jiao', 'jiaoStyle');
     bindSeg('set-omishake', 'omikujiShake');
     bindSeg('set-register', 'register');
     bindSeg('set-fx', 'chartEffects');

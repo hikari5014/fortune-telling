@@ -5,10 +5,15 @@ import { BUILTIN_SET, LUCK_SCORE, LUCK_ORDER, normalizeSet, SET_SCHEMA } from '.
  *  一平一凸＝聖筊（允）／兩平＝笑筊（問題不清）／兩凸＝陰筊（不允） */
 export function castJiao(rand = Math.random) {
   const a = rand() < 0.5, b = rand() < 0.5;       // true = 平面（陽）
-  const flat = Number(a) + Number(b);
+  return jiaoOf([a ? '平' : '凸', b ? '平' : '凸']);
+}
+
+/** 由兩片朝上的面決定結果（3D 擲筊落地後也走這一支） */
+export function jiaoOf(faces) {
+  const flat = faces.filter(f => f === '平').length;
   const kind = flat === 1 ? '聖筊' : flat === 2 ? '笑筊' : '陰筊';
   return {
-    faces: [a ? '平' : '凸', b ? '平' : '凸'],
+    faces,
     kind, ok: kind === '聖筊',
     text: kind === '聖筊' ? '允杯：可以'
         : kind === '笑筊' ? '笑杯：問題還不夠清楚，或時機未到'
