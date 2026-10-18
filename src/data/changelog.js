@@ -2,11 +2,20 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.37.0';
+export const APP_VERSION = '0.38.0';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.38.0', date: '2026-10-18', title: '擲筊：3D 筊杯與物理模擬',
+    items: [
+      { kind: 'change', text: '求籤的擲筊改成 3D：兩片筊杯真的被丟出去，在木地板上彈跳、翻滾，停下來哪一面朝上就是結果 —— 不是先決定答案再演動畫' },
+      { kind: 'add', text: '三種丟法：按「擲筊」、在畫面上往上一甩（甩越快丟越高）、或按「用手機擲筊」後雙手捧著手機輕輕往上一拋' },
+      { kind: 'add', text: '筊杯凸面是紅漆、平面是原木色，落定後各標「平」「凸」；落地有木頭碰撞聲與震動' },
+      { kind: 'add', text: '機率由物理決定：聖筊約五成、笑筊約三成、陰筊約兩成；設定 → 外觀「擲筊動畫」可以換回原本的翻轉' },
+    ],
+  },
   {
     v: '0.37.0', date: '2026-10-03', title: '神社：參拜與求籤分開，像真的走一趟',
     items: [

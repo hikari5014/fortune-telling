@@ -2,10 +2,11 @@ import { html, raw, $, $$, sheet, toast, copyText, confirmSheet, haptic, downloa
 import { icon } from '../icons.js';
 import { store } from '../store.js';
 import { resolve } from '../router.js';
-import { shakeQian, castJiao, toText, BUILTIN_SET, normalizeSet, SET_SCHEMA, luckScore } from '../engines/qian.js';
+import { shakeQian, castJiao, jiaoOf, toText, BUILTIN_SET, normalizeSet, SET_SCHEMA, luckScore } from '../engines/qian.js';
 import { observeReveal } from '../motion.js';
 import { DISCLAIMER, sectionHead, kv, shareBtn, doShare, askPrompt } from './_shared.js';
 import { trackBtn, bindTrack } from '../verify.js';
+import { mountJiao3D } from '../jiao3d.js';
 import { tube as tubeLine, stick as stickLine, slip as slipArt, jiao as jiaoLine, tubePhoto, stickPhoto, jiaoPhoto, usePhoto } from '../relics.js';
 
 /* 法器：照片或線稿，看設定 */
@@ -74,6 +75,10 @@ export default {
     }));
 
     const fast = () => document.documentElement.dataset.motion === 'off';
+    // 擲筊：3D 物理（預設）或原本的翻轉動畫
+    const use3d = () => (store.settings.jiaoStyle || '3d') === '3d' && typeof document.createElement('canvas').getContext === 'function';
+    let j3d = null;
+    addEventListener('hashchange', function off() { j3d?.destroy(); removeEventListener('hashchange', off); });
     const sleep = (ms) => new Promise(r => setTimeout(r, fast() ? 10 : ms));
 
     /* ── 第一步：搖籤筒 ─────────────────────────── */
@@ -120,13 +125,17 @@ export default {
             搖出<b>第 ${poem.n} 首・${poem.gz}籤</b>。請擲筊確認是不是這一支 ——
             ${need > 1 ? `連得 ${need} 個聖筊才算準` : '擲出聖筊就算確認'}；擲出笑筊或陰筊就重新搖過。
           </p>
-          <div class="jiaos" id="jiaos">
+          ${use3d() ? html`
+          <div class="jiao3d" id="jiao3d" data-noswipe></div>
+          <p class="qstep__hint jiao3d__tip" id="j3tip">按「擲筊」，或在上面往上一甩。</p>
+          <button class="chip press" id="j3motion" style="margin:0 auto var(--sp-2)">${raw(icon('spark'))} 用手機擲筊</button>`
+          : html`<div class="jiaos" id="jiaos">
             ${raw(Array.from({ length: 2 }, () => html`
               <span class="jiao">
                 <span class="jiao__f">${raw(jiaoArt(true))}</span>
                 <span class="jiao__f jiao__f--b">${raw(jiaoArt(false))}</span>
               </span>`).join(''))}
-          </div>
+          </div>`}
           <div class="jiao-log" id="jlog"></div>
           <p class="qstep__hint" id="jmsg" style="min-height:3.4em"></p>
           <div class="row" style="gap:var(--sp-2);justify-content:center">
@@ -137,6 +146,23 @@ export default {
       drawLog();
       $('#cast', stage).addEventListener('click', doCast);
       $('#restart', stage).addEventListener('click', reset);
+      if (use3d()) {
+        j3d?.destroy();
+        j3d = mountJiao3D($('#jiao3d', stage), {
+          canThrow: () => !!$('#cast', stage) && !$('#cast', stage).dataset.wait,
+          onThrow: () => { const b = $('#cast', stage); if (b) b.disabled = true; },
+          onResult: (faces) => settle(jiaoOf(faces)),
+        });
+        // 手機：權限一定要在點擊當下要，所以做成一顆按鈕
+        $('#j3motion', stage).addEventListener('click', async (e) => {
+          const btn = e.currentTarget;
+          const ok = await j3d.armMotion();
+          if (ok) {
+            btn.disabled = true; btn.textContent = '手機已就緒';
+            $('#j3tip', stage).textContent = '雙手捧著手機，輕輕往上一拋就擲出 —— 手機千萬不要離手。';
+          } else toast('沒辦法讀取手機的動作感測，用按鈕或往上甩也可以');
+        });
+      }
     }
 
     function drawLog() {
@@ -147,6 +173,7 @@ export default {
     async function doCast() {
       const btn = $('#cast', stage);
       btn.disabled = true;
+      if (use3d()) { j3d.toss(1); return; }          // 3D：丟出去，落地後由 settle() 接手
       const [a, b] = $$('.jiao', stage);
       /* 先擲出結果再放動畫：翻幾圈由「最後要落哪一面」決定，
          動畫跑到一半才改面，animation-name 一換就會整個重來。 */
@@ -159,6 +186,13 @@ export default {
       a.title = r.faces[0]; b.title = r.faces[1];
       haptic(12);
       await sleep(820);
+      settle(r);
+    }
+
+    /** 擲出結果之後：記錄、判斷聖筊與否（翻轉動畫與 3D 物理共用） */
+    async function settle(r) {
+      const btn = $('#cast', stage);
+      if (!btn) return;
       log.push(r);
       drawLog();
       $('#jmsg', stage).textContent = r.text;
@@ -170,6 +204,7 @@ export default {
         btn.disabled = false;
       } else {
         streak = 0;
+        btn.dataset.wait = '1';                     // 等著重新搖籤的這一秒，不能再丟
         $('#jmsg', stage).textContent = r.text + '　→　重新搖一支籤。';
         await sleep(1100);
         reset();
