@@ -2,13 +2,16 @@ import { html, raw, $, $$, sheet, toast, copyText, confirmSheet, haptic, downloa
 import { icon } from '../icons.js';
 import { store } from '../store.js';
 import { resolve } from '../router.js';
-import { shakeQian, castJiao, jiaoOf, toText, BUILTIN_SET, normalizeSet, SET_SCHEMA, luckScore } from '../engines/qian.js';
+import { shakeQian, castJiao, jiaoOf, toText, GUANYIN_SET, BUILTIN_SET, normalizeSet, SET_SCHEMA, luckScore } from '../engines/qian.js';
 import { observeReveal } from '../motion.js';
 import { DISCLAIMER, sectionHead, kv, shareBtn, doShare, askPrompt } from './_shared.js';
 import { trackBtn, bindTrack } from '../verify.js';
 import { mountJiao3D } from '../jiao3d.js';
 import { mountTube3D } from '../qian3d.js';
 import { zhNum } from '../relics.js';
+import { navigate } from '../router.js';
+import { godOf } from '../temple/gods.js';
+import { tablet } from '../temple/art.js';
 import { tube as tubeLine, stick as stickLine, slip as slipArt, jiao as jiaoLine, tubePhoto, stickPhoto, jiaoPhoto, usePhoto } from '../relics.js';
 
 /* 法器：照片或線稿，看設定 */
@@ -16,16 +19,28 @@ const tubeArt = (n) => (usePhoto(store.settings) ? tubePhoto() : tubeLine(n));
 const stickArt = (label) => (usePhoto(store.settings) ? stickPhoto(label) : stickLine(label));
 const jiaoArt = (flat) => (usePhoto(store.settings) ? jiaoPhoto(flat) : jiaoLine(flat));
 
-const luckCls = (l) => ['大吉', '上吉', '吉'].includes(l) ? 'luck--good' : l === '中吉' || l === '中平' ? 'luck--half' : 'luck--bad';
-const allSets = () => [BUILTIN_SET, ...store.qianSets];
+const luckCls = (l) => ['大吉', '上吉', '吉'].includes(l) ? 'luck--good'
+  : ['中吉', '中平', '半吉', '小吉', '末吉', '末小吉'].includes(l) ? 'luck--half' : 'luck--bad';
+const allSets = () => [BUILTIN_SET, GUANYIN_SET, ...store.qianSets];
 const currentSet = () => allSets().find(s => s.id === store.settings.qianSetId) || BUILTIN_SET;
+/* 從廟裡來的：在某位神明座前求籤，用那位神明的籤詩集 */
+const SET_OF_GOD = { builtin: () => BUILTIN_SET, guanyin: () => GUANYIN_SET };
+const setFor = (god) => (god ? SET_OF_GOD[god.set]?.() || BUILTIN_SET : currentSet());
+const gzOf = (p) => (p.gz ? `・${p.gz}籤` : '');
 
 export default {
   title: '求籤', eyebrow: 'ORACLE POEM',
-  render() {
-    const set = currentSet();
+  title: (c) => (godOf(c?.query?.god) ? '求籤' : '求籤'),
+  render({ query = {} } = {}) {
+    const god = godOf(query.god);
+    const set = setFor(god);
     const sets = allSets();
     return html`
+      ${god ? html`<section class="mz-before reveal" style="--tone:${god.tone}">
+        ${raw(tablet(god.name))}
+        <div><p class="card__label">於${god.name}座前求籤</p>
+          <p class="hint" style="margin-top:4px">${god.short}已允准求籤。籤詩集：${set.name}</p></div>
+      </section>` : ''}
       <section class="card reveal track" data-noswipe>
         <div class="field"><label for="qq">要問的事</label>
           <input class="input" id="qq" value="${store.drafts.qianQ || ''}" placeholder="例如：這份工作該不該接？" maxlength="60"></div>
@@ -51,9 +66,10 @@ export default {
       ${DISCLAIMER}`;
   },
 
-  mount(root, { all }) {
+  mount(root, { all, query = {} }) {
     const stage = $('#qstage', root);
-    let set = currentSet();
+    const god = godOf(query.god);
+    let set = setFor(god);
     let poem = null;
     let log = [];          // 擲筊紀錄
     let streak = 0;
@@ -159,7 +175,7 @@ export default {
         ${raw(sectionHead('擲筊請示'))}
         <div class="qstep reveal is-in">
           <p class="qstep__hint">
-            搖出<b>第 ${poem.n} 首・${poem.gz}籤</b>。請擲筊確認是不是這一支 ——
+            搖出<b>第 ${poem.n} 首${gzOf(poem)}</b>。請擲筊確認是不是這一支 ——
             ${need > 1 ? `連得 ${need} 個聖筊才算準` : '擲出聖筊就算確認'}；擲出笑筊或陰筊就重新搖過。
           </p>
           ${use3d() ? html`
@@ -261,7 +277,7 @@ export default {
           <div class="qslip__in">
             <div class="qcard__head">
               <span class="qcard__no">第 ${poem.n} 首</span>
-              <span class="badge badge--dash">${poem.gz}籤</span>
+              ${poem.gz ? html`<span class="badge badge--dash">${poem.gz}籤</span>` : ''}
               <span class="luck ${luckCls(poem.luck)}">${poem.luck}</span>
             </div>
             <div class="qpoem ${store.settings.qianVertical ? 'qpoem--v' : ''}" id="qpoem">
@@ -291,8 +307,14 @@ export default {
           ${shareBtn('q-share', '長圖')}
           <button class="btn btn--ghost press" id="again">${raw(icon('refresh'))} 重新求籤</button>
           ${trackBtn()}
-        </div>`;
+        </div>
+        ${god ? html`<div class="row" style="justify-content:center;margin-top:var(--sp-4)">
+          <button class="btn btn--primary press" id="thank">${raw(icon('heart'))} 謝神、添香油錢</button></div>` : ''}`;
       observeReveal(stage);
+      if (god) {
+        if (query.m) store.updateMerit(query.m, { poem: `第${zhNum(poem.n)}首（${poem.luck}）` });
+        $('#thank', stage).addEventListener('click', () => navigate(`/temple?god=${god.id}&at=thanks${query.m ? `&m=${query.m}` : ''}`));
+      }
       haptic(18);
 
       $('#qdir', stage).addEventListener('click', (e) => {

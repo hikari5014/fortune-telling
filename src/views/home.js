@@ -36,7 +36,7 @@ const TILES = [
   { p: '/direction',t:'方位',  icon: 'compass', d: '本命卦 · 四吉方 · 四凶方' },
   { p: '/iching',  t: '卜卦',   icon: 'dice',    d: '銅錢 · 時間 · 數字起卦' },
   { p: '/tarot',   t: '塔羅',   icon: 'star',    d: '五種牌陣 · 正逆位' },
-  { p: '/qian',    t: '求籤',   icon: 'folder',  d: '搖籤筒 · 擲筊 · 六十籤' },
+  { p: '/temple',  t: '廟',     icon: 'temple',  d: '六位主神 · 拜拜 · 求籤' },
   { p: '/omikuji', t: '神社',   icon: 'torii',   d: '手水 · 參拜 · 御神籤' },
   { p: '/synastry',t: '合盤',   icon: 'link',    d: '相位 · 刑沖合害 · 宮位對照' },
   { p: '/naming',  t: '姓名',   icon: 'naming',  d: '五格三才 · 81 靈動 · 取名' },

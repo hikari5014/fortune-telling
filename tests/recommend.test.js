@@ -16,7 +16,7 @@ test('沒有檔案 → 推建立檔案；有了檔案 → 第一個推塔羅', (
 test('用過塔羅之後推還沒用過的，不推昨天推過的', () => {
   const seen = { '/tarot': 1 };
   assert.equal(r.choose({ hasProfile: true, seen }).p, '/astro');
-  assert.equal(r.choose({ hasProfile: true, seen, last: '/astro' }).p, '/qian');
+  assert.equal(r.choose({ hasProfile: true, seen, last: '/astro' }).p, '/temple');
 });
 
 test('全部都用過 → 推最久沒用的', () => {

@@ -13,7 +13,7 @@ export const NAV = [
   { p: '/hire',      t: '面談', icon: 'edit',     eyebrow: 'INTERVIEW' },
   { p: '/iching',    t: '卜卦', icon: 'dice',     eyebrow: 'I CHING' },
   { p: '/tarot',     t: '塔羅', icon: 'star',     eyebrow: 'TAROT' },
-  { p: '/qian',      t: '求籤', icon: 'folder',   eyebrow: 'ORACLE POEM' },
+  { p: '/temple',    t: '廟',   icon: 'temple',   eyebrow: 'TEMPLE' },
   { p: '/omikuji',   t: '神社', icon: 'torii',    eyebrow: 'SHRINE' },
   { p: '/naming',    t: '姓名', icon: 'naming',   eyebrow: 'NAME STUDY' },
   { p: '/numbers',   t: '數字', icon: 'numbers',  eyebrow: 'NUMEROLOGY' },
@@ -34,7 +34,7 @@ export const CATS = [
   { key: 'chart',  name: '命盤', icon: 'astro',
     paths: ['/astro', '/ziwei', '/bazi', '/fortune'] },
   { key: 'divine', name: '占卜', icon: 'dice',
-    paths: ['/iching', '/tarot', '/qian', '/omikuji', '/daily', '/direction'] },
+    paths: ['/iching', '/tarot', '/temple', '/omikuji', '/daily', '/direction'] },
   { key: 'bond',   name: '人際', icon: 'link',
     paths: ['/synastry', '/hire', '/naming', '/numbers'] },
 ];

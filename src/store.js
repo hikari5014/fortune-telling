@@ -14,6 +14,7 @@ const K = {
   decks: 'xj.decks',
   daily: 'xj.daily',
   shrine: 'xj.shrinelog',
+  merit: 'xj.merit',
 };
 
 const DEFAULT_SETTINGS = {
@@ -117,6 +118,8 @@ export const EXPORT_PARTS = [
     get: (s) => s.candidates, set: (s, v, m) => write(K.candidates, m ? dedupe([...s.candidates, ...v]) : v) },
   { key: 'shrineLog', label: '御朱印帳', personal: true, desc: '在神社參拜的日子、投的香油錢，以及寫下的願望',
     get: (s) => s.shrineLog, set: (s, v, m) => write(K.shrine, m ? dedupe([...s.shrineLog, ...v]) : v) },
+  { key: 'meritLog', label: '功德簿', personal: true, desc: '在廟裡拜過哪位神明、求了什麼、添了多少香油錢（象徵性的）',
+    get: (s) => s.meritLog, set: (s, v, m) => write(K.merit, m ? dedupe([...s.meritLog, ...v]) : v) },
   { key: 'dailyLog', label: '今日一張紀錄', desc: '每天抽的那張塔羅與你寫的筆記',
     get: (s) => s.dailyLog, set: (s, v, m) => write(K.daily, m ? [...v, ...s.dailyLog].slice(0, 400) : v) },
 ];
@@ -183,6 +186,11 @@ export const store = {
   get shrineLog() { return read(K.shrine, []); },
   set shrineLog(v) { write(K.shrine, v); emit('shrine', v); },
   addShrine(e) { this.shrineLog = [e, ...this.shrineLog].slice(0, 500); return e; },
+  /** 功德簿：每拜一次一筆 {id, date, god, domain, wish, offerings, oil, poem} —— 香油錢是象徵性的 */
+  get meritLog() { return read(K.merit, []); },
+  set meritLog(v) { write(K.merit, v); emit('merit', v); },
+  addMerit(e) { this.meritLog = [e, ...this.meritLog].slice(0, 500); return e; },
+  updateMerit(id, patch) { this.meritLog = this.meritLog.map(e => (e.id === id ? { ...e, ...patch } : e)); },
   get dailyLog() { return read(K.daily, []); },
   set dailyLog(v) { write(K.daily, v); emit('daily', v); },
   logDaily(entry) {

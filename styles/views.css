@@ -1501,3 +1501,128 @@ body.cer-open { overflow: hidden; }
   touch-action: none; user-select: none; -webkit-user-select: none; }
 .tube3d__cv { display: block; cursor: grab; }
 .tube3d__cv:active { cursor: grabbing; }
+
+/* ══ 廟 ══════════════════════════════════════════════════
+   夜裡的廟埕：朱紅柱、燕尾脊、金色剪黏，紅燈籠亮著。 */
+.miao, .mz-scope { --gold: #e3b45a; --vermil: #b8281f; }
+.miao {
+  position: relative; overflow: hidden; border-radius: var(--r-3); padding: var(--sp-4) var(--sp-3) var(--sp-4);
+  background: radial-gradient(120% 70% at 50% 0%, #2a1d3d 0%, transparent 60%), linear-gradient(#120d22, #07060f 75%);
+  color: #f3e9cf; text-align: center; box-shadow: inset 0 0 0 1px rgba(227,180,90,.18);
+}
+.mz-sky { position: absolute; inset: 0; pointer-events: none; }
+.mz-sky i { position: absolute; left: var(--x); top: var(--y); width: 2px; height: 2px; border-radius: 50%; background: #fff; opacity: .35;
+  animation: jn-twinkle 3.4s var(--d) ease-in-out infinite; }
+.mz-front { position: relative; width: min(100%, 400px); margin: 0 auto; }
+.mz-facade { display: block; width: 100%; height: auto; filter: drop-shadow(0 12px 24px rgba(0,0,0,.6)); }
+.mz-plaque { font-family: var(--font-display); font-size: 15px; font-weight: 900; fill: var(--gold); text-anchor: middle; letter-spacing: .2em; }
+.mz-lantern { animation: mz-sway 4s ease-in-out infinite; transform-box: fill-box; transform-origin: 50% 0; }
+@keyframes mz-sway { 50% { transform: rotate(3deg); } }
+.mz-front__censer { position: absolute; left: 50%; bottom: -4%; width: 26%; translate: -50% 0; }
+.mz-censer { display: block; width: 100%; height: auto; }
+/* 香煙：幾縷往上飄、慢慢散開 */
+.mz-smoke { position: absolute; left: 50%; bottom: 60%; width: 40px; height: 90px; translate: -50% 0; pointer-events: none; }
+.mz-smoke i { position: absolute; bottom: 0; left: 50%; width: 10px; height: 10px; border-radius: 50%;
+  background: rgba(230,225,215,.35); filter: blur(4px); animation: mz-smoke 3.6s linear infinite; }
+.mz-smoke i:nth-child(2) { animation-delay: -1.2s; left: 40%; } .mz-smoke i:nth-child(3) { animation-delay: -2.4s; left: 60%; }
+.mz-smoke i:nth-child(4) { animation-delay: -.6s; left: 46%; }
+@keyframes mz-smoke { 0% { transform: translate(0, 0) scale(.6); opacity: 0; } 15% { opacity: .9; }
+  50% { transform: translate(8px, -45px) scale(1.4); } 100% { transform: translate(-10px, -90px) scale(2.4); opacity: 0; } }
+.mz-say { position: relative; z-index: 2; min-height: 3.2em; margin: var(--sp-4) auto 0; max-width: 32em; font-size: var(--step--1); line-height: 1.8; letter-spacing: .04em; }
+.mz-say.is-on { animation: jn-say 500ms ease-out; }
+.mz-domains { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: var(--sp-3); }
+@media (min-width: 560px) { .mz-domains { grid-template-columns: repeat(3, 1fr); } }
+.mz-domain { display: grid; gap: 2px; padding: 12px 10px; border-radius: 14px; text-align: left; color: #f3e9cf;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--tone) 38%, #120d22), #120d22 80%);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tone) 60%, transparent); }
+.mz-domain b { font-family: var(--font-display); font-size: var(--step-0); letter-spacing: .1em; }
+.mz-domain small { font-size: 11px; color: rgba(243,233,207,.6); line-height: 1.5; }
+.mz-domain span { margin-top: 4px; font-size: 12px; color: var(--gold); letter-spacing: .08em; }
+
+/* 神明座前 */
+.mz-stage { position: relative; width: min(100%, 380px); margin: 0 auto; transition: transform 1s cubic-bezier(.3,0,.2,1), filter 1s; transform-origin: 50% 0; }
+.mz-rite.is-bowing .mz-stage { transform: perspective(700px) rotateX(12deg) translateY(22px) scale(.95); filter: brightness(.55); }
+.mz-shrine { position: relative; width: 78%; margin: 0 auto; }
+.mz-niche { display: block; width: 100%; height: auto; }
+.mz-niche__glow { opacity: 0; transition: opacity 1.4s; }
+.mz-rite.is-arrived .mz-niche__glow { opacity: 1; }
+.mz-presence { position: absolute; left: 50%; top: 26%; translate: -50% 0; opacity: 0; transform: translateY(-14px) scale(.96);
+  transition: opacity 1.4s .5s, transform 1.4s .5s; }
+.mz-rite.is-arrived .mz-presence { opacity: 1; transform: none; }
+.mz-tablet { display: grid; place-items: center; padding: 10px 6px; min-height: 120px; width: 46px; border-radius: 22px 22px 4px 4px;
+  background: linear-gradient(#a8221a, #7a140f); box-shadow: inset 0 0 0 2px var(--gold, #e3b45a), 0 0 30px rgba(255,210,120,.45); }
+.mz-tablet__in { display: flex; flex-direction: column; align-items: center; gap: 1px; font-family: var(--font-display); font-weight: 900;
+  font-size: 15px; color: #ffe2a3; line-height: 1.05; }
+.mz-tablet__in i { font-style: normal; }
+.mz-beam { position: absolute; left: 50%; top: 0; width: 46%; height: 100%; translate: -50% 0; pointer-events: none; opacity: 0;
+  background: linear-gradient(rgba(255,226,160,.55), rgba(255,226,160,0) 85%); clip-path: polygon(40% 0, 60% 0, 100% 100%, 0 100%); }
+.mz-rite.is-calling .mz-beam { opacity: .5; transition: opacity 1.4s; }
+.mz-rite.is-arrived .mz-beam { animation: mz-beam 2.4s ease-out forwards; }
+@keyframes mz-beam { 0% { opacity: .9; } 100% { opacity: .18; } }
+/* 布幔：恭請之後往兩邊拉開 */
+.mz-curtain { position: absolute; top: 6%; bottom: 0; width: 41%; background: repeating-linear-gradient(90deg, #9a1d16 0 10px, #b5271e 10px 20px);
+  box-shadow: inset 0 -20px 30px rgba(0,0,0,.35); transition: transform 1.6s cubic-bezier(.5,0,.2,1); border-radius: 50% 50% 0 0 / 14% 14% 0 0; }
+.mz-curtain--l { left: 9%; transform-origin: 0 0; } .mz-curtain--r { right: 9%; transform-origin: 100% 0; }
+.mz-rite.is-arrived .mz-curtain--l { transform: scaleX(.25); } .mz-rite.is-arrived .mz-curtain--r { transform: scaleX(.25); }
+.mz-thanks .mz-curtain { display: none; }
+.mz-altar { position: relative; width: 100%; margin-top: -6px; }
+.mz-table { display: block; width: 100%; height: auto; overflow: visible; }
+.mz-table__t { font-family: var(--font-display); font-size: 14px; fill: var(--gold); text-anchor: middle; letter-spacing: .4em; }
+.mz-flame { position: absolute; top: -40%; width: 8px; height: 14px; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  background: radial-gradient(circle at 50% 70%, #fff6c8, #ffb23e 50%, rgba(255,120,40,0) 75%); filter: drop-shadow(0 0 8px #ffb23e);
+  animation: mz-flicker 1.2s ease-in-out infinite alternate; }
+.mz-flame--l { left: calc(10.6% - 4px); } .mz-flame--r { right: calc(10.6% - 4px); }
+@keyframes mz-flicker { 50% { transform: scale(.9, 1.1) translateY(-1px); } 100% { transform: scale(1.05, .95); } }
+.mz-plates { position: absolute; left: 21%; right: 21%; top: -38%; display: flex; justify-content: space-between; }
+.mz-plate { width: 44px; height: 44px; border-radius: 50%; border: 1px dashed rgba(227,180,90,.35); display: grid; place-items: center; }
+.mz-plate.is-on { border: 0; animation: mz-place 500ms cubic-bezier(.3,1.6,.5,1); }
+@keyframes mz-place { from { transform: translateY(-20px) scale(.6); opacity: 0; } }
+.mz-plate .mz-off { width: 40px; height: 40px; filter: drop-shadow(0 3px 3px rgba(0,0,0,.5)); }
+.mz-burner { position: absolute; left: 50%; top: 8%; width: 24%; z-index: 2; translate: -50% 0; cursor: pointer; }
+.mz-burner .mz-smoke { opacity: 0; transition: opacity 1s; bottom: 70%; }
+.mz-burner.is-planted .mz-smoke { opacity: 1; }
+.mz-sticks { position: absolute; left: 50%; bottom: 58%; translate: -50% 0; display: flex; gap: 5px; }
+.mz-sticks i { width: 2px; height: 34px; background: linear-gradient(#ff7a3a 0 3px, #6b2a12 3px 70%, #c9a46a 70%); border-radius: 1px; }
+.mz-ctrl { position: relative; z-index: 2; margin-top: var(--sp-3); }
+.mz-ctrl__hint { color: rgba(243,233,207,.6) !important; margin-top: var(--sp-2); }
+.mz-tray { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; }
+.mz-item { display: grid; justify-items: center; gap: 2px; padding: 8px 4px; border-radius: 12px; background: rgba(255,255,255,.04);
+  color: #f3e9cf; box-shadow: inset 0 0 0 1px rgba(227,180,90,.2); }
+.mz-item .mz-off { width: 40px; height: 40px; }
+.mz-item b { font-size: 13px; } .mz-item small { font-size: 10px; color: rgba(243,233,207,.6); line-height: 1.35; }
+.mz-item.is-used { opacity: .3; }
+.mz-item.is-no { animation: jn-wrong 320ms; box-shadow: inset 0 0 0 1px #c4425a; }
+.mz-incense { --p: 0; display: inline-grid; justify-items: center; gap: 6px; padding: 12px 18px; border-radius: 16px; position: relative;
+  background: rgba(255,255,255,.04); color: #f3e9cf; touch-action: none;
+  box-shadow: inset 0 0 0 1px rgba(227,180,90, calc(.2 + var(--p) * .8)), 0 0 calc(var(--p) * 24px) rgba(255,170,80,.5); }
+.mz-incense__sticks { display: flex; gap: 6px; height: 70px; align-items: flex-end; }
+.mz-incense__sticks i { width: 3px; height: 70px; border-radius: 2px; background: linear-gradient(#6b2a12 0 70%, #c9a46a 70%); }
+.mz-incense.is-lit .mz-incense__sticks i { background: linear-gradient(#ff7a3a 0 4px, #6b2a12 4px 70%, #c9a46a 70%); box-shadow: 0 -2px 8px #ff8a3a; }
+.mz-incense .mz-smoke { bottom: 80%; }
+.mz-incense small { font-size: 12px; letter-spacing: .1em; }
+.mz-report { max-width: 340px; margin: 0 auto; text-align: left; padding: var(--sp-3); border-radius: 14px; background: rgba(255,255,255,.04);
+  box-shadow: inset 0 0 0 1px rgba(227,180,90,.25); line-height: 1.9; font-size: var(--step--1); }
+.mz-report label { color: rgba(243,233,207,.7) !important; }
+.mz-asks { display: flex; flex-wrap: wrap; gap: 6px; margin-top: var(--sp-2); }
+.mz-ctrl .jiao3d { margin-top: 0; }
+/* 七個步驟擠成一排：去掉編號、縮小間距 */
+.mz-rite .jn-steps { gap: 4px; flex-wrap: nowrap; }
+.mz-rite .jn-steps li { padding: 3px 7px; letter-spacing: 0; white-space: nowrap; }
+.mz-rite .jn-steps li::before { content: none; }
+.mz-rite .jn-steps li.is-done::before { content: "✓"; margin-right: 1px; }
+.mz-go { margin: 0 auto var(--sp-3); display: flex; justify-content: center; }
+/* 求籤頁上方：在哪位神明座前 */
+.mz-before { display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-3) var(--sp-4); margin-bottom: var(--sp-4); border-radius: var(--r-3);
+  background: linear-gradient(120deg, color-mix(in srgb, var(--tone) 30%, var(--surface)), var(--surface)); }
+.mz-before .mz-tablet { min-height: 84px; width: 36px; } .mz-before .mz-tablet__in { font-size: 12px; }
+/* 功德箱與紅包 */
+.mz-oil { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin: var(--sp-2) 0 var(--sp-3); }
+.mz-box { position: relative; width: 150px; height: 70px; margin: 0 auto var(--sp-3); border-radius: 6px 6px 10px 10px; display: grid; place-items: center;
+  background: linear-gradient(#b8281f, #7a140f); box-shadow: inset 0 8px 0 rgba(0,0,0,.35), 0 0 0 2px var(--gold); }
+.mz-box b { font-family: var(--font-display); color: var(--gold); letter-spacing: .4em; }
+.mz-hongbao { position: absolute; left: 50%; top: -60px; width: 34px; height: 48px; margin-left: -17px; border-radius: 3px; display: grid; place-items: center;
+  background: #d6302a; color: #ffe2a3; font-size: 10px; font-weight: 700; box-shadow: inset 0 0 0 2px #e3b45a; }
+.mz-hongbao.is-in { animation: mz-hb 900ms cubic-bezier(.4,0,.6,1) forwards; }
+@keyframes mz-hb { 0% { transform: translateY(-30px) rotate(-8deg); opacity: 0; } 30% { opacity: 1; } 70% { transform: translateY(40px) rotate(0); opacity: 1; } 100% { transform: translateY(60px) scaleY(.2); opacity: 0; } }
+:root[data-motion="off"] .mz-smoke i, :root[data-motion="off"] .mz-lantern, :root[data-motion="off"] .mz-flame, :root[data-motion="off"] .mz-sky i { animation: none; }
+@media (prefers-reduced-motion: reduce) { .mz-smoke i, .mz-lantern, .mz-flame, .mz-sky i { animation: none; } }
