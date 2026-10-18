@@ -1707,3 +1707,38 @@ body.cer-open { overflow: hidden; }
 .about-motto__big { font-family: var(--font-display); font-size: var(--step-2, 1.5rem); line-height: 1.6; letter-spacing: .06em; color: var(--gold, #d9b25f); }
 .about-list { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; font-size: var(--step--1); line-height: 1.8; color: var(--ink-2); }
 .btn--share { box-shadow: inset 0 0 0 1px rgba(227,180,90,.55); color: var(--gold, #d9b25f); }
+
+/* ── 許願池：全螢幕 ─────────────────────────────────── */
+html.is-wishfs, html.is-wishfs body { overflow: hidden; overscroll-behavior: none; }
+.wishfs { position: fixed; inset: 0; z-index: 48; background: #070a1c; color: #efe6cf; overscroll-behavior: none; touch-action: none; }
+.pool3d--fs { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 0; box-shadow: none; }
+.wishfs__top { position: absolute; left: 0; right: 0; top: 0; display: flex; align-items: center; gap: 10px;
+  padding: calc(env(safe-area-inset-top) + 10px) 14px 10px; pointer-events: none;
+  background: linear-gradient(rgba(5,7,20,.55), rgba(5,7,20,0)); }
+.wishfs__top > * { pointer-events: auto; }
+.wishfs__btn { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; color: #f1d58f;
+  background: rgba(10,12,30,.5); box-shadow: inset 0 0 0 1px rgba(227,180,90,.35); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.wishfs__btn svg { width: 20px; height: 20px; }
+.wishfs__title { flex: 1; display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-display); letter-spacing: .25em; font-size: 15px; color: #f1d58f; text-shadow: 0 1px 8px rgba(0,0,0,.6); pointer-events: none; }
+.wishfs__title svg { width: 18px; height: 18px; }
+.wishfs__right { display: flex; align-items: center; gap: 8px; }
+.wishfs__wish { position: absolute; left: 16px; right: 16px; top: calc(env(safe-area-inset-top) + 64px); display: grid; gap: 6px; justify-items: center; }
+.wishfs__input { width: min(100%, 420px); height: 42px; padding: 0 18px; border: 0; border-radius: 99px; font: inherit; font-size: 15px; text-align: center;
+  color: #fff3d6; background: rgba(10,12,30,.45); box-shadow: inset 0 0 0 1px rgba(227,180,90,.35); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); touch-action: manipulation; }
+.wishfs__input::placeholder { color: rgba(243,233,207,.55); }
+.wishfs__input:focus { outline: none; box-shadow: inset 0 0 0 1.5px #e3b45a, 0 0 16px rgba(227,180,90,.35); }
+.wishfs .fu-mode { margin: 0; }
+.wishfs .wish__say { position: absolute; left: 20px; right: 20px; top: calc(env(safe-area-inset-top) + 150px); margin: 0 auto; text-shadow: 0 1px 10px rgba(0,0,0,.8); pointer-events: none; }
+.wishfs .wish__aim { position: absolute; left: 0; right: 0; bottom: calc(env(safe-area-inset-bottom) + 70px); pointer-events: none; text-shadow: 0 1px 6px rgba(0,0,0,.8); }
+.wishfs__hint { position: absolute; left: 0; right: 0; bottom: calc(env(safe-area-inset-bottom) + 66px); text-align: center; font-size: 13px; letter-spacing: .3em;
+  color: rgba(255,226,160,.85); text-shadow: 0 1px 8px rgba(0,0,0,.8); pointer-events: none; animation: wishfs-hint 2.4s ease-in-out infinite; transition: opacity .6s; }
+.wishfs__hint.is-gone { opacity: 0; animation: none; }
+@keyframes wishfs-hint { 0%, 100% { transform: translateY(0); opacity: .55; } 50% { transform: translateY(-6px); opacity: 1; } }
+.wishfs__bottom { position: absolute; left: 14px; right: 14px; bottom: calc(env(safe-area-inset-bottom) + 14px); display: flex; justify-content: space-between; align-items: center; pointer-events: none; }
+.wishfs__bottom > * { pointer-events: auto; }
+.wishfs__chip { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border-radius: 99px; font-size: 13px; color: #f1d58f;
+  background: rgba(10,12,30,.5); box-shadow: inset 0 0 0 1px rgba(227,180,90,.35); }
+.wishfs__chip svg { width: 16px; height: 16px; }
+.wishfs__chip:disabled { opacity: .7; }
+.wishfs .wish__line { top: 40%; }
+:root[data-motion="off"] .wishfs__hint { animation: none; }

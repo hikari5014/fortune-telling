@@ -2,11 +2,20 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.42.0';
+export const APP_VERSION = '0.43.0';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.43.0', date: '2026-10-18', title: '許願池：全螢幕，像寶可夢 GO 一樣丟硬幣',
+    items: [
+      { kind: 'change', text: '許願池改成全螢幕：整支手機就是池子，標題、願望欄、錢包浮在夜空上，App 的頂欄和底欄先收起來' },
+      { kind: 'change', text: '投法改成像寶可夢 GO 丟球：按住畫面下方的硬幣，它會跟著手指走，往上一甩放開就飛出去 —— 甩多快決定多遠、往哪個方向甩決定左右、在哪裡放開就從哪裡出手，不用旋轉' },
+      { kind: 'change', text: '甩得太慢、或往下拉，硬幣會滑回手上，不會白投' },
+      { kind: 'change', text: '手機直拿時鏡頭往下看，池子撐滿畫面；遠處多了一條石燈籠參道，畫面更有縱深' },
+    ],
+  },
   {
     v: '0.42.0', date: '2026-10-18', title: '分享卡、儀式全免費、贊助會員',
     items: [

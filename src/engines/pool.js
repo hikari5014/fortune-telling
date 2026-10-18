@@ -34,17 +34,17 @@ export const YAW_MAX = 0.62;          // 左右最多偏多少（弧度）
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
-/** 瞄準 → 落在水面高度的那一點。aim = { yaw: -1..1, power: 0..1 } */
-export function targetOf({ yaw = 0, power = 0.5 }) {
+/** 瞄準 → 落在水面高度的那一點。aim = { yaw: -1..1, power: 0..1 }；from 是出手的位置（手指放開的地方） */
+export function targetOf({ yaw = 0, power = 0.5 }, from = START) {
   const a = clamp(yaw, -1, 1) * YAW_MAX;
   const d = DIST.min + clamp(power, 0, 1) * (DIST.max - DIST.min);
-  return { x: START.x + d * Math.sin(a), y: 0, z: START.z - d * Math.cos(a), d };
+  return { x: from.x + d * Math.sin(a), y: 0, z: from.z - d * Math.cos(a), d };
 }
 
 /** 要剛好落在 target（水面高度）需要的出手速度 —— 拋物線公式解出來，不是試誤 */
-export function launchFor(target) {
-  const dx = target.x - START.x, dz = target.z - START.z;
-  const d = Math.hypot(dx, dz) || 1e-6, h0 = START.y - (target.y || 0);
+export function launchFor(target, from = START) {
+  const dx = target.x - from.x, dz = target.z - from.z;
+  const d = Math.hypot(dx, dz) || 1e-6, h0 = Math.max(0.02, from.y - (target.y || 0));
   const c = Math.cos(ANGLE), t = Math.tan(ANGLE);
   const v = Math.sqrt(POOL.G * d * d / (2 * c * c * (h0 + d * t)));
   const vh = v * c;
@@ -58,8 +58,8 @@ function airStep(p, v, dt) {
 }
 
 /** 預覽：從出手到落到水面高度的弧線（不含碰撞）。回傳點列與落點 */
-export function predict(v0, dt = 1 / 120) {
-  const p = { ...START }, v = { ...v0 }, pts = [{ ...p }];
+export function predict(v0, dt = 1 / 120, from = START) {
+  const p = { ...from }, v = { ...v0 }, pts = [{ ...p }];
   for (let i = 0; i < 2000; i++) {
     const py = p.y;
     airStep(p, v, dt);
@@ -74,6 +74,21 @@ export function predict(v0, dt = 1 / 120) {
   return { pts, land: { ...p } };
 }
 
+/**
+ * 寶可夢 GO 式的「甩」：手指放開前那一小段的速度（每秒幾個螢幕高）換成瞄準。
+ *   vy：往上為負；vx：往右為正；h：畫面高（px）
+ * 太慢、或往下甩 → null（硬幣回到手上）。同樣的甩法一定得到同樣的落點。
+ */
+export const FLICK = { min: 0.9, max: 4.2, maxAngle: 0.5 };     // 每秒 0.9～4.2 個螢幕高；左右最多偏約 29°
+export function flickAim(vx, vy, h) {
+  const up = -vy / h;
+  if (up < FLICK.min) return null;
+  return {
+    power: clamp((up - FLICK.min) / (FLICK.max - FLICK.min), 0, 1),
+    yaw: clamp(Math.atan2(vx, -vy) / FLICK.maxAngle, -1, 1),
+  };
+}
+
 /** 落點在哪一區（給瞄準圈上色用） */
 export function zoneOf({ x, z }) {
   const r = Math.hypot(x, z);
@@ -83,10 +98,10 @@ export function zoneOf({ x, z }) {
 }
 
 /* ── 一枚硬幣 ───────────────────────────────────────── */
-export function createCoin(v0, { spin = 17 } = {}) {
+export function createCoin(v0, { spin = 17 } = {}, from = START) {
   const sp = Math.hypot(v0.x, v0.z) || 1;
   return {
-    p: { ...START }, v: { ...v0 },
+    p: { ...from }, v: { ...v0 },
     phase: 'air',              // air → sink → rest | bowl | miss
     axis: { x: -v0.z / sp, y: 0, z: v0.x / sp },     // 翻轉軸：水平、跟前進方向垂直
     phi: 0, spin,              // 翻了幾圈、每秒翻多快
@@ -221,8 +236,8 @@ export function stepCoin(c, dt, out = []) {
 }
 
 /** 從出手一路算到停下來（減少動態、測試用） */
-export function simulate(v0, { dt = 1 / 120, max = 20 } = {}) {
-  const c = createCoin(v0), events = [];
+export function simulate(v0, { dt = 1 / 120, max = 20, from = START } = {}) {
+  const c = createCoin(v0, {}, from), events = [];
   for (let t = 0; t < max && c.phase !== 'rest'; t += dt) stepCoin(c, dt, events);
   if (c.phase !== 'rest') { c.phase = 'rest'; c.spot = c.spot || 'miss'; }
   return { coin: c, events };
