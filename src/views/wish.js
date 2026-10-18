@@ -7,14 +7,17 @@ import { mountPool } from '../pool3d.js';
 import { targetOf, START } from '../engines/pool.js';
 import { dayKey, fast } from '../rites/kit.js';
 import { spend, refund, NAME } from '../wallet.js';
-import { walletChip, bindWallet, ensure, coinIcon } from '../walletui.js';
+import { walletChip, bindWallet, coinIcon, coinToggle, goldMode, sponsorLink } from '../walletui.js';
+import { shareCardBtn, openShare } from '../shareui.js';
+import { wishSpec } from '../sharespecs.js';
 
 /* 星空許願池
    ──────────────────────────────────────────────────────────
-   寫下（或默念）一個願望，用手指或手機把一枚福幣投進池裡。
+   寫下（或默念）一個願望，用手指或手機把一枚硬幣投進池裡 —— 免費，投多少都可以。
+   贊助者可以改投金色的福幣（扣一枚，畫面多一點光）。
    落進水裡：硬幣沉到池底，一直留在那裡 —— 投越多，池底越亮。
    投進中央的月盞：算你厲害，多一句祝福。
-   掉到池外：福幣退回，撿起來再投一次。
+   掉到池外：撿起來再投一次（福幣會退回）。
 
    網址：/wish（許願池）、?at=log（許願簿） */
 
@@ -52,7 +55,8 @@ function hub() {
         ${walletChip()}
       </div>
       <div class="pool3d" id="pool"><div class="wish__float" id="wfloat" aria-hidden="true"></div></div>
-      <p class="wish__say" id="wsay" aria-live="polite">寫下願望，然後按住水池往上拉 —— 放手就投出一枚${NAME}。</p>
+      <p class="wish__say" id="wsay" aria-live="polite">寫下願望，然後按住水池往上拉 —— 放手就投出一枚硬幣。</p>
+      ${coinToggle()}
       <p class="wish__aim" id="waim"></p>
       <div class="field wish__field">
         <label for="wwish">你的願望（可以不寫，默念也行）</label>
@@ -62,6 +66,8 @@ function hub() {
         <button class="chip press" id="wmotion">${raw(icon('spark'))} 用手機投</button>
         <button class="chip press" data-go="/wish?at=log">${raw(icon('records'))} 許願簿</button>
       </div>
+      <div class="row" id="wcardrow" style="justify-content:center;margin-top:var(--sp-2)" hidden>${shareCardBtn('wcard', '分享這個願望')}</div>
+      <div class="wish__sponsor">${sponsorLink()}</div>
       <p class="hint wish__hint">
         往上拉越長、投越遠；往左右偏就改方向。拉的時候會畫出前半段的弧線和水面上的落點圈 ——
         空中沒有風、沒有運氣，落點就是你瞄的地方。中央的月盞比水面高，要投進去得自己抓好。
@@ -75,27 +81,31 @@ function mountHub(root) {
   const say = $('#wsay', root), aimEl = $('#waim', root), input = $('#wwish', root), float = $('#wfloat', root);
   const tell = (t) => { say.classList.remove('is-on'); void say.offsetWidth; say.textContent = t; say.classList.add('is-on'); };
   input.addEventListener('input', () => store.setDraft('wish', input.value));
-  let wish = '';
+  let wish = '', last = null, lastSay = '';
   const log = store.wishLog;
+  $('#wcard', root).addEventListener('click', () => last && openShare(wishSpec(last, lastSay), '玄鑑-許願池'));
   const pool = mountPool($('#pool', root), {
     coins: log.filter(e => e.spot === 'pool').reverse(),
-    bowlCoins: log.filter(e => e.spot === 'bowl').length,
+    bowlCoins: log.filter(e => e.spot === 'bowl').reverse().map(e => !!e.gold),
+    isGold: () => goldMode(root),
     onAim: (a) => { aimEl.textContent = aimText(a); },
     onBeforeThrow: () => {
-      if (!ensure(1)) return false;
-      spend(1, '許願池');
+      // 一般硬幣免費；選了福幣才扣（扣不到就改投一般硬幣）
+      const gold = goldMode(root) && spend(1, '許願池');
       wish = input.value.trim();
       tell('……');
-      return true;
+      return { gold };
     },
     onLand: (r) => {
       if (r.spot === 'miss') {
-        refund(1, '許願池・掉到池外退回');
-        tell(`硬幣掉到池外了，${NAME}已退回。再瞄準一次吧。`);
+        if (r.gold) refund(1, '許願池・掉到池外退回');
+        tell(r.gold ? `${NAME}掉到池外了，已經退回錢包。再瞄準一次吧。` : '硬幣掉到池外了，撿起來再瞄準一次吧。');
         return;
       }
-      store.addWish({ id: uid('wi'), date: dayKey(), at: new Date().toISOString(), wish, ...r });
-      tell(r.spot === 'bowl' ? pick(BOWL) : pick(BLESS));
+      last = store.addWish({ id: uid('wi'), date: dayKey(), at: new Date().toISOString(), wish, ...r });
+      lastSay = r.spot === 'bowl' ? pick(BOWL) : pick(BLESS);
+      tell(lastSay);
+      $('#wcardrow', root).hidden = false;
       if (wish) {
         // 願望化成一行光，從水面升起、散進星空
         const el = document.createElement('span');
@@ -120,19 +130,19 @@ function mountHub(root) {
 function book() {
   const log = store.wishLog;
   if (!log.length) return html`<div class="empty reveal">${raw(icon('pool'))}
-    <p>許願簿還是空的。<br>到許願池投下第一枚${NAME}吧。</p>
+    <p>許願簿還是空的。<br>到許願池投下第一枚硬幣吧。</p>
     <button class="btn btn--primary press" data-go="/wish">去許願池</button></div>${DISCLAIMER}`;
   const bowl = log.filter(e => e.spot === 'bowl').length;
   return html`
     <section class="section" style="margin-top:0">
       <div class="wish__stats">
-        <div><b>${log.length}</b><small>投下的${NAME}</small></div>
+        <div><b>${log.length}</b><small>投下的硬幣</small></div>
         <div><b>${bowl}</b><small>正中月盞</small></div>
         <div><b>${log.filter(e => e.wish).length}</b><small>寫下的願望</small></div>
       </div>
       <div class="stack" style="gap:8px;margin-top:var(--sp-4)">
         ${log.slice(0, 120).map(e => html`<div class="card wish__entry ${e.spot === 'bowl' ? 'is-bowl' : ''}">
-          <span class="wish__entry-coin">${raw(coinIcon(22))}</span>
+          <span class="wish__entry-coin ${e.gold ? '' : 'is-plain'}">${raw(coinIcon(22))}</span>
           <div><p class="card__label">${e.date}${e.spot === 'bowl' ? '　正中月盞' : ''}</p>
           <p style="margin-top:2px">${e.wish || '（默念的願望）'}</p></div>
         </div>`)}

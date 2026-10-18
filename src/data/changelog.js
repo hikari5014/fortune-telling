@@ -2,11 +2,23 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.41.0';
+export const APP_VERSION = '0.42.0';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.42.0', date: '2026-10-18', title: '分享卡、儀式全免費、贊助會員',
+    items: [
+      { kind: 'add', text: '分享卡：求籤、神籤、塔羅、卜卦、星盤日月升、許願池、廟裡參拜、神社御朱印、首頁今日一張，都能做成一張限時動態尺寸的圖，分享到 IG、Threads、LINE' },
+      { kind: 'add', text: '三種風格隨時切換：星夜金箔、宣紙朱印、現代雜誌（記住你上次選的）；底部 QR 掃了直接打開同一個功能' },
+      { kind: 'add', text: '卡上不印姓名和生日；「問的事」和「願望」要自己勾選才會印上去' },
+      { kind: 'change', text: '儀式全免費：許願池、香油錢、賽錢、初穗料都不扣任何東西，一般人投的是銀色硬幣，也不用登入' },
+      { kind: 'change', text: '福幣改成贊助者專用：開通會員錢包（Google 或 Email 免密碼登入）後，拜拜、許願時可以改投金色福幣，換手機也不會不見；拿掉每天送幣' },
+      { kind: 'add', text: '關於頁新增宗旨「讓有煩惱的人，有近距離的依靠與解答」與贊助條款：App 永遠免費、贊助費用 30 天內無條件退費、雲端只存登入 Email 與福幣紀錄' },
+      { kind: 'data', text: '贊助目前仍是示範，不會扣款' },
+    ],
+  },
   {
     v: '0.41.0', date: '2026-10-18', title: '星空許願池與福幣錢包',
     items: [

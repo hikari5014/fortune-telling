@@ -13,7 +13,7 @@ const NO_LINE_START = '，。、；：？！）》」』】〉…·”’%';
 /* 不能出現在行末的標點 */
 const NO_LINE_END = '（《「『【〈“‘';
 
-function wrap(ctx, text, maxW) {
+export function wrap(ctx, text, maxW) {
   const out = [];
   for (const para of String(text ?? '').split('\n')) {
     if (!para) { out.push(''); continue; }

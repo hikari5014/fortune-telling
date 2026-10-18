@@ -1679,3 +1679,31 @@ body.cer-open { overflow: hidden; }
 :root[data-motion="off"] .wish__line { animation-duration: 1ms; }
 .jn-wallet { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: var(--sp-2); }
 .jn-wallet small { font-size: 11px; color: rgba(239,230,207,.6); }
+/* 一般硬幣／福幣 的切換，與贊助入口 */
+.fu-mode { display: flex; justify-content: center; gap: 6px; margin: var(--sp-2) auto; }
+.fu-mode__b { display: inline-flex; align-items: center; gap: 4px; height: 32px; padding: 0 12px; border-radius: 99px; font-size: 13px;
+  color: rgba(243,233,207,.75); background: rgba(255,255,255,.04); box-shadow: inset 0 0 0 1px rgba(227,180,90,.25); }
+.fu-mode__b[aria-pressed="true"] { color: #1a160e; background: linear-gradient(#f6dc9a, #d9a441); box-shadow: 0 0 14px rgba(227,180,90,.45); }
+.fu-mode__b[data-fumode="plain"][aria-pressed="true"] { background: linear-gradient(#eef1f7, #b9bfcc); box-shadow: none; }
+.fu-link { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: rgba(241,201,104,.8); background: none; padding: 6px 8px; }
+.wish__sponsor { display: flex; justify-content: center; margin-top: var(--sp-2); }
+.wish__entry-coin.is-plain .fu-coin { filter: grayscale(1) brightness(1.15); }
+.fu-lead { font-size: var(--step--1); line-height: 1.8; }
+.fu-acct { padding: var(--sp-3); border-radius: 14px; background: var(--surface-2, rgba(255,255,255,.04)); display: grid; gap: 8px; font-size: var(--step--1); }
+.fu-login { display: grid; gap: 8px; } .fu-login .row { display: flex; } .fu-login .input { flex: 1; min-width: 0; }
+.fu-terms { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; font-size: 12px; color: var(--muted); line-height: 1.7; }
+.mz-hongbao.is-gold { box-shadow: inset 0 0 0 2px #ffe08a, 0 0 18px rgba(255,214,120,.8); }
+.jn-purse__coin--fu .fu-coin { filter: drop-shadow(0 0 8px rgba(255,214,120,.7)); }
+
+/* ── 分享卡抽屜 ─────────────────────────────────────── */
+.sc-sheet { display: grid; gap: var(--sp-3); }
+.sc-preview { position: relative; width: min(62vw, 260px); aspect-ratio: 9 / 16; margin: 0 auto; border-radius: 14px; overflow: hidden;
+  background: var(--surface-2, rgba(255,255,255,.05)); box-shadow: 0 12px 40px rgba(0,0,0,.35); display: grid; place-items: center; }
+.sc-preview img { width: 100%; height: 100%; object-fit: cover; display: block; transition: opacity .3s; }
+.sc-preview.is-busy img { opacity: .45; }
+.sc-loading { font-size: 13px; color: var(--muted); }
+.sc-styles { justify-self: center; }
+.sc-ask { display: flex; gap: 8px; align-items: center; font-size: var(--step--1); justify-content: center; }
+.about-motto__big { font-family: var(--font-display); font-size: var(--step-2, 1.5rem); line-height: 1.6; letter-spacing: .06em; color: var(--gold, #d9b25f); }
+.about-list { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; font-size: var(--step--1); line-height: 1.8; color: var(--ink-2); }
+.btn--share { box-shadow: inset 0 0 0 1px rgba(227,180,90,.55); color: var(--gold, #d9b25f); }

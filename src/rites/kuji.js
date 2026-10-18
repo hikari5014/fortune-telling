@@ -20,8 +20,8 @@ import { kujibako, kujiStick, rack } from '../shrine.js';
 import { juyosho, coinSVG } from './art.js';
 import { sleep, fast, drag, mark, listenShake, askMotion, onLeave } from './kit.js';
 import { rattle, coinDrop, knock, paper, suzu } from './sound.js';
-import { spend, NAME } from '../wallet.js';
-import { walletChip, bindWallet, ensure } from '../walletui.js';
+import { shareCardBtn, openShare } from '../shareui.js';
+import { omikujiSpec } from '../sharespecs.js';
 
 const NEED = 5;                                   // 搖幾下
 
@@ -60,8 +60,7 @@ export function render() {
       <div class="jn-kj__counter" id="kj-counter">
         <div class="jn-kj__offer">
           <button class="jn-kj__coin press" id="kj-coin" aria-label="把百圓放進初穗料箱">${raw(coinSVG(100))}</button>
-          <span class="jn-kj__obox" id="kj-obox"><b>初穗料</b><small>1 枚${NAME}</small></span>
-          <div class="jn-wallet">${walletChip()}</div>
+          <span class="jn-kj__obox" id="kj-obox"><b>初穗料</b><small>百圓</small></span>
         </div>
         <div class="jn-kujiwrap" id="kj-wrap">
           <button class="jn-kujibox press" id="kj-box" aria-label="六角籤箱" disabled>${raw(kujibako())}</button>
@@ -101,7 +100,6 @@ export function mount(root, { all }) {
   const cab = $('#kj-cab', root), fold = $('#kj-fold', root), result = $('#kj-result', root);
   const q = $('#kj-q', root);
   q.addEventListener('input', () => store.setDraft('omikujiQ', q.value));
-  bindWallet(root);
   let step = -1, shakes = 0, stop = () => {}, current = null;
   onLeave(() => stop());
 
@@ -123,8 +121,6 @@ export function mount(root, { all }) {
 
   coin.addEventListener('click', async () => {
     if (step !== 0) return;
-    if (!ensure(1)) return;
-    spend(1, '神社・初穗料');
     coin.disabled = true;
     const motion = askMotion();               // iOS 的權限只能在點擊當下要
     const a = coin.getBoundingClientRect(), b = obox.getBoundingClientRect();
@@ -284,6 +280,7 @@ export function mount(root, { all }) {
           ? html`<button class="btn btn--primary press" id="kj-tie">${raw(icon('pin'))} 綁在結籤處</button>`
           : html`<button class="btn btn--primary press" id="kj-keep">${raw(icon('down'))} 帶回家（存到紀錄）</button>`}
         <button class="btn btn--ghost press" id="kj-ask">${raw(icon('prompt'))} 請 LLM 解籤</button>
+        ${shareCardBtn('kj-card')}
         <button class="btn btn--ghost press" id="kj-copy">${raw(icon('copy'))} 複製</button>
         <button class="btn btn--ghost press" id="kj-again">${raw(icon('refresh'))} 再求一次</button>
       </div>
@@ -298,6 +295,7 @@ export function mount(root, { all }) {
 
     const text = omikujiText(s, question);
     $('#kj-copy', result).addEventListener('click', () => copyText(text, '籤詩已複製'));
+    $('#kj-card', result).addEventListener('click', () => openShare(omikujiSpec(s, banOf(s.n), question), `玄鑑-神籤${s.n}`));
     $('#kj-ask', result).addEventListener('click', () => goFocus({ all, label: `神籤 ${banOf(s.n)} ${s.level}`, text,
       question: `我在神社抽到了觀音百籤的${banOf(s.n)}（${s.level}）。請用白話解釋這首籤詩在說什麼${question ? `，並針對「${question}」給我建議` : ''}。` }));
     $('#kj-again', result).addEventListener('click', () => { start(); $('.jn-kj', root).scrollIntoView({ behavior: fast() ? 'auto' : 'smooth' }); });

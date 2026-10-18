@@ -4,6 +4,8 @@ import { wheelSVG, SIGNS, houseMeaning } from '../engines/astro.js';
 import { focusBtn, goFocus, hourWarning, DISCLAIMER, needProfile, sectionHead, kv, promptLink, pad, shareBtn, doShare } from './_shared.js';
 import { transits, transitText } from '../engines/transit.js';
 import { isHourUnknown } from '../engines/unknown.js';
+import { shareCardBtn, openShare } from '../shareui.js';
+import { natalSpec } from '../sharespecs.js';
 
 const ELEMENT_TEXT = { 火: '行動、直覺、熱度', 土: '務實、穩定、累積', 風: '思考、交流、彈性', 水: '情感、直覺、連結' };
 
@@ -181,6 +183,7 @@ export default {
           ${raw(promptLink('astro-big3', '解讀日月升'))}
           <a class="btn btn--ghost press" href="#/prompt?t=bazi-deep">${raw(icon('prompt'))} 八字格局</a>
           <a class="btn btn--ghost press" href="#/prompt?t=overview">${raw(icon('spark'))} 命盤總覽</a>
+          ${all.astro ? shareCardBtn('a-card') : ''}
           ${shareBtn('a-share', '存成長圖')}
         </div>
       </section>
@@ -202,6 +205,7 @@ export default {
       goFocus({ all, label: `行運 ${t.date}`, text: transitText(t),
         question: `請解讀 ${t.date} 的行運對我的影響：哪些是這陣子的主題、哪些只是這兩天的起伏，以及可以怎麼應對。` });
     });
+    $('#a-card', root)?.addEventListener('click', () => openShare(natalSpec(all.astro, isHourUnknown(profile)), '玄鑑-日月升'));
     $('#a-share', root)?.addEventListener('click', async () => {
       const { natalCard } = await import('../sharecards.js');
       doShare(() => natalCard(all, profile), '玄鑑-命盤.png');

@@ -58,26 +58,30 @@ test('落點分區：水、石緣、池外', () => {
 
 beforeEach(() => { localStorage.removeItem('xj.wallet'); });
 
-test('福幣：每天送一次，扣不夠就不扣，退回會加回來', () => {
+test('福幣：只給贊助者 —— 沒登入不能儲值，扣不夠就不扣，退回會加回來', async () => {
   assert.equal(W.balance(), 0);
-  assert.equal(W.claimDaily('2026-10-18'), W.DAILY);
-  assert.equal(W.claimDaily('2026-10-18'), 0, '同一天不能領兩次');
-  assert.equal(W.balance(), W.DAILY);
-  assert.equal(W.spend(W.DAILY + 1, 'x'), false);
-  assert.equal(W.balance(), W.DAILY, '不夠的時候一枚都不扣');
+  assert.equal(W.isSponsor(), false, '一般人不是贊助者');
+  assert.equal((await W.buy('p30')).reason, 'login', '福幣只存在會員帳戶裡');
+  W.syncFrom({ coins: 5, member: true });
+  assert.equal(W.isSponsor(), true);
+  assert.equal(W.spend(6, 'x'), false);
+  assert.equal(W.balance(), 5, '不夠的時候一枚都不扣');
   assert.equal(W.spend(2, '許願池'), true);
   W.refund(1, '退回');
-  assert.equal(W.balance(), W.DAILY - 1);
-  assert.equal(W.claimDaily('2026-10-19'), W.DAILY, '隔天又可以領');
-  assert.equal(store.wallet.log[0].what, '每日福幣');
+  assert.equal(W.balance(), 4);
+  assert.equal(store.wallet.log[0].what, '退回');
 });
 
-test('贊助儲值現在是示範：加幣、標明未扣款；錢包不進備份', async () => {
-  const r = await W.buy('p120');
-  assert.equal(r.ok, true); assert.equal(r.symbolic, true);
-  assert.equal(W.balance(), 120);
-  assert.match(store.wallet.log[0].what, /示範/);
-  assert.equal((await W.buy('nope')).ok, false);
+test('0.41 版本機送的福幣：沒登入就清掉；會員的不動', () => {
+  store.wallet = { coins: 12, day: '2026-10-18', log: [] };
+  W.migrateLocal();
+  assert.equal(W.balance(), 0);
+  store.wallet = { coins: 30, member: true, log: [] };
+  W.migrateLocal();
+  assert.equal(W.balance(), 30);
+});
+
+test('付款仍是象徵性的；錢包不進備份', async () => {
   assert.equal(pay.MODE, 'symbolic');
   const { EXPORT_PARTS } = await import('../src/store.js');
   assert.ok(!EXPORT_PARTS.some(p => /wallet/i.test(p.key)), '餘額不能跟著備份檔被複製');
@@ -97,9 +101,12 @@ test('許願池與許願簿畫得出來', () => {
   localStorage.removeItem('xj.wishes');
 });
 
-test('廟與神社的投錢都改從福幣扣', () => {
-  for (const f of ['../src/views/temple.js', '../src/rites/haiden.js', '../src/rites/kuji.js']) {
+test('儀式全免費：只有選了福幣才扣，初穗料不扣', () => {
+  const kuji = readFileSync(new URL('../src/rites/kuji.js', import.meta.url), 'utf8');
+  assert.doesNotMatch(kuji, /spend\(/);
+  for (const f of ['../src/views/temple.js', '../src/rites/haiden.js', '../src/views/wish.js']) {
     const src = readFileSync(new URL(f, import.meta.url), 'utf8');
-    assert.match(src, /ensure\(/, f); assert.match(src, /spend\(/, f);
+    assert.doesNotMatch(src, /ensure\(/, `${f} 不能因為沒有福幣就擋人`);
+    assert.match(src, /spend\(1/, f);
   }
 });

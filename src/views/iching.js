@@ -6,6 +6,8 @@ import { observeReveal } from '../motion.js';
 import { DISCLAIMER, sectionHead, kv, askPrompt } from './_shared.js';
 import { trackBtn, bindTrack } from '../verify.js';
 import { coin } from '../relics.js';
+import { shareCardBtn, openShare } from '../shareui.js';
+import { ichingSpec } from '../sharespecs.js';
 
 const hexSVG = (h, moving = [], title = '') => html`
   <div>
@@ -92,6 +94,7 @@ export default {
 
         <div class="row" style="gap:var(--sp-2);margin-top:var(--sp-4)">
           <button class="btn btn--primary press" id="ask">${raw(icon('prompt'))} 請 LLM 解卦</button>
+          ${shareCardBtn('i-card')}
           <button class="btn btn--ghost press" id="copy-hex">${raw(icon('copy'))} 複製卦象</button>
           <button class="btn btn--ghost press" id="again">${raw(icon('refresh'))} 重新起卦</button>
           ${trackBtn()}
@@ -110,6 +113,7 @@ export default {
       ].filter(Boolean).join('\n');
 
       $('#copy-hex', result).addEventListener('click', () => copyText(plain, '卦象已複製'));
+      $('#i-card', result).addEventListener('click', () => openShare(ichingSpec(r, lines, moving, $('#q', root).value.trim()), `玄鑑-${r.ben.name}卦`));
       bindTrack(result, () => ({ kind: 'iching', question: $('#q', root).value.trim(),
         text: plain.replace(/^問題：.*\n/, ''), profile: all?.profile || null }));
       $('#again', result).addEventListener('click', () => { result.innerHTML = ''; stage.innerHTML = ''; scrollTo({ top: 0, behavior: 'smooth' }); });

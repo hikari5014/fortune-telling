@@ -285,6 +285,9 @@ function boot() {
   });
 
   import('./router.js').then(r => { r.setHook(paint); r.start(); });
+  // 贊助者的會員：之前登入過、或剛從登入頁回來才會連網（一般使用完全不碰雲端）
+  import('./wallet.js').then(w => w.migrateLocal());
+  import('./account.js').then(a => a.initAccount());
 
   setTimeout(() => $('#boot').classList.add('is-done'), 520);
   addEventListener('resize', () => syncNav(path()));
