@@ -69,7 +69,7 @@ function hub() {
       <p class="wishfs__face" id="wface"></p>
       <p class="wish__say" id="wsay" aria-live="polite"></p>
       <p class="wish__aim" id="waim"></p>
-      <p class="wishfs__hint" id="whint">按住硬幣祈禱，往上一甩　·　左右滑動繞著池子走</p>
+      <p class="wishfs__hint" id="whint">按住硬幣祈禱，往上一甩<br>滑動畫面換角度　·　兩指縮放　·　點兩下回原位</p>
       <div class="wishfs__bottom">
         <button class="wishfs__chip press" id="wmotion">${raw(icon('spark'))} 用手機投</button>
         <span id="wcardrow" hidden>${shareCardBtn('wcard', '分享')}</span>

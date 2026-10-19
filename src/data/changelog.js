@@ -2,11 +2,20 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.44.0';
+export const APP_VERSION = '0.45.0';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.45.0', date: '2026-10-19', title: '許願池：透明會動的水、看得到池底的硬幣、自由換視角',
+    items: [
+      { kind: 'change', text: '水面重做：平靜時也一直有細細的波動，硬幣落水會盪出一圈圈真的漣漪；從上往下看是透明的，斜著看才倒映星空，月亮在水面上有一道碎光' },
+      { kind: 'add', text: '池底看得清楚了：馬賽克磁磚、會晃動的水光紋，還有每一枚沉在池底的銀幣和福幣；池底多了一盞微微透藍的燈' },
+      { kind: 'add', text: '視角可以自由調：左右滑繞著池子走、上下滑把鏡頭抬高（俯瞰）或壓低（貼近水面）、兩指縮放（電腦用滾輪）調遠近、點兩下回到原本的角度' },
+      { kind: 'fix', text: '修正廣場地板蓋住池底，讓池子看起來一片黑的問題；月光改從高處照下來，池子裡不再被石緣的影子整片蓋住' },
+    ],
+  },
   {
     v: '0.44.0', date: '2026-10-18', title: '許願池 3D 重製：四隻神獸、繞池走、祈禱與流星',
     items: [
