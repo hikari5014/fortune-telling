@@ -21,6 +21,7 @@ import { makeWater } from './pool/water.js';
 import { clink, plop, chime } from './rites/sound.js';
 import { haptic } from './ui.js';
 import { askMotion } from './rites/kit.js';
+import { nextFrame } from './loading.js';
 
 const fastMode = () => document.documentElement.dataset.motion === 'off'
   || matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -41,14 +42,21 @@ export function webglOK() {
  *   onBeforeThrow(aim)  出手那一刻；回傳 false 不投，回傳 { gold } 決定投哪一種
  *   onLand(r)     停下來了：{ spot: 'pool'|'animal'|'miss', k, gold, pray, x, z, … }
  *   onAim(aim|null)、onFacing(animal|null)、onCharge(0..1|null)
+ *   onProgress(0..1, 文字)  載入進度（星空、石池、神獸⋯⋯ 一段一段蓋，每段之間讓畫面喘口氣）
+ *   cancelled()   使用者已經離開這頁了嗎？是的話就停下來、收乾淨，回傳 null
+ * @returns {Promise<object|null>}
  */
-export function mountPool(host, { coins = [], animalCoins = {}, isGold = () => false, canThrow, onBeforeThrow, onLand, onAim, onFacing, onCharge } = {}) {
+export async function mountPool(host, { coins = [], animalCoins = {}, isGold = () => false, canThrow, onBeforeThrow, onLand, onAim, onFacing, onCharge, onProgress, cancelled } = {}) {
+  // 每一段之間：回報進度、讓瀏覽器畫一格（等待畫面才會動），順便看看人還在不在
+  const stage = async (p, text) => { onProgress?.(p, text); await nextFrame(); return !cancelled?.(); };
   host.querySelectorAll('canvas, .pool3d__no').forEach(n => n.remove());   // 留著願望升空的那一層
   if (!webglOK()) {
     host.insertAdjacentHTML('beforeend', '<p class="pool3d__no">這台裝置不支援 3D 畫面，許願池暫時無法顯示。</p>');
     return { armMotion: async () => false, busy: () => false, throwAt: () => false, walkTo() {}, destroy() {} };
   }
+  if (!await stage(0.08, '點亮星空⋯⋯')) return null;
   const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+  const quit = () => { renderer.dispose(); renderer.domElement.remove(); return null; };
   renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.75));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.15;
@@ -80,6 +88,7 @@ export function mountPool(host, { coins = [], animalCoins = {}, isGold = () => f
   // 池底的燈：像夜裡的泳池一樣從水裡微微透著藍光，池底的磁磚與硬幣才看得清楚
   const poolLight = new THREE.PointLight(0x8fc4ff, 1.4, 1.9, 1.3); poolLight.position.set(0, -0.12, 0); scene.add(poolLight);
 
+  if (!await stage(0.32, '鋪石池、注滿池水⋯⋯')) { pmrem.dispose(); return quit(); }
   const M = MD.materials();
   scene.add(MD.ground(M), MD.pool(M), MD.island(M));
   const wat = makeWater(skyTex); scene.add(wat.mesh, wat.caustics);
@@ -93,6 +102,7 @@ export function mountPool(host, { coins = [], animalCoins = {}, isGold = () => f
     halo.scale.set(0.9, 0.9, 1); halo.position.y = 0.6; l.add(halo);
     scene.add(l); lanterns.push(l);
   }
+  if (!await stage(0.58, '請四隻神獸就座⋯⋯')) { pmrem.dispose(); return quit(); }
   const beasts = MD.animals(M);
   beasts.forEach(b => scene.add(b.group));
 
@@ -496,6 +506,11 @@ export function mountPool(host, { coins = [], animalCoins = {}, isGold = () => f
   }
 
   size(); resetView(); el = elGoal; dist = distGoal; placeCamera();
+  // 最後一段：先把所有著色器編譯好、畫第一格 —— 不然第一次轉動畫面會頓一下
+  if (!await stage(0.82, '點亮石燈籠⋯⋯')) { pmrem.dispose(); return quit(); }
+  renderer.compile(scene, camera);
+  renderer.render(scene, camera);
+  if (!await stage(1, '好了')) { pmrem.dispose(); return quit(); }
   const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => size()) : null;
   ro?.observe(host);
   raf = requestAnimationFrame(frame);

@@ -3,7 +3,7 @@ import { icon } from '../icons.js';
 import { store, uid } from '../store.js';
 import { navigate } from '../router.js';
 import { DISCLAIMER } from './_shared.js';
-import { mountPool } from '../pool3d.js';
+import { begin, progress as loadProgress } from '../loading.js';
 import { targetOf, START, animalOf, ANIMALS } from '../engines/pool.js';
 import { dayKey, fast } from '../rites/kit.js';
 import { spend, refund, NAME } from '../wallet.js';
@@ -77,7 +77,7 @@ function hub() {
     </section>`;
 }
 
-function mountHub(page) {
+async function mountHub(page) {
   // 全螢幕那一層搬到 <body> 底下：頁面容器有轉場動畫（transform），
   // 留在裡面的話 position: fixed 會被困在容器裡，蓋不過 App 的頂欄與底欄
   const root = $('.wishfs', page);
@@ -92,7 +92,24 @@ function mountHub(page) {
   let wish = '', last = null, lastSay = '';
   const log = store.wishLog;
   $('#wcard', root).addEventListener('click', () => last && openShare(wishSpec(last, lastSay), '玄鑑-許願池'));
-  const pool = mountPool($('#pool', root), {
+  // 3D 很重：一進來就蓋上等待畫面（帶進度），3D 程式也是這時候才下載
+  let pool = null, gone = false;
+  const done = begin('準備許願池⋯⋯', { delay: 0, progress: 0.03 });
+  const off = () => {
+    gone = true; pool?.destroy(); root.remove(); document.documentElement.classList.remove('is-wishfs');
+    done(); removeEventListener('hashchange', off);
+  };
+  addEventListener('hashchange', off);
+  // 換頁過場還沒跑完就已經離開了：直接收掉，不留一層蓋住畫面
+  if (!/^#\/wish(\?|$)/.test(location.hash) || /[?&]at=log/.test(location.hash)) { off(); return; }
+  root.classList.add('is-loading');
+  let mountPool;
+  try { ({ mountPool } = await import('../pool3d.js')); }
+  catch { done(); toast('許願池載入失敗，請檢查網路後再試一次'); return; }
+  if (gone) return;
+  pool = await mountPool($('#pool', root), {
+    onProgress: (p, text) => loadProgress(0.1 + p * 0.9, text),
+    cancelled: () => gone,
     coins: log.filter(e => e.spot === 'pool').reverse(),
     animalCoins: Object.fromEntries(ANIMALS.map(a => [a.k, log.filter(e => e.spot === 'animal' && e.k === a.k).reverse().map(e => !!e.gold)])),
     isGold: () => goldMode(root),
@@ -135,8 +152,10 @@ function mountHub(page) {
       }
     },
   });
+  if (!pool) { done(); return; }                     // 載到一半就離開了
   $('#wmotion', root).addEventListener('click', async (e) => {
     const b = e.currentTarget;
+    if (!pool) return;
     const ok = await pool.armMotion();             // 權限請求在 armMotion 裡同步發出
     if (ok) {
       b.disabled = true; b.textContent = '手機已就緒';
@@ -144,10 +163,8 @@ function mountHub(page) {
       $('#whint', root).classList.add('is-gone');
     } else toast('沒辦法讀取手機的動作感測，用手指拉也可以');
   });
-  addEventListener('hashchange', function off() {
-    pool.destroy(); root.remove(); document.documentElement.classList.remove('is-wishfs');
-    removeEventListener('hashchange', off);
-  });
+  done();
+  root.classList.remove('is-loading');
 }
 
 function book() {

@@ -2,11 +2,20 @@
    改版時：更新 APP_VERSION、在 CHANGELOG 最前面加一筆，並把 sw.js 的 VERSION 改成同一組版號
    （tools/check_version.py 會檢查兩邊是否一致）。 */
 
-export const APP_VERSION = '0.45.0';
+export const APP_VERSION = '0.46.0';
 export const APP_STAGE = 'demo';
 
 /** kind: add 新增 / fix 修正 / change 調整 / data 資料 */
 export const CHANGELOG = [
+  {
+    v: '0.46.0', date: '2026-10-19', title: '全 App 等待畫面：不再以為當機',
+    items: [
+      { kind: 'add', text: '點下去要等超過 0.5 秒的地方，都會蓋上一層轉動的玄鑑星軌和說明文字；0.5 秒內就好的不會出現，不會閃一下' },
+      { kind: 'add', text: '許願池一點進去就顯示等待畫面和進度條，一步步告訴你在做什麼（點亮星空、注滿池水、請神獸就座、點亮石燈籠）；3D 程式也改成要用時才下載' },
+      { kind: 'add', text: '上次打開比較慢的頁面，這次一開始就先顯示等待畫面；存分享長圖、登入、儲值、登出也都有等待畫面' },
+      { kind: 'fix', text: '修正許願池還在載入時就離開，畫面會留下一層蓋住整個 App 的問題；快速連點換頁時，不會再把舊的頁面畫出來' },
+    ],
+  },
   {
     v: '0.45.0', date: '2026-10-19', title: '許願池：透明會動的水、看得到池底的硬幣、自由換視角',
     items: [
