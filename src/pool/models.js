@@ -16,8 +16,8 @@ export function materials() {
   const stoneTex = TX.stone(1);
   return {
     stone: new THREE.MeshStandardMaterial({ map: stoneTex, color: 0xd6d9e4, roughness: 0.78, metalness: 0.02, bumpMap: stoneTex, bumpScale: 0.004 }),
-    rock: new THREE.MeshStandardMaterial({ map: TX.stone(7, [70, 80, 78]), color: 0x8a958c, roughness: 0.9 }),
-    tiles: new THREE.MeshStandardMaterial({ map: TX.tiles(), roughness: 0.55 }),
+    rock: new THREE.MeshStandardMaterial({ map: TX.stone(7, [104, 114, 108]), color: 0xc4cec6, roughness: 0.85 }),
+    tiles: new THREE.MeshStandardMaterial({ map: TX.tiles(), roughness: 0.5, color: 0xe6efff, emissive: 0x0b1a33, emissiveIntensity: 1 }),
     plaza: new THREE.MeshStandardMaterial({ map: TX.plaza(), roughness: 0.9 }),
     gold: new THREE.MeshStandardMaterial({ color: 0xd9ad55, metalness: 0.95, roughness: 0.26 }),
     bronze: new THREE.MeshStandardMaterial({ color: 0xa8763a, metalness: 0.9, roughness: 0.35 }),
@@ -34,7 +34,7 @@ export function materials() {
   };
 }
 
-/* ── 石池、池底、水、石島、廣場、樹林 ─────────────────── */
+/* ── 石池、池底、石島、廣場、樹林（水在 water.js） ──────── */
 export function pool(M) {
   const g = new THREE.Group(), { R, RIM_W, RIM_H, GROUND, DEPTH } = POOL;
   // 石緣：一條剖面繞一圈（內壁 → 圓角 → 頂面 → 圓角 → 外牆）
@@ -50,17 +50,6 @@ export function pool(M) {
   const floor = new THREE.Mesh(new THREE.CircleGeometry(R, 96), M.tiles);
   floor.rotation.x = -Math.PI / 2; floor.position.y = -DEPTH; floor.receiveShadow = true; g.add(floor);
   return g;
-}
-
-export function water(envMap) {
-  const nm = TX.waterNormal();
-  const mat = new THREE.MeshPhysicalMaterial({
-    color: 0x16346e, roughness: 0.04, metalness: 0, transparent: true, opacity: 0.74,
-    normalMap: nm, normalScale: new THREE.Vector2(0.22, 0.22), envMap, envMapIntensity: 1.6, clearcoat: 1, clearcoatRoughness: 0.05,
-  });
-  const m = new THREE.Mesh(new THREE.CircleGeometry(POOL.R, 128), mat);
-  m.rotation.x = -Math.PI / 2; m.renderOrder = 2;
-  return { mesh: m, tick: (t) => { nm.offset.set(t * 0.012, t * 0.008); } };
 }
 
 export function island(M) {
@@ -82,7 +71,8 @@ export function island(M) {
 
 export function ground(M) {
   const g = new THREE.Group();
-  const p = new THREE.Mesh(new THREE.CircleGeometry(14, 120), M.plaza);
+  // 廣場是一圈環：池子那一塊要挖空，不然會蓋住池底與沉下去的硬幣
+  const p = new THREE.Mesh(new THREE.RingGeometry(POOL.R + POOL.RIM_W - 0.01, 14, 160, 4), M.plaza);
   p.rotation.x = -Math.PI / 2; p.position.y = POOL.GROUND; p.receiveShadow = true; g.add(p);
   const trees = new THREE.Mesh(new THREE.CylinderGeometry(15, 15, 4, 96, 1, true),
     new THREE.MeshBasicMaterial({ map: TX.treeline(), transparent: true, side: THREE.BackSide, fog: false, depthWrite: false }));
@@ -228,8 +218,9 @@ export function coinKit() {
   const face = TX.coinFace();
   const geo = new THREE.CylinderGeometry(COIN_R, COIN_R, 0.009, 40);
   const make = (color) => {
-    const side = new THREE.MeshStandardMaterial({ color, metalness: 1, roughness: 0.32 });
-    const cap = new THREE.MeshStandardMaterial({ color, metalness: 1, roughness: 0.22, bumpMap: face, bumpScale: 0.6, emissive: 0x000000 });
+    // 金屬在夜裡只會映出黑黑的地面 —— 調一點粗糙、帶一點自己的微光，沉在池底也看得出是硬幣
+    const side = new THREE.MeshStandardMaterial({ color, metalness: 0.85, roughness: 0.35, emissive: color, emissiveIntensity: 0.06 });
+    const cap = new THREE.MeshStandardMaterial({ color, metalness: 0.85, roughness: 0.28, bumpMap: face, bumpScale: 0.6, emissive: color, emissiveIntensity: 0.08 });
     return [side, cap, cap];
   };
   return { geo, gold: make(0xf0c35a), silver: make(0xdfe4ee) };
