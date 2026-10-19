@@ -8,6 +8,7 @@ import { html, raw, $, $$, sheet, toast, haptic } from './ui.js';
 import { onStore, store } from './store.js';
 import { balance, isSponsor, buy, PACKS, NAME, REFUND_DAYS } from './wallet.js';
 import { account, signInGoogle, signInEmail, verifyEmailCode, signOut, configured } from './account.js';
+import { withLoading } from './loading.js';
 
 /** 一枚福幣（金色、中央四芒星） */
 export const coinIcon = (size = 18) => `<svg class="fu-coin" width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true">
@@ -109,7 +110,7 @@ export function openWallet(note = '') {
     onMount(root, close) {
       $$('[data-pack]', root).forEach(b => b.addEventListener('click', async () => {
         b.disabled = true;
-        const r = await buy(b.dataset.pack);
+        const r = await withLoading(() => buy(b.dataset.pack), '處理中⋯⋯');
         b.disabled = false;
         if (r.ok) {
           $$('[data-wallet-n]', root).forEach(n => { n.textContent = balance(); });
@@ -118,21 +119,21 @@ export function openWallet(note = '') {
         } else toast(r.reason === 'login' ? '請先登入會員' : '儲值還沒開放');
       }));
       $('#fu-google', root)?.addEventListener('click', async () => {
-        const r = await signInGoogle();                 // 成功的話會直接跳到 Google，不會回到這裡
+        const r = await withLoading(() => signInGoogle(), '前往 Google 登入⋯⋯');                 // 成功的話會直接跳到 Google，不會回到這裡
         if (!r.ok) toast(/not enabled|provider/i.test(r.error || '') ? 'Google 登入還在設定中，先用 Email 吧' : `登入失敗：${r.error}`);
       });
       $('#fu-mail', root)?.addEventListener('click', async () => {
         const email = $('#fu-email', root).value.trim();
         if (!/^\S+@\S+\.\S+$/.test(email)) { toast('Email 格式不對'); return; }
-        const r = await signInEmail(email);
+        const r = await withLoading(() => signInEmail(email), '寄出登入信⋯⋯');
         if (r.ok) { $('#fu-codebox', root).hidden = false; toast('登入信已寄出：點信裡的連結，或輸入信裡的驗證碼'); }
         else toast(`寄不出去：${r.error || '請稍後再試'}`);
       });
       $('#fu-verify', root)?.addEventListener('click', async () => {
-        const r = await verifyEmailCode($('#fu-email', root).value.trim(), $('#fu-code', root).value.trim());
+        const r = await withLoading(() => verifyEmailCode($('#fu-email', root).value.trim(), $('#fu-code', root).value.trim()), '登入中⋯⋯');
         if (r.ok) { close(); toast('登入成功'); setTimeout(() => openWallet(), 400); } else toast(`驗證碼不對：${r.error || ''}`);
       });
-      $('#fu-out', root)?.addEventListener('click', async () => { await signOut(); close(); toast('已登出'); });
+      $('#fu-out', root)?.addEventListener('click', async () => { await withLoading(() => signOut(), '登出中⋯⋯'); close(); toast('已登出'); });
     },
   });
 }

@@ -154,7 +154,8 @@ async function paint(view, p) {
 
   const useVT = typeof document.startViewTransition === 'function'
     && document.documentElement.dataset.motion !== 'off';
-  if (useVT) document.startViewTransition(() => doRender(false));
+  // 等畫面真的換好才回報「好了」（等待畫面才知道什麼時候收起來）
+  if (useVT) { const vt = document.startViewTransition(() => doRender(false)); await vt.updateCallbackDone.catch(() => {}); }
   else doRender(true);
   syncNav(p);
 }

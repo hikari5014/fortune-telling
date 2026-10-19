@@ -404,3 +404,24 @@ input[type="range"]:active::-webkit-slider-thumb { transform: scale(1.18); }
   transform: scale(1.03);
 }
 .navmenu__i.is-hot em { color: color-mix(in srgb, var(--invert-ink) 55%, transparent); }
+
+/* ── 等待畫面（src/loading.js）：超過 0.5 秒才出現 ───────── */
+.ld { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; pointer-events: none;
+  background: radial-gradient(60% 50% at 50% 45%, rgba(18,22,52,.72), rgba(5,7,20,.86)); opacity: 0; visibility: hidden;
+  transition: opacity .28s ease, visibility 0s linear .28s; -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
+.ld.is-on { opacity: 1; visibility: visible; pointer-events: auto; transition: opacity .28s ease; }
+.ld__box { display: grid; justify-items: center; gap: 14px; transform: translateY(6px); transition: transform .4s cubic-bezier(.2,.8,.3,1); }
+.ld.is-on .ld__box { transform: none; }
+.ld__mark { width: 64px; height: 64px; color: var(--gold, #d9b25f); filter: drop-shadow(0 0 12px rgba(227,180,90,.45)); }
+.ld__mark svg { width: 100%; height: 100%; }
+.ld__orbit, .ld__ring, .ld__star { transform-origin: 50% 50%; }
+.ld__orbit { animation: ld-spin 9s linear infinite; }
+.ld__ring { animation: ld-spin 1.6s cubic-bezier(.5,.1,.5,.9) infinite reverse; }
+.ld__star { animation: ld-pulse 1.6s ease-in-out infinite; }
+@keyframes ld-spin { to { transform: rotate(360deg); } }
+@keyframes ld-pulse { 0%, 100% { transform: scale(.86); opacity: .75; } 50% { transform: scale(1.08); opacity: 1; } }
+.ld__text { margin: 0; font-size: 14px; letter-spacing: .25em; color: #f1e3bd; text-shadow: 0 1px 8px rgba(0,0,0,.6); }
+.ld__bar { width: 160px; height: 3px; border-radius: 3px; background: rgba(241,227,189,.15); overflow: hidden; }
+.ld__bar i { display: block; height: 100%; width: 4%; border-radius: inherit; background: linear-gradient(90deg, #b9862a, #f6dc9a); transition: width .35s ease; }
+:root[data-motion="off"] .ld__orbit, :root[data-motion="off"] .ld__ring, :root[data-motion="off"] .ld__star { animation: none; }
+@media (prefers-reduced-motion: reduce) { .ld__orbit, .ld__ring, .ld__star { animation: none; } }

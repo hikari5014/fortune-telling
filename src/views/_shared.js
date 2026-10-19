@@ -82,9 +82,12 @@ export function shareBtn(id = 'share-img', label = '存成長圖') {
 export async function doShare(build, filename) {
   const { toast } = await import('../ui.js');
   try {
-    const { shareCard } = await import('../share.js');
-    toast('產生圖片中…');
-    const r = await shareCard(build(), filename);
+    const { withLoading, nextFrame } = await import('../loading.js');
+    const r = await withLoading(async () => {
+      const { shareCard } = await import('../share.js');
+      await nextFrame();
+      return shareCard(build(), filename);
+    }, '產生圖片中⋯⋯');
     if (r === 'downloaded') toast('已存成 PNG');
     else if (r === 'shared') toast('已分享');
   } catch (e) {
